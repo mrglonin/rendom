@@ -1,0 +1,63 @@
+{% from "blocks/components/decor.njk" import decor %}
+
+{% macro popupDialog(props = {}) %}
+<div
+    class="popup{{ (' ' ~ props.className) if props.className else '' }}"
+    data-popup="{{ props.name }}"
+    aria-hidden="true">
+    <div class="popup__wrapper" data-popup-close>
+        <div class="popup__inner" role="dialog" aria-modal="true" aria-labelledby="{{ props.name }}-title">
+            <div class="popup-card">
+                <div class="popup-card__titling">
+                    <h5 class="popup-card__title" id="{{ props.name }}-title">
+                        {{ props.title }}
+                    </h5>
+                </div>
+                <ul class="popup-card__list">
+                    {% for item in props.items %}
+                    <li class="popup-card__item">
+                        <button
+                            class="popup-card__action{% if item.colored %} popup-card__action--colored{% endif %}{% if item.active %} popup-card__action--active{% endif %}"
+                            type="button"
+                            {% if item.close %}data-popup-close{% endif %}
+                            {% if item.action %}data-popup-action="{{ item.action }}"{% endif %}
+                            {% if item.language %}data-language="{{ item.language }}"{% endif %}>
+                            {{ item.label }}
+                        </button>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {{ decor({
+                    "elementClass": "popup-card__decor",
+                    "className": "decor--small"
+                }) }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}
+
+{% macro resetPopup() %}
+{{ popupDialog({
+    "name": "reset",
+    "className": "popup--reset",
+    "title": "Хотите вернуться в начало?",
+    "items": [
+        {"label": "нет", "close": true},
+        {"label": "да", "action": "reset-app", "colored": true}
+    ]
+}) }}
+{% endmacro %}
+
+{% macro languagesPopup() %}
+{{ popupDialog({
+    "name": "languages",
+    "className": "popup--languages",
+    "title": "Выберите язык",
+    "items": [
+        {"label": "KZ", "language": "kz"},
+        {"label": "RU", "language": "ru", "active": true},
+        {"label": "EN", "language": "en"}
+    ]
+}) }}
+{% endmacro %}

@@ -1,0 +1,18 @@
+{% macro langs(props = {}) %}
+{% set items = props.items or [] %}
+<div class="langs{{ (' ' ~ props.className) if props.className else '' }}">
+    <ul class="langs__list">
+        {% for item in items %}
+        <li class="langs__item{% if item.active %} langs__item--active{% endif %}">
+            {% if item.href and not item.active %}
+            <a class="langs__link" href="{{ item.href }}">
+                {{ item.label }}
+            </a>
+            {% else %}
+            <span class="langs__label">{{ item.label }}</span>
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endmacro %}

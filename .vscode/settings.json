@@ -1,0 +1,46 @@
+{
+  "files.associations": {
+    "*.njk": "html"
+  },
+  "[html]": {
+    "editor.defaultFormatter": "vscode.html-language-features",
+    "editor.formatOnSave": true,
+    "editor.quickSuggestions": {
+      "other": true,
+      "comments": false,
+      "strings": true
+    }
+  },
+  "[css]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[scss]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "emmet.includeLanguages": {
+    "njk": "html",
+    "nunjucks": "html",
+    "html": "html"
+  },
+  "emmet.showExpandedAbbreviation": "always",
+  "emmet.triggerExpansionOnTab": true,
+  "editor.snippetSuggestions": "top",
+  "editor.suggestOnTriggerCharacters": true,
+  "html.completion.attributeDefaultValue": "doublequotes",
+  "html.format.wrapAttributes": "preserve",
+  "html.format.wrapLineLength": 120,
+  "html.format.contentUnformatted": "pre,code,textarea",
+  "html.format.extraLiners": "",
+  "prettier.requireConfig": true,
+  "djlint.pythonPath": "python3"
+}

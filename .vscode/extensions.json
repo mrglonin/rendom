@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "monosans.djlint",
+    "esbenp.prettier-vscode",
+    "ronnidc.nunjucks",
+    "dbaeumer.vscode-eslint",
+    "stylelint.vscode-stylelint"
+  ]
+}

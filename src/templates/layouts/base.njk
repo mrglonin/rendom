@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="{{ page.lang or site.lang or 'ru' }}">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ page.title or site.name }}</title>
+    <meta name="description"
+          content="{{ page.description or site.description }}" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cascadia+Code:ital,wght@0,200..700;1,200..700&display=swap"
+          rel="stylesheet">
+    <link rel="stylesheet" href="css/{{ 'style.min.css' if build.isProd else 'style.css' }}" />
+  </head>
+  <body class="{{ page.bodyClass or '' }}">
+    <div class="wrapper">
+      <main class="main">
+        {# Контент конкретной страницы вставляется сюда #}
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+    <script type="module" src="js/{{ 'main.min.js' if build.isProd else 'main.js' }}"></script>
+  </body>
+</html>

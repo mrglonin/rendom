@@ -1,0 +1,37 @@
+@use "../../scss/base/vars" as *;
+
+.panel-head {
+  padding: 10px 20px;
+  min-height: 55px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 30px;
+  background: linear-gradient(90deg, #27232f 0%, #342657 100%);
+  border-bottom: 2px solid $purple;
+
+  &__suptitle {
+    color: $dark-purple;
+    font-size: 27px;
+    line-height: 31px;
+    font-weight: 600;
+  }
+
+  &__icons {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+
+    svg {
+      width: 35px;
+      min-width: 35px;
+      height: 35px;
+    }
+  }
+
+  &--accent {
+    .panel-head__suptitle {
+      color: $purple;
+    }
+  }
+}

@@ -1,0 +1,340 @@
+@use "../../scss/base/vars" as *;
+
+.end {
+  grid-area: 1 / 1;
+  position: relative;
+  z-index: 0;
+  min-height: 100svh;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  will-change: opacity;
+  transition:
+    opacity 0.35s ease,
+    visibility 0.35s allow-discrete;
+
+  &--active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: all;
+    z-index: 100;
+
+    @starting-style {
+      opacity: 0;
+    }
+  }
+
+  &--hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  &__layers {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+  }
+
+  &__layer {
+    position: absolute;
+    &--base {
+      width: 100%;
+      height: 100%;
+      inset: 0;
+      .end__media {
+        display: block;
+        width: 100%;
+        height: 100%;
+        background: $blue;
+        img {
+          mix-blend-mode: luminosity;
+          object-fit: cover;
+        }
+      }
+    }
+
+    &--artwork {
+      width: 1081px;
+      height: 1081px;
+      top: 220px;
+      left: 50%;
+      margin-left: -540.5px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      .end__media {
+        display: block;
+        width: 100%;
+        height: 100%;
+        img {
+          object-fit: contain;
+          mix-blend-mode: lighten;
+        }
+      }
+    }
+
+    &--glow-blue {
+      width: 1240px;
+      height: 884px;
+      top: -425px;
+      left: -210px;
+      border-radius: 100%;
+      transform: rotate(-16deg);
+      background: radial-gradient(50% 50% at 50% 50%, #2675ff 0%, rgba(38, 117, 255, 0) 100%);
+    }
+
+    &--glow-green-top {
+      width: 810px;
+      height: 580px;
+      right: -520px;
+      top: 225px;
+      border-radius: 100%;
+      transform: rotate(-86deg);
+      background: radial-gradient(50% 50% at 50% 50%, #00ff5d 0%, rgba(0, 255, 93, 0) 100%);
+    }
+
+    &--glow-green-bottom {
+      width: 910px;
+      height: 580px;
+      bottom: 280px;
+      right: -420px;
+      border-radius: 100%;
+      transform: rotate(-16deg);
+      background: radial-gradient(50% 50% at 50% 50%, #00ff5d 0%, rgba(0, 255, 93, 0) 100%);
+    }
+    &--glow-gradient-right {
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 215px;
+      height: 100%;
+      background: linear-gradient(270deg, rgba(0, 255, 93, 1) 0%, rgba(0, 255, 93, 0) 50%);
+      opacity: 0.3;
+    }
+  }
+
+  &__inner {
+    display: flex;
+    flex-direction: column;
+    min-height: 100svh;
+    padding: 160px 0 80px 0;
+  }
+
+  &__intro {
+    margin-bottom: 90px;
+  }
+
+  &__title {
+    margin-bottom: 70px;
+    margin-left: -80px;
+  }
+
+  &__title-line {
+    padding: 0 10px 0 80px;
+    display: block;
+    width: max-content;
+    text-transform: uppercase;
+    color: $black;
+    font-size: 70px;
+    line-height: 81px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    &:last-child {
+      margin-bottom: unset;
+    }
+
+    &--accent {
+      background: $green;
+    }
+  }
+
+  &__texts {
+    position: relative;
+    padding-left: 180px;
+    margin-left: -80px;
+    &::before {
+      content: "";
+      position: absolute;
+      width: 180px;
+      height: 100%;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      background: $dark;
+    }
+    &::after {
+      content: "";
+      position: absolute;
+      width: 2px;
+      height: calc(100% - 24px);
+      left: 147px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: $grey;
+    }
+  }
+
+  &__description {
+    margin-bottom: 32px;
+    position: relative;
+    color: $grey;
+    font-size: 24px;
+    line-height: 29px;
+    font-weight: 350;
+    max-width: 632px;
+    &::after {
+      content: "";
+      position: absolute;
+      width: 286px;
+      height: 40px;
+      bottom: -40px;
+      left: 0;
+      background: $dark;
+    }
+    &:last-child {
+      margin-bottom: unset;
+      &::after {
+        content: unset;
+      }
+    }
+    background: $dark;
+    padding: 5px;
+    width: fit-content;
+  }
+
+  &__stats {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    margin-bottom: 32px;
+  }
+
+  &__stats-title {
+    background: $dark;
+    padding: 16px 60px 12px 150px;
+    margin-left: -80px;
+    color: $white;
+    font-size: 24px;
+    line-height: 31px;
+    font-weight: 600;
+  }
+
+  &__stats-list {
+    margin-left: 95px;
+    background: $dark;
+    padding: 60px 50px 45px 180px;
+    margin-left: -80px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px 40px;
+    position: relative;
+    margin-top: -2px;
+    &::before {
+      content: "";
+      width: 1px;
+      height: calc(100% - 40px);
+      position: absolute;
+      left: 150px;
+      bottom: 0;
+      background: $white;
+    }
+  }
+
+  &__stats-item {
+    &--accent {
+      .end__stats-value {
+        border: 1px solid $purple;
+      }
+      .end__stats-bar {
+        background: $purple;
+      }
+    }
+  }
+
+  &__stats-value {
+    border: 1px solid $green;
+    margin-bottom: 8px;
+    overflow: hidden;
+    color: $white;
+    font-size: 32px;
+    line-height: 39px;
+    font-weight: 600;
+    padding: 3px 14px;
+    position: relative;
+  }
+
+  &__stats-bar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    background: $green;
+    pointer-events: none;
+  }
+
+  &__stats-number {
+    position: relative;
+    z-index: 1;
+    text-shadow: 0px 0px 8.1px rgba(2, 74, 28, 0.2);
+  }
+
+  &__stats-unit {
+    font-size: 20px;
+    line-height: 24px;
+    font-weight: 350;
+  }
+
+  &__stats-text {
+    color: $grey;
+    font-size: 24px;
+    line-height: 29px;
+    font-weight: 350;
+  }
+
+  &__stats-footer {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    background: $dark;
+    width: 100%;
+    max-width: 783px;
+    padding: 10px 30px 10px 150px;
+    margin-left: -80px;
+    margin-top: -2px;
+  }
+
+  &__stats-footer-mark {
+    margin-bottom: 10px;
+    margin-top: -8px;
+
+    svg {
+      width: 10px;
+      min-width: 10px;
+      height: 34px;
+    }
+  }
+
+  &__stats-footer-text {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 24px;
+    line-height: 31px;
+    font-weight: 350;
+    &::before {
+      content: "";
+      width: 18px;
+      min-width: 18px;
+      height: 18px;
+      background: $purple;
+    }
+    color: $white;
+    span {
+      color: $purple;
+    }
+  }
+}

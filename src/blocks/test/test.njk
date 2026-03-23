@@ -1,0 +1,133 @@
+{% from "blocks/components/decor.njk" import decor %}
+{% from "blocks/steps/steps.njk" import steps %}
+{% from "blocks/components/navigation.njk" import navigation %}
+{% from "blocks/quiz/quiz.njk" import quiz %}
+{% from "blocks/assessment/assessment.njk" import assessment %}
+{% from "blocks/status/status.njk" import status %}
+{% from "blocks/results/results.njk" import results %}
+
+{% macro test(props = {}) %}
+{% set questions = props.questions or [
+{
+"suptitle": "[ВОПРОС 1/5].exe",
+"text": "Как вы думаете, появится ли сильный искусственный интеллект (ИИ, способный мыслить и осознавать себя как
+человек) и когда это произойдет?"
+},
+{
+"suptitle": "[ВОПРОС 2/5].exe",
+"text": "Должен ли ИИ быть строго контролируем человеком, <br> и как это должно осуществляться?"
+},
+{
+"suptitle": "[ВОПРОС 3/5].exe",
+"text": "Как, по вашему мнению, <br> ИИ повлияет на рынок труда в ближайшие 20 лет?"
+},
+{
+"suptitle": "[ВОПРОС 4/5].exe",
+"text": "Что вы думаете об ИИ <br> в искусстве и творчестве?"
+},
+{
+"suptitle": "[ВОПРОС 5/5].exe",
+"text": "Как вы относитесь к внедрению ИИ в повседневную жизнь - <br> в медицине, транспорте или государственном
+управлении?"
+}
+] %}
+{% set answers = props.answers or [
+{
+"title": "Ответы на вопрос 1",
+"options": [
+{"text": "Да, и довольно скоро — в ближайшие 3-5 лет", "value": "1"},
+{"text": "Возможно, через несколько десятилетий или даже веков. Это очень сложная задача", "value": "2"},
+{"text": "Нет, никогда. Истинное сознание и разум невозможно воспроизвести в машине", "value": "3"},
+{"text": "Скорее всего, через 10-20 лет. И мы должны активно работать над безопасностью и дружественностью такого ИИ для
+человечества", "value": "4"}
+]
+},
+{
+"title": "Ответы на вопрос 2",
+"options": [
+{"text": "ИИ достаточно умен, чтобы самостоятельно принимать <br> оптимальные решения", "value": "1"},
+{"text": "Да, ИИ должен быть под контролем человека — через <br> законодательство, этические кодексы и мониторинг",
+"value": "2"},
+{"text": "ИИ настолько непредсказуем, что лучше вообще <br> ограничить его развитие", "value": "3"},
+{"text": "Да, и нужны четкие правила, чтобы он всегда <br> действовал в интересах человека", "value": "4"}
+]
+},
+{
+"title": "Ответы на вопрос 3",
+"options": [
+{"text": "Создаст множество новых, более <br> интересных и высокотехнологичных рабочих мест", "value": "1"},
+{"text": "Изменит многие профессии, но в целом баланс <br> сохранится за счет новых возможностей", "value": "2"},
+{"text": "Приведет к безработице и увеличению социального <br> неравенства, так как машины заменят большинство людей",
+"value": "3"},
+{"text": "Он способен значительно улучшить условия труда, <br> если будут созданы социальные программы поддержки",
+"value": "4"}
+]
+},
+{
+"title": "Ответы на вопрос 4",
+"options": [
+{"text": "Совместное творчество человека и машины приведет <br> к созданию новых уникальных произведений", "value":
+"1"},
+{"text": "Едва ли ИИ сможет создать нечто настолько же <br> неповторимое, как творец-человек", "value": "2"},
+{"text": "Только человек может создавать произведения <br> искусства. ИИ способен только на имитацию", "value": "3"},
+{"text": "Интересно, но важно сохранить концепцию авторства <br> и подлинности произведений, созданных человеком",
+"value": "4"}
+]
+},
+{
+"title": "Ответы на вопрос 5",
+"options": [
+{"text": "Полностью за! Это сделает жизнь <br> эффективнее и безопаснее", "value": "1"},
+{"text": "Считаю, что внедрять нужно очень <br> осторожно и поэтапно", "value": "2"},
+{"text": "Категорически против. <br> Это слишком рискованно", "value": "3"},
+{"text": "За, но только при условии вмешательства <br> человека в критических ситуациях", "value": "4"}
+]
+}
+] %}
+
+<div class="test test--hidden">
+    <div class="test__layers">
+        <div class="test__layer test__layer--base">
+            <picture class="test__media">
+                <img src="images/test-base.jpg" alt="base">
+            </picture>
+        </div>
+        <div class="test__layer test__layer--artwork">
+            <picture class="test__media">
+                <img src="images/test-artwork-img.png" alt="bg">
+            </picture>
+            <div class="test__layer-line"></div>
+            {{ decor({"elementClass": "test__decor", "className": "decor--medium"}) }}
+        </div>
+        <div class="test__layer test__layer--glow-blue"></div>
+        <div class="test__layer test__layer--glow-green-top"></div>
+        <div class="test__layer test__layer--glow-green-bottom"></div>
+        <div class="test__layer test__layer--glow-gradient-right"></div>
+    </div>
+
+    <div class="container">
+        <div class="test__inner">
+            <div class="test__head">
+                <h2 class="test__title">
+                    <span class="test__title-text">Тест</span>
+                </h2>
+                {{ steps({"className": "test__steps", "total": 4, "current": 1}) }}
+            </div>
+
+            <div class="test__content">
+                {{ quiz({
+                "className": "test__quiz",
+                "items": questions,
+                "groups": answers,
+                "current": 1,
+                "submitText": "далее"
+                }) }}
+                {{ assessment({"className": "test__assessment"}) }}
+                {{ status({"className": "test__status"}) }}
+                {{ results({"className": "test__results"}) }}
+            </div>
+            {{ navigation({"className": "test__navigation"}) }}
+        </div>
+    </div>
+</div>
+{% endmacro %}

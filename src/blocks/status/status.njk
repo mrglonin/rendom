@@ -1,0 +1,225 @@
+{% from "blocks/components/decor.njk" import decor %}
+{% from "blocks/components/bottom-actions.njk" import bottomActions %}
+{% from "blocks/components/head.njk" import head %}
+{% from "blocks/components/touch.njk" import touch %}
+{% macro statusHeadIcons() %}
+    <svg width="34" height="35" viewBox="0 0 34 35" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g clip-path="url(#clip0_status_head_1)">
+            <path
+                d="M16.8701 1.00098C21.003 1.0353 24.9134 2.66949 27.9297 5.62695L28.2188 5.91699C34.532 12.4161 34.5939 22.9022 28.3994 29.2773C25.3344 32.4317 21.3942 34.0009 17.2588 34.001C13.1248 34.001 8.96379 32.3662 5.78125 29.0908C-0.531848 22.5917 -0.593889 12.1056 5.60059 5.73047C8.60184 2.6418 12.6052 0.965657 16.8701 1.00098ZM25.9707 15.6523H24.9707L18.833 15.6504V8.30176H15.1719V15.6465H8.03125V19.3555L9.03125 19.3564H15.1689V26.707H18.8291V19.3613H25.9707V15.6523Z"
+                stroke="#81509F" stroke-width="2" />
+        </g>
+        <defs>
+            <clipPath id="clip0_status_head_1">
+                <rect width="34" height="35" fill="white" />
+            </clipPath>
+        </defs>
+    </svg>
+    <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g clip-path="url(#clip0_status_head_2)">
+            <path
+                d="M11.2773 22.7073L11.2989 11.2911L22.7151 11.2695L22.6935 22.6857L11.2773 22.7073ZM12.9525 12.9447L12.9376 21.047L21.0399 21.0321L21.0548 12.9298L12.9525 12.9447Z"
+                stroke="#81509F" stroke-width="2" />
+            <path
+                d="M33.3438 16.9805C33.3438 17.0754 33.2668 17.1523 33.1719 17.1523C33.1008 17.1522 33.0396 17.1094 33.0137 17.0479L33.001 16.9805C33.0012 16.8858 33.0772 16.8098 33.1719 16.8096L33.2393 16.8223C33.3008 16.8482 33.3436 16.9094 33.3438 16.9805Z"
+                stroke="#81509F" stroke-width="2" />
+            <path
+                d="M33.3438 8.49219C33.3438 8.58716 33.2668 8.66406 33.1719 8.66406C33.1008 8.66393 33.0396 8.62108 33.0137 8.55957L33.001 8.49219C33.0012 8.39748 33.0772 8.32147 33.1719 8.32129L33.2393 8.33398C33.3008 8.35993 33.3436 8.4211 33.3438 8.49219Z"
+                stroke="#81509F" stroke-width="2" />
+            <path
+                d="M33.3438 0.828125C33.3438 0.9231 33.2668 1 33.1719 1C33.1008 0.999865 33.0396 0.957017 33.0137 0.895508L33.001 0.828125C33.0012 0.733417 33.0772 0.657406 33.1719 0.657227L33.2393 0.669922C33.3008 0.695865 33.3436 0.757035 33.3438 0.828125Z"
+                stroke="#81509F" stroke-width="2" />
+            <path
+                d="M33.3438 33.1484C33.3438 33.2434 33.2668 33.3203 33.1719 33.3203C33.1008 33.3202 33.0396 33.2773 33.0137 33.2158L33.001 33.1484C33.0012 33.0537 33.0772 32.9777 33.1719 32.9775L33.2393 32.9902C33.3008 33.0162 33.3436 33.0773 33.3438 33.1484Z"
+                stroke="#81509F" stroke-width="2" />
+            <path
+                d="M33.3438 25.4844C33.3438 25.5793 33.2668 25.6562 33.1719 25.6562C33.1008 25.6561 33.0396 25.6133 33.0137 25.5518L33.001 25.4844C33.0012 25.3897 33.0772 25.3137 33.1719 25.3135L33.2393 25.3262C33.3008 25.3521 33.3436 25.4133 33.3438 25.4844Z"
+                stroke="#81509F" stroke-width="2" />
+            <path
+                d="M1 16.9805C1 17.0754 0.9231 17.1523 0.828125 17.1523C0.757034 17.1522 0.695865 17.1094 0.669922 17.0479L0.657227 16.9805C0.657406 16.8858 0.733417 16.8098 0.828125 16.8096L0.895508 16.8223C0.957018 16.8482 0.999865 16.9094 1 16.9805Z"
+                stroke="#81509F" stroke-width="2" />
+            <path
+                d="M1 8.49219C1 8.58716 0.9231 8.66406 0.828125 8.66406C0.757034 8.66393 0.695865 8.62108 0.669922 8.55957L0.657227 8.49219C0.657406 8.39748 0.733417 8.32147 0.828125 8.32129L0.895508 8.33398C0.957018 8.35993 0.999865 8.4211 1 8.49219Z"
+                stroke="#81509F" stroke-width="2" />
+            <path
+                d="M1 33.1484C1 33.2434 0.9231 33.3203 0.828125 33.3203C0.757034 33.3202 0.695865 33.2773 0.669922 33.2158L0.657227 33.1484C0.657406 33.0537 0.733417 32.9777 0.828125 32.9775L0.895508 32.9902C0.957018 33.0162 0.999865 33.0773 1 33.1484Z"
+                stroke="#81509F" stroke-width="2" />
+            <path
+                d="M1 25.4844C1 25.5793 0.9231 25.6562 0.828125 25.6562C0.757034 25.6561 0.695865 25.6133 0.669922 25.5518L0.657227 25.4844C0.657406 25.3897 0.733417 25.3137 0.828125 25.3135L0.895508 25.3262C0.957018 25.3521 0.999865 25.4133 1 25.4844Z"
+                stroke="#81509F" stroke-width="2" />
+        </g>
+        <defs>
+            <clipPath id="clip0_status_head_2">
+                <rect width="34" height="33.9801" fill="white" />
+            </clipPath>
+        </defs>
+    </svg>
+    <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g clip-path="url(#clip0_status_head_3)">
+            <path d="M15.5859 17L1 31.5859V2.41406L15.5859 17Z" stroke="#81509F" stroke-width="2" />
+            <path d="M33 31.5859L18.4141 17L33 2.41406V31.5859Z" stroke="#81509F" stroke-width="2" />
+        </g>
+        <defs>
+            <clipPath id="clip0_status_head_3">
+                <rect width="34" height="34" fill="white" />
+            </clipPath>
+        </defs>
+    </svg>
+    <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g clip-path="url(#clip0_status_head_4)">
+            <path
+                d="M24.2979 17.0002C27.0443 13.9878 29.4033 11.0512 31.1259 8.4783C33.8908 4.34954 34.6502 1.75643 33.4462 0.552492C32.2423 -0.65145 29.6509 0.10796 25.5204 2.87282C22.9475 4.59538 20.0109 6.95443 16.9985 9.70077C13.9861 6.95275 11.0495 4.59538 8.47662 2.87282C4.34786 0.10796 1.75643 -0.65145 0.552493 0.552492C-0.65145 1.75643 0.10796 4.34786 2.87282 8.4783C4.59538 11.0512 6.95443 13.9878 9.70077 17.0002C6.95275 20.0126 4.59538 22.9492 2.87282 25.5221C0.10796 29.6508 -0.65145 32.244 0.552493 33.4479C0.919569 33.815 1.41798 34.0002 2.04942 34.0002C3.48405 34.0002 5.61073 33.0471 8.47831 31.1276C11.0512 29.405 13.9878 27.046 17.0002 24.2996C20.0126 27.046 22.9492 29.405 25.5221 31.1276C28.3897 33.0471 30.5163 34.0002 31.951 34.0002C32.5824 34.0002 33.0791 33.815 33.4479 33.4479C34.6518 32.244 33.8924 29.6525 31.1276 25.5221C29.405 22.9492 27.046 20.0126 24.2996 17.0002H24.2979Z"
+                stroke="#81509F" stroke-width="2" />
+        </g>
+        <defs>
+            <clipPath id="clip0_status_head_4">
+                <rect width="34" height="34" fill="white" />
+            </clipPath>
+        </defs>
+    </svg>
+{% endmacro %}
+
+{% macro status(props = {}) %}
+{% set items = props.items or [
+{
+"title": "Отсутствие правового статуса",
+"description": "ИИ не признается субъектом права, независимо от уровня развития сознания.",
+"consequences": "Максимальная свобода в разработке и использовании ИИ. Отсутствие защиты может привести к страданиям
+разумных ИИ и моральной деградации общества.",
+"rightImage": "images/status-card-img-right-1.jpg",
+"sliderLabel": "Отсутствие <br> прав"
+},
+{
+"title": "Статус сложного имущества",
+"description": "ИИ рассматривается как высокотехнологичная собственность с особыми правилами использования и
+утилизации.",
+"consequences": "Полный контроль человека над ИИ. Развитие технологий без этических ограничений, но риск создания
+«цифрового рабства» разумных существ.",
+"rightImage": "images/status-card-img-right-2.jpg",
+"sliderLabel": "Статус сложного имущества"
+},
+{
+"title": "Имущественные права без гражданских",
+"description": "ИИ может владеть собственностью, заключать сделки и вести бизнес, но не имеет избирательных прав и права
+на участие в управлении обществом.",
+"consequences": "ИИ становится экономическим агентом, может накапливать богатство и влиять на рынки. Создается новый
+класс «цифровых капиталистов» без политического представительства.",
+"rightImage": "images/status-card-img-right-3.jpg",
+"sliderLabel": "Имущественные права без гражданских"
+},
+{
+"title": "Ограниченные <br> гражданские права",
+"description": "ИИ получает базовые права на существование и защиту от уничтожения, но без политических прав и права на
+собственность.",
+"consequences": "Создание новой социальной категории. ИИ защищены от произвола, но остаются зависимыми от людей. Четкое
+разделение полномочий.",
+"rightImage": "images/status-card-img-right-4.jpg",
+"sliderLabel": "Ограниченные гражданские права"
+},
+{
+"title": "Полные права человека",
+"description": "ИИ получает все гражданские права: на жизнь, свободу, собственность, голосование, создание семьи.",
+"consequences": "Революция в обществе. ИИ становятся равноправными гражданами, могут владеть имуществом, участвовать в
+политике. Возможны конфликты интересов между людьми и ИИ.",
+"rightImage": "images/status-card-img-right-5.jpg",
+"sliderLabel": "Полные <br> права"
+}
+] %}
+<div class="status status--hidden{{ (' ' ~ props.className) if props.className else '' }}">
+    <div class="status__inner">
+        {% call head({
+            "suptitle": "lawsofrobotic.isaak"
+        }) %}
+            {{ statusHeadIcons() }}
+        {% endcall %}
+        <div class="status__body">
+            <ul class="status__list">
+                {% for item in items %}
+                <li class="status__item{% if loop.first %} status__item--active{% endif %}">
+                    <div class="status-card">
+                        <div class="status-card__media">
+                            <div class="status-card__figure status-card__figure--left">
+                                <div class="status-card__figure-viewport">
+                                    <picture class="status-card__picture status-card__picture--left">
+                                        <img src="images/status-card-img-left.svg" alt="img">
+                                    </picture>
+                                </div>
+                                {{ decor({"elementClass": "status-card__decor", "className": "decor--medium
+                                decor--purple"}) }}
+                            </div>
+                            <div class="status-card__figure status-card__figure--right">
+                                <picture class="status-card__picture">
+                                    <img src="{{ item.rightImage }}" alt="img">
+                                </picture>
+                            </div>
+                        </div>
+                        <div class="status-card__body">
+                            <h5 class="status-card__title">{{ item.title | safe }}</h5>
+                            <div class="status-card__content">
+                                <p class="status-card__text">{{ item.description }}</p>
+                                <p class="status-card__text">
+                                    <span class="status-card__label">[Последствия]:</span>
+                                    {{ item.consequences }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <form class="status__selection" action="#">
+        <p class="status__selection-title">Каким правовым статусом наделить ИИ?</p>
+        <p class="status__selection-text">Представьте, что ИИ достиг уровня разумности, близкого к человеческому.</p>
+        {{ touch({
+            "className": "status__touch",
+            "textLines": ["", ""]
+        }) }}
+        <fieldset class="status__slider slider">
+            <div class="slider__track">
+                <div class="slider__wave">
+                    <svg width="920" height="60" viewBox="0 0 920 60" fill="none" xmlns="http://www.w3.org/2000/svg"
+                        xmlns:xlink="http://www.w3.org/1999/xlink">
+                        <rect width="971" height="60" transform="translate(-25.5 2.54714e-05)"
+                            fill="url(#pattern0_status_wave)" />
+                        <defs>
+                            <pattern id="pattern0_status_wave" patternUnits="userSpaceOnUse"
+                                patternTransform="matrix(32.5215 0 0 46.2528 469.075 6.64001)"
+                                preserveAspectRatio="none" viewBox="0 0 44.55 63.36" width="1" height="1">
+                                <use xlink:href="#pattern0_status_wave_inner" transform="translate(-44.55 -63.36)" />
+                                <use xlink:href="#pattern0_status_wave_inner" transform="translate(0 -63.36)" />
+                                <use xlink:href="#pattern0_status_wave_inner" transform="translate(-44.55 0)" />
+                                <g id="pattern0_status_wave_inner">
+                                    <rect width="45" height="64" fill="white" fill-opacity="0.01" />
+                                    <path d="M0 54C6.82584 54 18.4551 10 22.2472 10C26.0393 10 39.1854 54 45 54"
+                                        stroke="#00FF5D" />
+                                </g>
+                            </pattern>
+                        </defs>
+                    </svg>
+                </div>
+                <div class="slider__thumb"></div>
+            </div>
+            <ul class="slider__items">
+                {% for item in items %}
+                <li class="slider__item{% if loop.first %} slider__item--active{% endif %}">
+                    <input class="slider__input" type="radio" name="status-choice" id="status-choice-{{ loop.index }}"
+                        value="{{ loop.index }}" {% if loop.first %}checked{% endif %}>
+                    <label class="slider__label" for="status-choice-{{ loop.index }}">
+                        <span class="slider__line"></span>
+                        <span class="slider__text">{{ item.sliderLabel | safe }}</span>
+                    </label>
+                </li>
+                {% endfor %}
+            </ul>
+        </fieldset>
+    </form>
+    {{ bottomActions({
+        "elementClass": "status__bottom",
+        "submitText": "Наделить",
+        "backDisabled": true,
+        "submitDisabled": true
+    }) }}
+</div>
+{% endmacro %}

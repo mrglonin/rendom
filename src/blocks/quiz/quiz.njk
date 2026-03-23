@@ -1,0 +1,128 @@
+{% from "blocks/components/head.njk" import head %}
+{% from "blocks/components/bottom-actions.njk" import bottomActions %}
+{% macro questionCardIcons(index) %}
+        <svg width="34"
+             height="35"
+             viewBox="0 0 34 35"
+             fill="none"
+             xmlns="http://www.w3.org/2000/svg">
+            <path d="M1 34L1 24.2725L1.00977 24.2725L1.00977 0.999997L10.3857 0.999998L10.3857 12.6357L21.7783 12.6357L21.7783 24.2725L33 24.2725L33 34L1 34Z" stroke="#CE7FFF" stroke-width="2" />
+        </svg>
+        <svg width="34"
+             height="35"
+             viewBox="0 0 34 35"
+             fill="none"
+             xmlns="http://www.w3.org/2000/svg">
+            <path d="M17 1C25.8079 1 33 8.36033 33 17.5C33 26.6397 25.8079 34 17 34C8.19207 34 1 26.6397 1 17.5C1 8.36033 8.19207 1 17 1ZM17 3.6582C15.2519 3.6582 13.5021 4.62992 12.6836 6.54199C12.2271 7.60158 11.2083 8.24302 10.1348 8.21191L9.91895 8.19629C9.73215 8.17507 9.55091 8.16699 9.38086 8.16699C5.56846 8.16707 3.33047 12.6347 5.59766 15.8252L5.59961 15.8281C5.95169 16.3197 6.12988 16.9065 6.12988 17.5C6.12988 18.0931 5.95231 18.6816 5.59863 19.1777H5.59766C4.97255 20.0563 4.68559 21.0398 4.68555 21.999V22.999H4.79492C5.26543 25.2234 7.26702 27.102 9.91992 26.8066L9.92773 26.8057C10.0189 26.7948 10.1124 26.79 10.2129 26.79C11.2619 26.7901 12.244 27.4253 12.6865 28.4609L12.6875 28.4619C13.5056 30.3689 15.2537 31.3446 17.0029 31.3447C18.7511 31.3447 20.5008 30.373 21.3193 28.4609L21.3184 28.46C21.7653 27.4244 22.7481 26.79 23.7939 26.79C23.8943 26.79 23.988 26.7948 24.0791 26.8057L24.084 26.8066C24.2708 26.8279 24.452 26.8359 24.6221 26.8359C28.4345 26.8359 30.6725 22.3693 28.4053 19.1787L28.4043 19.1777L28.2803 18.9873C28.0093 18.5339 27.873 18.0166 27.873 17.5C27.873 16.9107 28.0505 16.3226 28.4043 15.8262L28.4053 15.8252C29.0319 14.9445 29.3145 13.9605 29.3145 13.0039C29.3144 10.3804 27.1269 7.85723 24.083 8.19629L24.0752 8.19727C23.9841 8.20809 23.8904 8.21289 23.79 8.21289C22.7412 8.21271 21.7589 7.57845 21.3164 6.54297L21.3154 6.54102C20.4972 4.63414 18.7492 3.6582 17 3.6582Z" stroke="#CE7FFF" stroke-width="2" />
+        </svg>
+        <svg width="34"
+             height="34"
+             viewBox="0 0 34 34"
+             fill="none"
+             xmlns="http://www.w3.org/2000/svg">
+            <g clip-path="url(#clip0_quiz_icons_1_{{ index }})">
+                <path d="M1.67937 22.5938L0.0214844 22.5954L0.0380633 33.9884H11.4112V32.3305H1.69429L1.67937 22.5938Z" stroke="#CE7FFF" stroke-width="2" />
+                <path d="M32.3208 32.3289H22.4746V33.9868H33.9787V22.5938H32.3208V32.3289Z" stroke="#CE7FFF" stroke-width="2" />
+                <path d="M32.3224 11.4792H33.9803V0H22.5508V1.65789H32.3224V11.4792Z" stroke="#CE7FFF" stroke-width="2" />
+                <path d="M0.0214844 11.4776L1.67937 11.4792L1.69429 1.65789H11.4493V0H0.0380633L0.0214844 11.4776Z" stroke="#CE7FFF" stroke-width="2" />
+                <path d="M17.001 16.8223C17.0955 16.8223 17.1719 16.8987 17.1719 16.9932C17.1719 17.0877 17.0955 17.1641 17.001 17.1641C16.9065 17.1641 16.8301 17.0877 16.8301 16.9932C16.8301 16.8987 16.9065 16.8223 17.001 16.8223Z" stroke="#CE7FFF" stroke-width="2" />
+                <path d="M17.001 8.33008C17.0955 8.33008 17.1719 8.40649 17.1719 8.50098C17.1719 8.59547 17.0955 8.67188 17.001 8.67188C16.9065 8.67188 16.8301 8.59547 16.8301 8.50098C16.8301 8.40649 16.9065 8.33008 17.001 8.33008Z" stroke="#CE7FFF" stroke-width="2" />
+            </g>
+            <defs>
+                <clipPath id="clip0_quiz_icons_1_{{ index }}">
+                    <rect width="34" height="34" fill="white" />
+                </clipPath>
+            </defs>
+        </svg>
+        <svg width="34"
+             height="34"
+             viewBox="0 0 34 34"
+             fill="none"
+             xmlns="http://www.w3.org/2000/svg">
+            <g clip-path="url(#clip0_quiz_icons_2_{{ index }})">
+                <path d="M11.2773 22.7257L11.2989 11.3028L22.7151 11.2812L22.6935 22.7041L11.2773 22.7257ZM12.9525 12.9574L12.9376 21.0645L21.0399 21.0495L21.0548 12.9425L12.9525 12.9574Z" stroke="#CE7FFF" stroke-width="2" />
+                <path d="M33.3438 16.9932C33.3437 17.0872 33.2673 17.1641 33.1719 17.1641C33.1004 17.1639 33.0395 17.1208 33.0137 17.0596L33.001 16.9932C33.001 16.8991 33.0765 16.8224 33.1719 16.8223L33.2393 16.835C33.3011 16.861 33.3438 16.9225 33.3438 16.9932Z" stroke="#CE7FFF" stroke-width="2" />
+                <path d="M17.0879 33.002C17.1824 33.002 17.2588 33.0784 17.2588 33.1729C17.2588 33.2673 17.1824 33.3438 17.0879 33.3438C16.9934 33.3438 16.917 33.2673 16.917 33.1729C16.917 33.0784 16.9934 33.002 17.0879 33.002Z" stroke="#CE7FFF" stroke-width="2" />
+            </g>
+            <defs>
+                <clipPath id="clip0_quiz_icons_2_{{ index }}">
+                    <rect width="34" height="34" fill="white" />
+                </clipPath>
+            </defs>
+        </svg>
+{% endmacro %}
+
+{% macro quiz(props = {}) %}
+{% set items = props.items or [] %}
+{% set groups = props.groups or [] %}
+{% set current = props.current or 1 %}
+<div class="quiz{{ (' ' ~ props.className) if props.className else '' }}">
+    <div class="quiz__questions question-cards">
+        <div class="question-cards__backdrop">
+            <div class="question-cards__backdrop-item question-card">
+                {{ head({
+                    "theme": "accent",
+                    "suptitle": ""
+                }) }}
+                <div class="question-card__body"></div>
+            </div>
+            <div class="question-cards__backdrop-item question-card">
+                {{ head({
+                    "theme": "accent",
+                    "suptitle": ""
+                }) }}
+                <div class="question-card__body"></div>
+            </div>
+        </div>
+        <ul class="question-cards__list">
+            {% for item in items %}
+            <li class="question-cards__item question-card{% if loop.index == current %} question-card--active{% endif %}">
+                {% call head({
+                    "theme": "accent",
+                    "suptitle": item.suptitle or "[ВОПРОС " ~ loop.index ~ "/" ~ (items | length) ~ "].exe"
+                }) %}
+                    {{ questionCardIcons(loop.index) }}
+                {% endcall %}
+                <div class="question-card__body">
+                    <p class="question-card__text">{{ item.text | safe }}</p>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="quiz__answers answer-groups">
+        <form class="answer-groups__form" action="#">
+            <ul class="answer-groups__list">
+                {% for group in groups %}
+                {% set groupIndex = loop.index %}
+                <li class="answer-groups__item{% if loop.index == current %} answer-groups__item--active{% endif %}">
+                    <fieldset class="answer-group">
+                        <ul class="answer-group__list">
+                            {% for option in group.options %}
+                            <li class="answer-group__item">
+                                <input class="answer-group__input"
+                                    type="radio"
+                                    name="question-{{ groupIndex }}"
+                                    id="question-{{ groupIndex }}-answer-{{ loop.index }}"
+                                    value="{{ option.value or loop.index }}">
+                                <label class="answer-group__label"
+                                    for="question-{{ groupIndex }}-answer-{{ loop.index }}">{{ option.text | safe }}</label>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </fieldset>
+                </li>
+                {% endfor %}
+            </ul>
+            {{ bottomActions({
+                "elementClass": "answer-groups__bottom",
+                "submitType": "submit",
+                "submitText": props.submitText or "далее",
+                "submitIcon": true,
+                "backDisabled": true,
+                "submitDisabled": true
+            }) }}
+        </form>
+    </div>
+</div>
+{% endmacro %}

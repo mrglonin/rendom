@@ -1,0 +1,330 @@
+@use "../../scss/base/vars" as *;
+
+.status {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  grid-area: 1 / 1;
+  position: relative;
+  z-index: 0;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  will-change: opacity;
+  transition:
+    opacity 0.35s ease,
+    visibility 0.35s allow-discrete;
+
+  &--active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: all;
+    z-index: 100;
+
+    @starting-style {
+      opacity: 0;
+    }
+  }
+
+  &--hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  &--dragging {
+    .slider__thumb {
+      transition: none;
+    }
+  }
+
+  &__inner {
+    border: 2px solid $purple;
+    margin-bottom: 50px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+  }
+
+  &__body {
+    box-shadow: inset 0px 0px 90px rgba(65, 148, 214, 0.3);
+    background: $dark;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+  }
+
+  &__list {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__item {
+    grid-area: 1 / 1;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+      opacity 0.3s ease,
+      visibility 0.3s allow-discrete;
+
+    &--active {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: all;
+
+      @starting-style {
+        opacity: 0;
+      }
+    }
+  }
+
+  &__selection {
+    margin-bottom: 70px;
+    border: 0;
+    padding: 0;
+    margin-left: 0;
+    margin-right: 0;
+    position: relative;
+  }
+
+  &__legend {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  &__selection-title {
+    color: $green;
+    font-size: 24px;
+    line-height: 31px;
+    font-weight: 600;
+    margin-bottom: 20px;
+  }
+
+  &__selection-text {
+    color: $green;
+    font-size: 20px;
+    line-height: 26px;
+    font-weight: 350;
+    margin-bottom: 40px;
+  }
+
+  &__touch {
+    left: 97px;
+    bottom: 80px;
+    z-index: 3;
+    transition:
+      opacity 0.3s ease,
+      visibility 0.3s allow-discrete;
+
+    &--hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+  }
+}
+
+.status-card {
+  &__media {
+    display: grid;
+    grid-template-columns: 224px 1fr;
+    gap: 10px;
+    margin-bottom: 40px;
+  }
+
+  &__figure {
+    position: relative;
+    border: 1px solid $dark-purple;
+
+    &--left {
+      .status-card__picture--left {
+        width: 1230px;
+        min-width: 1230px;
+
+        img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+        }
+      }
+    }
+  }
+
+  &__figure-viewport {
+    position: relative;
+    width: 100%;
+    height: 528px;
+    overflow: hidden;
+    border: 1px solid $purple;
+  }
+
+  &__picture {
+    display: block;
+    width: 100%;
+    height: 528px;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  &__title {
+    margin-bottom: 20px;
+    font-size: 43px;
+    line-height: 50px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: $white;
+  }
+
+  &__content {
+    max-height: 233px;
+    overflow-y: auto;
+    padding-right: 20px;
+    margin-right: -20px;
+    &::-webkit-scrollbar {
+      width: 2px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: $purple;
+      border-radius: 2px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: $grey;
+      border-radius: 2px;
+    }
+  }
+
+  &__text {
+    color: $grey;
+    font-size: 24px;
+    line-height: 29px;
+    font-weight: 350;
+    margin-bottom: 30px;
+
+    &:last-child {
+      margin-bottom: unset;
+    }
+  }
+
+  &__label {
+    color: $green;
+  }
+}
+
+.slider {
+  background: $black-blue;
+  border-radius: 34px;
+  padding-bottom: 20px;
+  border: 0;
+  min-width: 0;
+
+  &__track {
+    position: relative;
+    height: 60px;
+    width: 100%;
+    border: 2px solid $green;
+    border-radius: 34px;
+    cursor: pointer;
+    touch-action: none;
+    transition:
+      box-shadow 0.3s ease,
+      background 0.3s ease;
+
+    @media (hover: hover) {
+      &:hover {
+        box-shadow: 0 0 18px rgba($green, 0.14);
+      }
+    }
+  }
+
+  &__wave {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    inset: 0;
+  }
+
+  &__thumb {
+    width: 33px;
+    border-radius: 100px;
+    height: 86px;
+    position: absolute;
+    background: $green;
+    box-shadow: 0px 0px 30px $green;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: transform 0.35s ease;
+    cursor: grab;
+    touch-action: none;
+  }
+
+  &__items {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+  }
+
+  &__item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    color: $dark-green;
+    text-align: center;
+    font-size: 20px;
+    line-height: 24px;
+    font-weight: 600;
+    transition: color 0.3s ease;
+
+    @media (hover: hover) {
+      &:hover {
+        color: $green;
+      }
+    }
+
+    &--active {
+      color: $green;
+    }
+  }
+
+  &__input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  &__label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    width: 100%;
+    cursor: pointer;
+  }
+
+  &__line {
+    width: 2px;
+    height: 10px;
+    background: $green;
+  }
+}
