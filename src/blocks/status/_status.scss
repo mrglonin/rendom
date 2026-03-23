@@ -40,17 +40,17 @@
   }
 
   &__inner {
-    border: 2px solid $purple;
-    margin-bottom: 50px;
+    border: 2rem solid $purple;
+    margin-bottom: 50rem;
     display: flex;
     flex-direction: column;
     flex-grow: 1;
   }
 
   &__body {
-    box-shadow: inset 0px 0px 90px rgba(65, 148, 214, 0.3);
+    box-shadow: inset 0rem 0rem 90rem rgba(65, 148, 214, 0.3);
     background: $dark;
-    padding: 40px;
+    padding: 40rem;
     display: flex;
     flex-direction: column;
     flex-grow: 1;
@@ -85,7 +85,7 @@
   }
 
   &__selection {
-    margin-bottom: 70px;
+    margin-bottom: 70rem;
     border: 0;
     padding: 0;
     margin-left: 0;
@@ -95,10 +95,10 @@
 
   &__legend {
     position: absolute;
-    width: 1px;
-    height: 1px;
+    width: 1rem;
+    height: 1rem;
     padding: 0;
-    margin: -1px;
+    margin: -1rem;
     overflow: hidden;
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
@@ -107,23 +107,23 @@
 
   &__selection-title {
     color: $green;
-    font-size: 24px;
-    line-height: 31px;
+    font-size: 24rem;
+    line-height: 31rem;
     font-weight: 600;
-    margin-bottom: 20px;
+    margin-bottom: 20rem;
   }
 
   &__selection-text {
     color: $green;
-    font-size: 20px;
-    line-height: 26px;
+    font-size: 20rem;
+    line-height: 26rem;
     font-weight: 350;
-    margin-bottom: 40px;
+    margin-bottom: 40rem;
   }
 
   &__touch {
-    left: 97px;
-    bottom: 80px;
+    left: 97rem;
+    bottom: 80rem;
     z-index: 3;
     transition:
       opacity 0.3s ease,
@@ -139,19 +139,19 @@
 .status-card {
   &__media {
     display: grid;
-    grid-template-columns: 224px 1fr;
-    gap: 10px;
-    margin-bottom: 40px;
+    grid-template-columns: 224rem 1fr;
+    gap: 10rem;
+    margin-bottom: 40rem;
   }
 
   &__figure {
     position: relative;
-    border: 1px solid $dark-purple;
+    border: 1rem solid $dark-purple;
 
     &--left {
       .status-card__picture--left {
-        width: 1230px;
-        min-width: 1230px;
+        width: 1230rem;
+        min-width: 1230rem;
 
         img {
           width: 100%;
@@ -166,15 +166,15 @@
   &__figure-viewport {
     position: relative;
     width: 100%;
-    height: 528px;
+    height: 528rem;
     overflow: hidden;
-    border: 1px solid $purple;
+    border: 1rem solid $purple;
   }
 
   &__picture {
     display: block;
     width: 100%;
-    height: 528px;
+    height: 528rem;
 
     img {
       width: 100%;
@@ -184,40 +184,40 @@
   }
 
   &__title {
-    margin-bottom: 20px;
-    font-size: 43px;
-    line-height: 50px;
+    margin-bottom: 20rem;
+    font-size: 43rem;
+    line-height: 50rem;
     font-weight: 600;
     text-transform: uppercase;
     color: $white;
   }
 
   &__content {
-    max-height: 233px;
+    max-height: 233rem;
     overflow-y: auto;
-    padding-right: 20px;
-    margin-right: -20px;
+    padding-right: 20rem;
+    margin-right: -20rem;
     &::-webkit-scrollbar {
-      width: 2px;
+      width: 2rem;
     }
 
     &::-webkit-scrollbar-thumb {
       background: $purple;
-      border-radius: 2px;
+      border-radius: 2rem;
     }
 
     &::-webkit-scrollbar-track {
       background: $grey;
-      border-radius: 2px;
+      border-radius: 2rem;
     }
   }
 
   &__text {
     color: $grey;
-    font-size: 24px;
-    line-height: 29px;
+    font-size: 24rem;
+    line-height: 29rem;
     font-weight: 350;
-    margin-bottom: 30px;
+    margin-bottom: 30rem;
 
     &:last-child {
       margin-bottom: unset;
@@ -231,17 +231,17 @@
 
 .slider {
   background: $black-blue;
-  border-radius: 34px;
-  padding-bottom: 20px;
+  border-radius: 34rem;
+  padding-bottom: 20rem;
   border: 0;
   min-width: 0;
 
   &__track {
     position: relative;
-    height: 60px;
+    height: 60rem;
     width: 100%;
-    border: 2px solid $green;
-    border-radius: 34px;
+    border: 2rem solid $green;
+    border-radius: 34rem;
     cursor: pointer;
     touch-action: none;
     transition:
@@ -250,7 +250,7 @@
 
     @media (hover: hover) {
       &:hover {
-        box-shadow: 0 0 18px rgba($green, 0.14);
+        box-shadow: 0 0 18rem rgba($green, 0.14);
       }
     }
   }
@@ -260,15 +260,19 @@
     width: 100%;
     height: 100%;
     inset: 0;
+    svg {
+      width: 100%;
+      height: 100%;
+    }
   }
 
   &__thumb {
-    width: 33px;
-    border-radius: 100px;
-    height: 86px;
+    width: 33rem;
+    border-radius: 100rem;
+    height: 86rem;
     position: absolute;
     background: $green;
-    box-shadow: 0px 0px 30px $green;
+    box-shadow: 0rem 0rem 30rem $green;
     left: 0;
     top: 50%;
     transform: translateY(-50%);
@@ -287,11 +291,11 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 15px;
+    gap: 15rem;
     color: $dark-green;
     text-align: center;
-    font-size: 20px;
-    line-height: 24px;
+    font-size: 20rem;
+    line-height: 24rem;
     font-weight: 600;
     transition: color 0.3s ease;
 
@@ -317,14 +321,14 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 15px;
+    gap: 15rem;
     width: 100%;
     cursor: pointer;
   }
 
   &__line {
-    width: 2px;
-    height: 10px;
+    width: 2rem;
+    height: 10rem;
     background: $green;
   }
 }

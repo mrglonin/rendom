@@ -17,8 +17,8 @@
   will-change: opacity;
 
   &__inner {
-    border: 2px solid $purple;
-    margin-bottom: 30px;
+    border: 2rem solid $purple;
+    margin-bottom: 30rem;
     display: flex;
     flex-direction: column;
     flex-grow: 1;
@@ -46,12 +46,12 @@
     flex-direction: column;
     flex-grow: 1;
     background: $dark;
-    box-shadow: inset 0px 0px 90px rgba(65, 148, 214, 0.3);
-    padding: 35px;
+    box-shadow: inset 0rem 0rem 90rem rgba(65, 148, 214, 0.3);
+    padding: 35rem;
   }
 
   &__submit {
-    padding: 27px 54px;
+    padding: 27rem 54rem;
     text-align: center;
   }
 
@@ -62,20 +62,20 @@
   }
 }
 .assessment-choice {
-  margin-bottom: 65px;
+  margin-bottom: 65rem;
   &__suptext {
-    margin-bottom: 20px;
+    margin-bottom: 20rem;
     color: $grey;
-    font-size: 20px;
-    line-height: 26px;
+    font-size: 20rem;
+    line-height: 26rem;
     font-weight: 350;
   }
 
   &__inner {
     display: grid;
-    grid-template-columns: 156px 1fr;
-    gap: 30px;
-    margin-bottom: 35px;
+    grid-template-columns: 156rem 1fr;
+    gap: 30rem;
+    margin-bottom: 35rem;
   }
 
   &__legend {
@@ -85,9 +85,9 @@
 
   &__legend-item {
     transition: color 0.3s;
-    min-height: 112px;
-    font-size: 20px;
-    line-height: 26px;
+    min-height: 112rem;
+    font-size: 20rem;
+    line-height: 26rem;
     font-weight: 350;
     display: flex;
     color: $grey;
@@ -100,13 +100,13 @@
 
   &__chart {
     display: grid;
-    grid-template-columns: 31px 1fr;
+    grid-template-columns: 31rem 1fr;
     position: relative;
   }
 
   &__touch {
-    right: 300px;
-    top: 75px;
+    right: 300rem;
+    top: 75rem;
     z-index: 3;
     transition:
       opacity 0.3s ease,
@@ -119,10 +119,10 @@
   }
 
   &__axis {
-    font-size: 24px;
+    font-size: 24rem;
     display: flex;
     align-items: center;
-    line-height: 31px;
+    line-height: 31rem;
     color: $grey;
     &--vertical {
       writing-mode: vertical-rl;
@@ -140,7 +140,7 @@
   &__form {
     position: relative;
     width: 100%;
-    height: 332px;
+    height: 332rem;
   }
 
   &__options {
@@ -155,7 +155,6 @@
   &__option {
     position: absolute;
 
-
     &--active {
       .assessment-choice__option-label {
         svg {
@@ -169,51 +168,51 @@
       }
     }
     &:nth-child(1) {
-      width: 363px;
-      height: 96px;
-      top: 20px;
-      left: 20px;
+      width: 363rem;
+      height: 96rem;
+      top: 20rem;
+      left: 20rem;
       .assessment-choice__option-label {
-        left: -24px;
+        left: -24rem;
         top: 0;
-        width: 412px;
-        height: 349px;
+        width: 412rem;
+        height: 349rem;
       }
     }
     &:nth-child(2) {
-      width: 383px;
-      height: 150px;
-      left: 18px;
-      bottom: 65px;
+      width: 383rem;
+      height: 150rem;
+      left: 18rem;
+      bottom: 65rem;
       .assessment-choice__option-label {
-        left: -22px;
+        left: -22rem;
         top: 0;
-        width: 412px;
-        height: 252px;
+        width: 412rem;
+        height: 252rem;
       }
     }
     &:nth-child(3) {
-      width: 362px;
-      height: 96px;
-      left: 20px;
-      bottom: 7px;
+      width: 362rem;
+      height: 96rem;
+      left: 20rem;
+      bottom: 7rem;
       .assessment-choice__option-label {
-        left: -24px;
+        left: -24rem;
         top: 0;
-        width: 412px;
-        height: 140px;
+        width: 412rem;
+        height: 140rem;
       }
     }
     &:nth-child(4) {
-      width: 208px;
-      height: 324px;
-      right: -15px;
+      width: 208rem;
+      height: 324rem;
+      right: -15rem;
       top: 0;
       .assessment-choice__option-label {
-        left: -431px;
+        left: -431rem;
         top: 0;
-        width: 639px;
-        height: 370px;
+        width: 639rem;
+        height: 370rem;
       }
     }
     &--active {
@@ -253,21 +252,21 @@
 
   &__footer {
     display: grid;
-    grid-template-columns: 230px 1fr;
+    grid-template-columns: 230rem 1fr;
     align-items: flex-end;
-    gap: 25px;
+    gap: 25rem;
   }
 
   &__footer-text {
     color: $grey;
-    font-size: 20px;
-    line-height: 26px;
+    font-size: 20rem;
+    line-height: 26rem;
   }
 
   &__timeline {
     &--bottom {
       .assessment-choice__axis {
-        margin-bottom: 30px;
+        margin-bottom: 30rem;
       }
     }
   }
@@ -283,14 +282,14 @@
     justify-content: center;
     align-items: center;
     color: $grey;
-    font-size: 20px;
-    line-height: 26px;
+    font-size: 20rem;
+    line-height: 26rem;
     text-align: center;
     font-weight: 350;
     transition: color 0.3s;
     span {
-      margin-left: -5px;
-      min-width: 130px;
+      margin-left: -5rem;
+      min-width: 130rem;
     }
     &--active {
       color: $purple;
@@ -342,37 +341,37 @@
   }
 
   &__title {
-    margin-bottom: 20px;
-    font-size: 43px;
-    line-height: 50px;
+    margin-bottom: 20rem;
+    font-size: 43rem;
+    line-height: 50rem;
     color: $white;
     text-transform: uppercase;
     font-weight: 600;
   }
 
   &__text {
-    font-size: 24px;
-    line-height: 29px;
+    font-size: 24rem;
+    line-height: 29rem;
     font-weight: 350;
     color: $grey;
-    margin-bottom: 60px;
+    margin-bottom: 60rem;
     flex-grow: 1;
-    max-height: 369px;
+    max-height: 369rem;
     overflow-y: auto;
-    padding-right: 20px;
-    margin-right: -20px;
+    padding-right: 20rem;
+    margin-right: -20rem;
     &::-webkit-scrollbar {
-      width: 2px;
+      width: 2rem;
     }
 
     &::-webkit-scrollbar-thumb {
       background: $purple;
-      border-radius: 2px;
+      border-radius: 2rem;
     }
 
     &::-webkit-scrollbar-track {
       background: $grey;
-      border-radius: 2px;
+      border-radius: 2rem;
     }
   }
 
@@ -382,18 +381,18 @@
 .representatives {
   display: flex;
   align-items: flex-start;
-  gap: 60px;
+  gap: 60rem;
   &__title {
     color: $purple;
-    font-size: 24px;
-    line-height: 31px;
+    font-size: 24rem;
+    line-height: 31rem;
     font-weight: 600;
   }
 
   &__list {
     display: flex;
     align-items: flex-start;
-    gap: 50px;
+    gap: 50rem;
   }
 
   &__item {
@@ -403,7 +402,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 12rem;
 
   &--active {
     .representative-card__icon {
@@ -422,35 +421,35 @@
   &__head {
     display: flex;
     align-items: flex-start;
-    margin-left: -40px;
+    margin-left: -40rem;
   }
 
   &__line {
-    height: 2px;
+    height: 2rem;
     background: $grey;
-    width: 40px;
-    min-width: 40px;
-    margin-top: 12px;
+    width: 40rem;
+    min-width: 40rem;
+    margin-top: 12rem;
   }
 
   &__name {
-    margin-left: 24px;
-    margin-right: 12px;
+    margin-left: 24rem;
+    margin-right: 12rem;
     color: $grey;
-    font-size: 20px;
-    line-height: 26px;
+    font-size: 20rem;
+    line-height: 26rem;
     text-align: right;
     font-weight: 350;
-    max-width: 190px;
+    max-width: 190rem;
     width: 100%;
   }
 
   &__icon {
     position: relative;
-    width: 26px;
-    min-width: 26px;
-    height: 26px;
-    border: 1px solid $purple;
+    width: 26rem;
+    min-width: 26rem;
+    height: 26rem;
+    border: 1rem solid $purple;
     background: $dark-black;
 
     svg {
@@ -467,35 +466,43 @@
 
     @media (hover: hover) {
       &:hover {
-        box-shadow: 0 0 16px rgba($purple, 0.18);
+        box-shadow: 0 0 16rem rgba($purple, 0.18);
       }
     }
 
     @media (hover: none) {
       &:active {
-        box-shadow: 0 0 16px rgba($purple, 0.18);
+        box-shadow: 0 0 16rem rgba($purple, 0.18);
       }
     }
   }
 
   &__image {
+    width: 200rem;
+    height: 200rem;
+    img {
+      border-radius: 100%;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
   }
 
   &__hint {
-    right: 60px;
-    bottom: 260px;
+    right: 60rem;
+    bottom: 260rem;
   }
 }
 .representative-hint {
   position: absolute;
   opacity: 0;
   pointer-events: unset;
-  padding: 28px;
+  padding: 28rem;
   background: $dark-black;
-  border: 1px solid $purple;
+  border: 1rem solid $purple;
 
-  min-width: 366px;
-  max-width: 366px;
+  min-width: 366rem;
+  max-width: 366rem;
   transition: opacity 0.3s;
   &--active {
     opacity: 1;
@@ -503,18 +510,18 @@
   }
   &__text {
     color: $grey;
-    font-size: 18px;
-    line-height: 24px;
+    font-size: 18rem;
+    line-height: 24rem;
     font-weight: 350;
   }
 
   &__line {
     background: $purple;
-    bottom: -13px;
-    height: 1px;
+    bottom: -13rem;
+    height: 1rem;
     position: absolute;
-    right: -40px;
+    right: -40rem;
     transform: rotate(34deg);
-    width: 40px;
+    width: 40rem;
   }
 }

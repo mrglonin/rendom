@@ -1,31 +1,31 @@
 @use "../../scss/base/vars" as *;
 
 .panel-head {
-  padding: 10px 20px;
-  min-height: 55px;
+  padding: 10rem 20rem;
+  min-height: 55rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 30px;
+  gap: 30rem;
   background: linear-gradient(90deg, #27232f 0%, #342657 100%);
-  border-bottom: 2px solid $purple;
+  border-bottom: 2rem solid $purple;
 
   &__suptitle {
     color: $dark-purple;
-    font-size: 27px;
-    line-height: 31px;
+    font-size: 27rem;
+    line-height: 31rem;
     font-weight: 600;
   }
 
   &__icons {
     display: flex;
     align-items: center;
-    gap: 25px;
+    gap: 25rem;
 
     svg {
-      width: 35px;
-      min-width: 35px;
-      height: 35px;
+      width: 35rem;
+      min-width: 35rem;
+      height: 35rem;
     }
   }
 

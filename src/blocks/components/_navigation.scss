@@ -2,13 +2,13 @@
 
 .navigation {
   position: absolute;
-  bottom: 80px;
-  left: 80px;
+  bottom: 80rem;
+  left: 80rem;
   z-index: 10;
   &__list {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 20rem;
     margin: 0;
     padding: 0;
     list-style: none;
@@ -16,13 +16,13 @@
 
   &__item {
     position: relative;
-    width: 80px;
-    height: 80px;
+    width: 80rem;
+    height: 80rem;
     display: flex;
     justify-content: center;
     align-items: center;
     background: rgba($dark, 40%);
-    border: 1px solid $green;
+    border: 1rem solid $green;
     cursor: pointer;
     transition: background 0.3s;
 

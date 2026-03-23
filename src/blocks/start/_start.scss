@@ -1,7 +1,7 @@
 @use "../../scss/base/vars" as *;
 
 .start {
-  padding: 80px;
+  padding: 80rem;
   grid-area: 1 / 1;
   position: relative;
   z-index: 0;
@@ -56,27 +56,27 @@
     }
 
     &--frame-small {
-      border: 1px solid $green;
-      width: 400px;
-      height: 400px;
-      top: 150px;
-      right: 170px;
+      border: 1rem solid $green;
+      width: 400rem;
+      height: 400rem;
+      top: 150rem;
+      right: 170rem;
       animation: startFloatSoft 7s ease-in-out infinite;
     }
 
     &--artwork {
-      border: 1px solid $green;
-      width: 590px;
-      height: 590px;
-      bottom: 490px;
-      left: -250px;
+      border: 1rem solid $green;
+      width: 590rem;
+      height: 590rem;
+      bottom: 490rem;
+      left: -250rem;
       display: flex;
       justify-content: center;
       align-items: center;
       .start__media {
         display: block;
-        width: 500px;
-        height: 500px;
+        width: 500rem;
+        height: 500rem;
         img {
           animation: startFloatWide 10s ease-in-out infinite;
           object-fit: contain;
@@ -87,17 +87,17 @@
 
     &--cross {
       background: rgba($green, 25%);
-      border: 1px solid $green;
-      width: 280px;
-      height: 105px;
-      bottom: 285px;
-      right: 60px;
+      border: 1rem solid $green;
+      width: 280rem;
+      height: 105rem;
+      bottom: 285rem;
+      right: 60rem;
       animation: startFloatSoft 8s ease-in-out infinite reverse;
       .start__layer-line {
         position: absolute;
         background: $green;
-        height: 1px;
-        width: calc(100% + 12px);
+        height: 1rem;
+        width: calc(100% + 12rem);
         top: 50%;
         left: 50%;
         &:nth-child(1) {
@@ -110,10 +110,10 @@
     }
 
     &--glow-blue {
-      width: 1240px;
-      height: 884px;
-      top: -425px;
-      left: -210px;
+      width: 1240rem;
+      height: 884rem;
+      top: -425rem;
+      left: -210rem;
       border-radius: 100%;
       transform: rotate(-16deg);
       background: radial-gradient(50% 50% at 50% 50%, #2675ff 0%, rgba(38, 117, 255, 0) 100%);
@@ -121,10 +121,10 @@
     }
 
     &--glow-green-top {
-      width: 810px;
-      height: 580px;
-      right: -520px;
-      top: 225px;
+      width: 810rem;
+      height: 580rem;
+      right: -520rem;
+      top: 225rem;
       border-radius: 100%;
       transform: rotate(-86deg);
       background: radial-gradient(50% 50% at 50% 50%, $green 0%, rgba(0, 255, 93, 0) 100%);
@@ -132,10 +132,10 @@
     }
 
     &--glow-green-bottom {
-      width: 910px;
-      height: 580px;
-      bottom: 280px;
-      right: -420px;
+      width: 910rem;
+      height: 580rem;
+      bottom: 280rem;
+      right: -420rem;
       border-radius: 100%;
       transform: rotate(-16deg);
       background: radial-gradient(50% 50% at 50% 50%, $green 0%, rgba(0, 255, 93, 0) 100%);
@@ -151,13 +151,13 @@
   }
 
   &__titling {
-    margin-top: 200px;
+    margin-top: 200rem;
   }
 
   &__title {
     margin-left: auto;
-    margin-right: 20px;
-    margin-bottom: 115px;
+    margin-right: 20rem;
+    margin-bottom: 115rem;
   }
 
   &__text {
@@ -168,10 +168,10 @@
     font-weight: 600;
     &--accent {
       background: $green;
-      padding: 10px;
-      font-size: 70px;
-      line-height: 81px;
-      margin-bottom: 30px;
+      padding: 10rem;
+      font-size: 70rem;
+      line-height: 81rem;
+      margin-bottom: 30rem;
       &:last-child {
         margin-bottom: unset;
       }
@@ -179,9 +179,9 @@
 
     &--base {
       background: $white;
-      padding: 2px 5px;
-      font-size: 43px;
-      line-height: 50px;
+      padding: 2rem 5rem;
+      font-size: 43rem;
+      line-height: 50rem;
     }
   }
 
@@ -189,18 +189,18 @@
     display: flex;
     align-items: flex-start;
     justify-content: flex-end;
-    gap: 35px;
+    gap: 35rem;
   }
 
   &__title-icons {
     display: flex;
     align-items: center;
-    gap: 40px;
-    margin-left: 15px;
+    gap: 40rem;
+    margin-left: 15rem;
       svg {
-        width: 80px;
-        min-width: 80px;
-        height: 80px;
+        width: 80rem;
+        min-width: 80rem;
+        height: 80rem;
         animation: startIconPulse 6s ease-in-out infinite;
         &:last-child {
           animation-delay: 1s;
@@ -211,16 +211,16 @@
   &__title-group {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 10rem;
   }
 
   &__subtext {
-    font-size: 24px;
-    line-height: 28px;
+    font-size: 24rem;
+    line-height: 28rem;
     font-weight: 600;
     margin-left: auto;
-    margin-right: 40px;
-    max-width: 536px;
+    margin-right: 40rem;
+    max-width: 536rem;
     color: $grey;
     span {
       color: $green;
@@ -229,37 +229,37 @@
 
   &__terminal {
     position: absolute;
-    left: 120px;
-    bottom: 620px;
+    left: 120rem;
+    bottom: 620rem;
     width: 100%;
-    max-width: 657px;
-    border: 2px solid $purple;
+    max-width: 657rem;
+    border: 2rem solid $purple;
     background: $black;
 
     .panel-head {
-      min-height: 58px;
+      min-height: 58rem;
     }
   }
 
   &__terminal-body {
-    padding: 30px 40px;
+    padding: 30rem 40rem;
     background: $black;
-    box-shadow: inset 0px 0px 90px rgba(65, 148, 214, 0.3);
+    box-shadow: inset 0rem 0rem 90rem rgba(65, 148, 214, 0.3);
   }
 
   &__terminal-line {
   }
 
   &__terminal-prompt {
-    font-size: 20px;
-    line-height: 26px;
+    font-size: 20rem;
+    line-height: 26rem;
     font-weight: 350;
     color: $purple;
   }
 
   &__touch {
-    right: -20px;
-    bottom: -120px;
+    right: -20rem;
+    bottom: -120rem;
   }
 }
 
@@ -313,7 +313,7 @@
     transform: translate3d(0, 0, 0) scale(1);
   }
   50% {
-    transform: translate3d(0, -10px, 0) scale(1.02);
+    transform: translate3d(0, -10rem, 0) scale(1.02);
   }
   100% {
     transform: translate3d(0, 0, 0) scale(1);
@@ -325,7 +325,7 @@
     transform: translate3d(0, 0, 0) scale(1);
   }
   50% {
-    transform: translate3d(12px, -12px, 0) scale(1.03);
+    transform: translate3d(12rem, -12rem, 0) scale(1.03);
   }
   100% {
     transform: translate3d(0, 0, 0) scale(1);
@@ -346,6 +346,6 @@
 
 .start__langs {
   position: absolute;
-  left: 80px;
-  bottom: 80px;
+  left: 80rem;
+  bottom: 80rem;
 }

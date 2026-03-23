@@ -8,78 +8,78 @@
   pointer-events: none;
   &--small {
     .decor__item {
-      width: 4px;
-      height: 4px;
+      width: 4rem;
+      height: 4rem;
       &:nth-child(1) {
-        top: -1.5px;
-        left: -1.5px;
+        top: -1.5rem;
+        left: -1.5rem;
       }
 
       &:nth-child(2) {
-        top: -1.5px;
-        right: -1.5px;
+        top: -1.5rem;
+        right: -1.5rem;
       }
 
       &:nth-child(3) {
-        bottom: -1.5px;
-        right: -1.5px;
+        bottom: -1.5rem;
+        right: -1.5rem;
       }
 
       &:nth-child(4) {
-        bottom: -1.5px;
-        left: -1.5px;
+        bottom: -1.5rem;
+        left: -1.5rem;
       }
     }
   }
 
   &--medium {
     .decor__item {
-      width: 8px;
-      height: 8px;
+      width: 8rem;
+      height: 8rem;
       &:nth-child(1) {
-        top: -4px;
-        left: -4px;
+        top: -4rem;
+        left: -4rem;
       }
 
       &:nth-child(2) {
-        top: -4px;
-        right: -4px;
+        top: -4rem;
+        right: -4rem;
       }
 
       &:nth-child(3) {
-        bottom: -4px;
-        right: -4px;
+        bottom: -4rem;
+        right: -4rem;
       }
 
       &:nth-child(4) {
-        bottom: -4px;
-        left: -4px;
+        bottom: -4rem;
+        left: -4rem;
       }
     }
   }
 
   &--big {
     .decor__item {
-      width: 18px;
-      height: 18px;
+      width: 18rem;
+      height: 18rem;
       &:nth-child(1) {
-        top: -9px;
-        left: -9px;
+        top: -9rem;
+        left: -9rem;
       }
 
       &:nth-child(2) {
-        top: -9px;
-        right: -9px;
+        top: -9rem;
+        right: -9rem;
       }
 
       &:nth-child(3) {
-        bottom: -9px;
-        right: -9px;
+        bottom: -9rem;
+        right: -9rem;
       }
 
       &:nth-child(4) {
-        bottom: -9px;
-        left: -9px;
+        bottom: -9rem;
+        left: -9rem;
       }
     }
   }
@@ -107,9 +107,9 @@
     transform: translate(0, 0) scale(1);
   }
   50% {
-    transform: translate(2px, -2px) scale(1.1);
+    transform: translate(2rem, -2rem) scale(1.1);
   }
   100% {
-    transform: translate(-2px, 2px) scale(1);
+    transform: translate(-2rem, 2rem) scale(1);
   }
 }

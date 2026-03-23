@@ -31,7 +31,7 @@
   }
 
   &__questions {
-    margin-bottom: 100px;
+    margin-bottom: 100rem;
   }
 }
 
@@ -40,7 +40,7 @@
   grid-template-columns: minmax(0, 1fr);
   align-items: start;
   width: 100%;
-  height: 642px;
+  height: 642rem;
 
   &__backdrop,
   &__list {
@@ -61,8 +61,8 @@
 
   &__item {
     grid-area: 1 / 1;
-    margin-top: 45px;
-    margin-left: 30px;
+    margin-top: 45rem;
+    margin-left: 30rem;
     z-index: 1;
   }
 
@@ -73,17 +73,17 @@
     z-index: 0;
 
     &:nth-child(1) {
-      transform: translate(-8px, 0);
+      transform: translate(-8rem, 0);
     }
 
     &:nth-child(2) {
-      transform: translate(10px, 25px);
+      transform: translate(10rem, 25rem);
     }
   }
 }
 
 .question-card {
-  border: 2px solid $purple;
+  border: 2rem solid $purple;
   width: 100%;
   opacity: 0;
   position: relative;
@@ -98,9 +98,9 @@
 
   &__body {
     background: $dark;
-    padding: 40px;
-    box-shadow: inset 0px 0px 90px rgba(65, 148, 214, 0.3);
-    min-height: 587px;
+    padding: 40rem;
+    box-shadow: inset 0rem 0rem 90rem rgba(65, 148, 214, 0.3);
+    min-height: 587rem;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -109,8 +109,8 @@
 
   &__text {
     color: $grey;
-    font-size: 43px;
-    line-height: 50px;
+    font-size: 43rem;
+    line-height: 50rem;
     font-weight: 600;
   }
 }
@@ -168,15 +168,15 @@
   &__list {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 20rem;
   }
 
   &__item {
     background: $black-blue;
     position: relative;
-    padding: 20px 40px;
-    min-height: 140px;
-    border: 1px solid $green;
+    padding: 20rem 40rem;
+    min-height: 140rem;
+    border: 1rem solid $green;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -187,13 +187,13 @@
 
     @media (hover: hover) {
       &:hover {
-        box-shadow: 0 0 18px rgba($green, 0.12);
+        box-shadow: 0 0 18rem rgba($green, 0.12);
       }
     }
 
     @media (hover: none) {
       &:active {
-        box-shadow: 0 0 18px rgba($green, 0.12);
+        box-shadow: 0 0 18rem rgba($green, 0.12);
       }
     }
 
@@ -202,7 +202,7 @@
         color: $green;
       }
 
-      border: 1px solid $green;
+      border: 1rem solid $green;
       background: $dark-green;
     }
   }
@@ -217,8 +217,8 @@
 
   &__label {
     color: $dark-green;
-    font-size: 28px;
-    line-height: 36px;
+    font-size: 28rem;
+    line-height: 36rem;
     font-weight: 600;
     transition: color 0.3s;
   }

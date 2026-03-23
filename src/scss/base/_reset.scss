@@ -6,6 +6,13 @@
 
 html {
   scroll-behavior: smooth;
+  font-size: 1px;
+}
+
+@media (min-width: 320px) {
+  html {
+    font-size: 0.0927vw;
+  }
 }
 
 body,
