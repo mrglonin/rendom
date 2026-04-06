@@ -168,6 +168,37 @@ app.get("/api/sessions/:sessionId", (request, response, next) => {
   }
 });
 
+app.post("/api/sessions/:sessionId/settings", (request, response, next) => {
+  try {
+    const session = getSessionOrThrow(request.params.sessionId);
+    const displayColumn = String(request.body.displayColumn || "").trim();
+
+    if (!displayColumn || !session.columns.includes(displayColumn)) {
+      throw createHttpError(400, "Выберите корректное поле из Excel для розыгрыша");
+    }
+
+    const nextSession = saveSession({
+      ...session,
+      defaults: {
+        ...session.defaults,
+        displayColumn,
+      },
+    });
+
+    logger.info("Session settings updated", {
+      sessionId: session.id,
+      displayColumn,
+    });
+
+    response.json({
+      ok: true,
+      session: buildSessionSummary(nextSession),
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 app.post("/api/sessions/:sessionId/preview", (request, response, next) => {
   try {
     const session = getSessionOrThrow(request.params.sessionId);

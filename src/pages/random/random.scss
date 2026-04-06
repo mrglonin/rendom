@@ -504,6 +504,98 @@
       opacity: 0.45;
       pointer-events: none;
     }
+
+    &--accent {
+      background: $color-accent;
+
+      &:hover {
+        background: $color-accent-dark;
+      }
+    }
+  }
+
+  &__modal {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30rem;
+    background: rgba(0, 18, 8, 0.6);
+    -webkit-backdrop-filter: blur(18rem);
+    backdrop-filter: blur(18rem);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+
+    &--open {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+  }
+
+  &__modal-dialog {
+    position: relative;
+    width: min(100%, 760rem);
+    padding: 56rem;
+    border-radius: 48rem;
+    background: rgba(0, 87, 40, 0.78);
+    -webkit-backdrop-filter: blur(18rem);
+    backdrop-filter: blur(18rem);
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 4rem;
+      background: linear-gradient(180deg, rgba($color-white, 0.86) 0%, rgba($color-white, 0.2) 100%);
+      -webkit-mask:
+        linear-gradient($color-white 0 0) content-box,
+        linear-gradient($color-white 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+  }
+
+  &__modal-header {
+    margin-bottom: 32rem;
+  }
+
+  &__modal-title {
+    margin-bottom: 16rem;
+    color: $color-white;
+    font-size: 42rem;
+    line-height: 1.1;
+    font-weight: 700;
+  }
+
+  &__modal-description,
+  &__modal-file {
+    color: $color-white;
+    font-size: 24rem;
+    line-height: 1.35;
+    font-weight: 500;
+  }
+
+  &__modal-file {
+    margin-top: 14rem;
+    opacity: 0.92;
+  }
+
+  &__modal-select-mount {
+    width: 100%;
+    margin-bottom: 32rem;
+  }
+
+  &__modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 18rem;
   }
 
   &__quantity-label {

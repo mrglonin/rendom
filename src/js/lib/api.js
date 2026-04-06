@@ -56,6 +56,15 @@ export const api = {
   getSession(sessionId) {
     return request(buildAppUrl(`api/sessions/${sessionId}`));
   },
+  updateSessionSettings(sessionId, payload) {
+    return request(buildAppUrl(`api/sessions/${sessionId}/settings`), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+  },
   getPreview(sessionId, payload) {
     return request(buildAppUrl(`api/sessions/${sessionId}/preview`), {
       method: "POST",

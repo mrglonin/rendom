@@ -602,6 +602,15 @@ var api = {
   getSession(sessionId) {
     return request(buildAppUrl(`api/sessions/${sessionId}`));
   },
+  updateSessionSettings(sessionId, payload) {
+    return request(buildAppUrl(`api/sessions/${sessionId}/settings`), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+  },
   getPreview(sessionId, payload) {
     return request(buildAppUrl(`api/sessions/${sessionId}/preview`), {
       method: "POST",
@@ -846,12 +855,16 @@ function buildSessionHint(session) {
   const totalCount = session?.counts?.totalRecords ?? 0;
   const activeCount = session?.counts?.activeRecords ?? 0;
   const excludedCount = session?.counts?.excludedRecords ?? 0;
+  const displayColumn = String(session?.defaults?.displayColumn || "").trim();
   const parts = [];
   if (session?.source?.originalName) {
     parts.push(`\u0424\u0430\u0439\u043B: ${session.source.originalName}.`);
   }
   if (totalCount > 0) {
     parts.push(`\u0417\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u043E ${totalCount} ${getRecordWord(totalCount)}.`);
+  }
+  if (displayColumn) {
+    parts.push(`\u041F\u043E\u043B\u0435 \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448\u0430: ${displayColumn}.`);
   }
   if (activeCount > 0) {
     parts.push(`\u0421\u0435\u0439\u0447\u0430\u0441 \u0432 \u043F\u0443\u043B\u0435 ${activeCount} ${getRecordWord(activeCount)}.`);
@@ -911,7 +924,10 @@ function initRandomControls() {
     session: null,
     lastDraw: null,
     isSidebarOpen: false,
-    isImporting: false
+    isImporting: false,
+    isFieldModalOpen: false,
+    isSavingDisplayColumn: false,
+    pendingDisplayColumn: ""
   };
   const formElement = randomSectionElement.querySelector(".random__form");
   const fileInputElement = randomSectionElement.querySelector("[data-file-input]");
@@ -925,15 +941,97 @@ function initRandomControls() {
   const autoScrollElement = randomSectionElement.querySelector('input[name="autoScroll"]');
   const winnersCountInputElement = randomSectionElement.querySelector(".random__quantity-input");
   const importTriggerButtonElement = randomSectionElement.querySelector("[data-import-trigger]");
+  const displayColumnButtonElement = randomSectionElement.querySelector("[data-display-column-button]");
+  const displayColumnDescriptionElement = randomSectionElement.querySelector(
+    "[data-display-column-description]"
+  );
   const resetExclusionsButtonElement = randomSectionElement.querySelector(
     "[data-reset-exclusions-button]"
   );
   const resetExclusionsDescriptionElement = randomSectionElement.querySelector(
     "[data-reset-exclusions-description]"
   );
+  const displayColumnModalElement = randomSectionElement.querySelector("[data-display-column-modal]");
+  const displayColumnSelectMountElement = randomSectionElement.querySelector(
+    "[data-display-column-select]"
+  );
+  const displayColumnModalDescriptionElement = randomSectionElement.querySelector(
+    "[data-display-column-modal-description]"
+  );
+  const displayColumnModalFileElement = randomSectionElement.querySelector(
+    "[data-display-column-modal-file]"
+  );
+  const displayColumnSaveButtonElement = randomSectionElement.querySelector(
+    "[data-display-column-save]"
+  );
+  const displayColumnCancelButtonElement = randomSectionElement.querySelector(
+    "[data-display-column-cancel]"
+  );
   randomSectionElement.querySelectorAll(".random__quantity-field--counter").forEach((counterElement) => {
     initCounter(counterElement);
   });
+  function getDisplayColumnLabel() {
+    return String(state.session?.defaults?.displayColumn || "").trim();
+  }
+  function syncDrawAvailability() {
+    const hasActiveRecords = (state.session?.counts?.activeRecords ?? 0) > 0;
+    submitButtonElement.disabled = !hasActiveRecords || state.isImporting || state.isSavingDisplayColumn || state.isFieldModalOpen;
+  }
+  function setFieldModalOpen(isOpen) {
+    if (!displayColumnModalElement) {
+      return;
+    }
+    state.isFieldModalOpen = isOpen;
+    displayColumnModalElement.classList.toggle("random__modal--open", isOpen);
+    displayColumnModalElement.setAttribute("aria-hidden", String(!isOpen));
+    syncDrawAvailability();
+  }
+  function syncDisplayColumnControls() {
+    if (!displayColumnButtonElement || !displayColumnDescriptionElement) {
+      return;
+    }
+    if (!state.session) {
+      displayColumnButtonElement.disabled = true;
+      displayColumnButtonElement.textContent = "\u0412\u044B\u0431\u0440\u0430\u0442\u044C \u043F\u043E\u043B\u0435";
+      displayColumnDescriptionElement.textContent = "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u0435 \u0444\u0430\u0439\u043B, \u0437\u0430\u0442\u0435\u043C \u043C\u043E\u0436\u043D\u043E \u0432\u044B\u0431\u0440\u0430\u0442\u044C \u043A\u043E\u043B\u043E\u043D\u043A\u0443 \u0438\u0437 Excel.";
+      return;
+    }
+    const displayColumn = getDisplayColumnLabel();
+    displayColumnButtonElement.disabled = false;
+    displayColumnButtonElement.textContent = displayColumn ? "\u0418\u0437\u043C\u0435\u043D\u0438\u0442\u044C \u043F\u043E\u043B\u0435" : "\u0412\u044B\u0431\u0440\u0430\u0442\u044C \u043F\u043E\u043B\u0435";
+    displayColumnDescriptionElement.textContent = displayColumn ? `\u0421\u0435\u0439\u0447\u0430\u0441 \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448 \u0438\u0434\u0451\u0442 \u043F\u043E \u043F\u043E\u043B\u044E \xAB${displayColumn}\xBB.` : "\u041F\u043E\u043B\u0435 \u0435\u0449\u0451 \u043D\u0435 \u0432\u044B\u0431\u0440\u0430\u043D\u043E. \u0423\u043A\u0430\u0436\u0438\u0442\u0435 \u043A\u043E\u043B\u043E\u043D\u043A\u0443 \u0438\u0437 Excel.";
+  }
+  function openDisplayColumnModal() {
+    if (!state.session || !displayColumnModalElement || !displayColumnSelectMountElement) {
+      return;
+    }
+    const selectedValue = getDisplayColumnLabel() || state.session.columns[0] || "";
+    const hiddenInputElement = mountDynamicSelect(displayColumnSelectMountElement, {
+      name: "displayColumn",
+      value: selectedValue,
+      options: state.session.columns.map((column) => ({
+        value: column,
+        label: column
+      })),
+      classes: "random__sidebar-select random__select random__modal-select"
+    });
+    state.pendingDisplayColumn = hiddenInputElement?.value || selectedValue;
+    hiddenInputElement?.addEventListener("change", (event) => {
+      state.pendingDisplayColumn = event.target.value;
+    });
+    if (displayColumnModalDescriptionElement) {
+      displayColumnModalDescriptionElement.textContent = "\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u043A\u043E\u043B\u043E\u043D\u043A\u0443 \u0438\u0437 Excel, \u043F\u043E \u043A\u043E\u0442\u043E\u0440\u043E\u0439 \u0431\u0443\u0434\u0443\u0442 \u043E\u0442\u043E\u0431\u0440\u0430\u0436\u0430\u0442\u044C\u0441\u044F \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0438.";
+    }
+    if (displayColumnModalFileElement) {
+      displayColumnModalFileElement.textContent = state.session.source?.originalName ? `\u0424\u0430\u0439\u043B: ${state.session.source.originalName}` : "";
+    }
+    displayColumnSaveButtonElement.disabled = false;
+    displayColumnCancelButtonElement.disabled = false;
+    setFieldModalOpen(true);
+  }
+  function closeDisplayColumnModal() {
+    setFieldModalOpen(false);
+  }
   function applySavedSidebarSettings(savedSettings) {
     if (!savedSettings) {
       return;
@@ -955,6 +1053,7 @@ function initRandomControls() {
     );
   }
   function syncSidebarActions() {
+    syncDisplayColumnControls();
     if (!resetExclusionsButtonElement || !resetExclusionsDescriptionElement) {
       return;
     }
@@ -991,6 +1090,7 @@ function initRandomControls() {
         submitDisabled: true
       });
       syncSidebarActions();
+      syncDrawAvailability();
       return;
     }
     renderWinnerHistory(
@@ -1001,6 +1101,7 @@ function initRandomControls() {
       state.session
     );
     syncSidebarActions();
+    syncDrawAvailability();
   }
   function setImportingState(isImporting) {
     state.isImporting = isImporting;
@@ -1009,6 +1110,7 @@ function initRandomControls() {
     }
     importTriggerButtonElement.disabled = isImporting;
     importTriggerButtonElement.setAttribute("aria-busy", String(isImporting));
+    syncDrawAvailability();
   }
   async function hydrateSession(sessionId) {
     try {
@@ -1044,6 +1146,7 @@ function initRandomControls() {
     }
     const previousSession = state.session;
     const previousDraw = state.lastDraw;
+    closeDisplayColumnModal();
     setImportingState(true);
     setStatus(statusElement, "\u0418\u043C\u043F\u043E\u0440\u0442\u0438\u0440\u0443\u0435\u043C Excel-\u0444\u0430\u0439\u043B \u0438 \u0441\u043E\u0431\u0438\u0440\u0430\u0435\u043C \u043F\u0443\u043B \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432\u2026");
     renderPlaceholder(listWrapperElement, listElement, hintElement, submitButtonElement, {
@@ -1055,16 +1158,16 @@ function initRandomControls() {
       const response = await api.importReport(file);
       state.session = response.session;
       state.lastDraw = null;
+      state.pendingDisplayColumn = response.session.defaults.displayColumn;
       window.localStorage.setItem(SESSION_STORAGE_KEY, response.session.id);
       window.localStorage.removeItem(DRAW_STORAGE_KEY);
       renderCurrentState();
       setStatus(
         statusElement,
-        `\u0424\u0430\u0439\u043B \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D. \u0412 \u043F\u0443\u043B\u0435 ${response.session.counts.activeRecords} ${getRecordWord(
-          response.session.counts.activeRecords
-        )}.`,
-        "success"
+        "\u0424\u0430\u0439\u043B \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D. \u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u043F\u043E\u043B\u0435 \u0434\u043B\u044F \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448\u0430 \u0438 \u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u0435 \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0443.",
+        "info"
       );
+      openDisplayColumnModal();
     } catch (error) {
       randomLogger.error("Import failed", error);
       state.session = previousSession;
@@ -1084,7 +1187,12 @@ function initRandomControls() {
       setStatus(statusElement, "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u0435 Excel-\u0444\u0430\u0439\u043B.", "error");
       return;
     }
+    if (state.isFieldModalOpen) {
+      setStatus(statusElement, "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0432\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u043F\u043E\u043B\u0435 \u0434\u043B\u044F \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448\u0430 \u0438 \u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u0435 \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0443.", "error");
+      return;
+    }
     const payload = {
+      displayColumn: getDisplayColumnLabel(),
       winnersCount: winnersCountInputElement?.value || "1",
       removeWinners: formElement.querySelector('input[name="removeWinners"]')?.value || "no",
       sortResults: formElement.querySelector('input[name="sortResults"]')?.value || "no"
@@ -1114,7 +1222,7 @@ function initRandomControls() {
     } catch (error) {
       randomLogger.error("Draw failed", error);
       setStatus(statusElement, error.message, "error");
-      submitButtonElement.disabled = false;
+      syncDrawAvailability();
     }
   }
   fileInputElement?.addEventListener("change", () => {
@@ -1126,6 +1234,50 @@ function initRandomControls() {
   });
   importTriggerButtonElement?.addEventListener("click", () => {
     openFilePicker();
+  });
+  displayColumnButtonElement?.addEventListener("click", () => {
+    openDisplayColumnModal();
+  });
+  displayColumnCancelButtonElement?.addEventListener("click", () => {
+    closeDisplayColumnModal();
+    if (state.session) {
+      setStatus(
+        statusElement,
+        `\u0418\u0441\u043F\u043E\u043B\u044C\u0437\u0443\u0435\u0442\u0441\u044F \u043F\u043E\u043B\u0435 \xAB${getDisplayColumnLabel()}\xBB. \u041F\u0440\u0438 \u043D\u0435\u043E\u0431\u0445\u043E\u0434\u0438\u043C\u043E\u0441\u0442\u0438 \u0435\u0433\u043E \u043C\u043E\u0436\u043D\u043E \u0438\u0437\u043C\u0435\u043D\u0438\u0442\u044C \u0441\u043D\u043E\u0432\u0430.`,
+        "info"
+      );
+    }
+  });
+  displayColumnSaveButtonElement?.addEventListener("click", async () => {
+    if (!state.session || !state.pendingDisplayColumn || state.isSavingDisplayColumn) {
+      return;
+    }
+    state.isSavingDisplayColumn = true;
+    displayColumnSaveButtonElement.disabled = true;
+    displayColumnCancelButtonElement.disabled = true;
+    syncDrawAvailability();
+    setStatus(statusElement, "\u0421\u043E\u0445\u0440\u0430\u043D\u044F\u0435\u043C \u043F\u043E\u043B\u0435 \u0434\u043B\u044F \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448\u0430\u2026");
+    try {
+      const response = await api.updateSessionSettings(state.session.id, {
+        displayColumn: state.pendingDisplayColumn
+      });
+      state.session = response.session;
+      closeDisplayColumnModal();
+      renderCurrentState();
+      setStatus(
+        statusElement,
+        `\u041F\u043E\u043B\u0435 \xAB${getDisplayColumnLabel()}\xBB \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u043E. \u041C\u043E\u0436\u043D\u043E \u0437\u0430\u043F\u0443\u0441\u043A\u0430\u0442\u044C \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448.`,
+        "success"
+      );
+    } catch (error) {
+      randomLogger.error("Failed to update display column", error);
+      setStatus(statusElement, error.message, "error");
+    } finally {
+      state.isSavingDisplayColumn = false;
+      displayColumnSaveButtonElement.disabled = false;
+      displayColumnCancelButtonElement.disabled = false;
+      syncDrawAvailability();
+    }
   });
   randomSectionElement.querySelector("[data-settings-toggle]")?.addEventListener("click", () => {
     state.isSidebarOpen = !state.isSidebarOpen;

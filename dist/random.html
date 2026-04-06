@@ -40,7 +40,7 @@
   <div class="select js-select random__select">
     <input class="select__input" type="hidden" name="listState" value="0">
     <button class="select__trigger" type="button" aria-expanded="false" aria-haspopup="listbox">
-      <span class="select__value">0 записей</span>
+      <span class="select__value">0 победителей</span>
       <svg width="31" height="31" viewBox="0 0 31 31" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M2.5 9.5L15.5 21.5L28.5 9.5" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"
           stroke-linejoin="round" />
@@ -51,7 +51,7 @@
         <li>
           <button class="select__option is-selected" type="button"
             data-value="0" role="option" aria-selected="true">
-            0 записей
+            0 победителей
           </button>
         </li>
       
@@ -137,6 +137,19 @@
               </button>
             </div>
             <aside class="random__sidebar" data-settings-sidebar aria-hidden="true">
+              <div class="random__sidebar-item">
+                <div class="random__sidebar-header">
+                  <div class="random__sidebar-title">
+                    Поле для розыгрыша
+                  </div>
+                  <div class="random__sidebar-description" data-display-column-description>
+                    Сначала загрузите файл, затем можно выбрать колонку из Excel.
+                  </div>
+                </div>
+                <button class="random__sidebar-button" type="button" data-display-column-button disabled>
+                  Выбрать поле
+                </button>
+              </div>
               <div class="random__sidebar-item">
                 <div class="random__sidebar-header">
                   <div class="random__sidebar-title">
@@ -251,6 +264,29 @@
             </aside>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+  <div class="random__modal" data-display-column-modal aria-hidden="true">
+    <div class="random__modal-dialog" role="dialog" aria-modal="true" aria-labelledby="display-column-modal-title">
+      <div class="random__modal-header">
+        <div class="random__modal-title" id="display-column-modal-title">
+          Поле для розыгрыша
+        </div>
+        <div class="random__modal-description" data-display-column-modal-description>
+          Выберите колонку из Excel, по которой будут отображаться победители.
+        </div>
+        <div class="random__modal-file" data-display-column-modal-file></div>
+      </div>
+      <div class="random__modal-select-mount" data-display-column-select></div>
+      <div class="random__modal-actions">
+        <button class="random__sidebar-button" type="button" data-display-column-cancel>
+          Отмена
+        </button>
+        <button class="random__sidebar-button random__sidebar-button--accent" type="button"
+          data-display-column-save>
+          Сохранить
+        </button>
       </div>
     </div>
   </div>

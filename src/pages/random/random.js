@@ -217,6 +217,7 @@ function buildSessionHint(session) {
   const totalCount = session?.counts?.totalRecords ?? 0;
   const activeCount = session?.counts?.activeRecords ?? 0;
   const excludedCount = session?.counts?.excludedRecords ?? 0;
+  const displayColumn = String(session?.defaults?.displayColumn || "").trim();
   const parts = [];
 
   if (session?.source?.originalName) {
@@ -225,6 +226,10 @@ function buildSessionHint(session) {
 
   if (totalCount > 0) {
     parts.push(`Загружено ${totalCount} ${getRecordWord(totalCount)}.`);
+  }
+
+  if (displayColumn) {
+    parts.push(`Поле розыгрыша: ${displayColumn}.`);
   }
 
   if (activeCount > 0) {
@@ -307,6 +312,9 @@ export function initRandomControls() {
     lastDraw: null,
     isSidebarOpen: false,
     isImporting: false,
+    isFieldModalOpen: false,
+    isSavingDisplayColumn: false,
+    pendingDisplayColumn: "",
   };
 
   const formElement = randomSectionElement.querySelector(".random__form");
@@ -321,11 +329,31 @@ export function initRandomControls() {
   const autoScrollElement = randomSectionElement.querySelector('input[name="autoScroll"]');
   const winnersCountInputElement = randomSectionElement.querySelector(".random__quantity-input");
   const importTriggerButtonElement = randomSectionElement.querySelector("[data-import-trigger]");
+  const displayColumnButtonElement = randomSectionElement.querySelector("[data-display-column-button]");
+  const displayColumnDescriptionElement = randomSectionElement.querySelector(
+    "[data-display-column-description]",
+  );
   const resetExclusionsButtonElement = randomSectionElement.querySelector(
     "[data-reset-exclusions-button]",
   );
   const resetExclusionsDescriptionElement = randomSectionElement.querySelector(
     "[data-reset-exclusions-description]",
+  );
+  const displayColumnModalElement = randomSectionElement.querySelector("[data-display-column-modal]");
+  const displayColumnSelectMountElement = randomSectionElement.querySelector(
+    "[data-display-column-select]",
+  );
+  const displayColumnModalDescriptionElement = randomSectionElement.querySelector(
+    "[data-display-column-modal-description]",
+  );
+  const displayColumnModalFileElement = randomSectionElement.querySelector(
+    "[data-display-column-modal-file]",
+  );
+  const displayColumnSaveButtonElement = randomSectionElement.querySelector(
+    "[data-display-column-save]",
+  );
+  const displayColumnCancelButtonElement = randomSectionElement.querySelector(
+    "[data-display-column-cancel]",
   );
 
   randomSectionElement
@@ -333,6 +361,92 @@ export function initRandomControls() {
     .forEach((counterElement) => {
       initCounter(counterElement);
     });
+
+  function getDisplayColumnLabel() {
+    return String(state.session?.defaults?.displayColumn || "").trim();
+  }
+
+  function syncDrawAvailability() {
+    const hasActiveRecords = (state.session?.counts?.activeRecords ?? 0) > 0;
+
+    submitButtonElement.disabled =
+      !hasActiveRecords || state.isImporting || state.isSavingDisplayColumn || state.isFieldModalOpen;
+  }
+
+  function setFieldModalOpen(isOpen) {
+    if (!displayColumnModalElement) {
+      return;
+    }
+
+    state.isFieldModalOpen = isOpen;
+    displayColumnModalElement.classList.toggle("random__modal--open", isOpen);
+    displayColumnModalElement.setAttribute("aria-hidden", String(!isOpen));
+    syncDrawAvailability();
+  }
+
+  function syncDisplayColumnControls() {
+    if (!displayColumnButtonElement || !displayColumnDescriptionElement) {
+      return;
+    }
+
+    if (!state.session) {
+      displayColumnButtonElement.disabled = true;
+      displayColumnButtonElement.textContent = "Выбрать поле";
+      displayColumnDescriptionElement.textContent =
+        "Сначала загрузите файл, затем можно выбрать колонку из Excel.";
+      return;
+    }
+
+    const displayColumn = getDisplayColumnLabel();
+
+    displayColumnButtonElement.disabled = false;
+    displayColumnButtonElement.textContent = displayColumn ? "Изменить поле" : "Выбрать поле";
+    displayColumnDescriptionElement.textContent = displayColumn
+      ? `Сейчас розыгрыш идёт по полю «${displayColumn}».`
+      : "Поле ещё не выбрано. Укажите колонку из Excel.";
+  }
+
+  function openDisplayColumnModal() {
+    if (!state.session || !displayColumnModalElement || !displayColumnSelectMountElement) {
+      return;
+    }
+
+    const selectedValue = getDisplayColumnLabel() || state.session.columns[0] || "";
+    const hiddenInputElement = mountDynamicSelect(displayColumnSelectMountElement, {
+      name: "displayColumn",
+      value: selectedValue,
+      options: state.session.columns.map((column) => ({
+        value: column,
+        label: column,
+      })),
+      classes: "random__sidebar-select random__select random__modal-select",
+    });
+
+    state.pendingDisplayColumn = hiddenInputElement?.value || selectedValue;
+
+    hiddenInputElement?.addEventListener("change", (event) => {
+      state.pendingDisplayColumn = event.target.value;
+    });
+
+    if (displayColumnModalDescriptionElement) {
+      displayColumnModalDescriptionElement.textContent =
+        "Выберите колонку из Excel, по которой будут отображаться победители.";
+    }
+
+    if (displayColumnModalFileElement) {
+      displayColumnModalFileElement.textContent = state.session.source?.originalName
+        ? `Файл: ${state.session.source.originalName}`
+        : "";
+    }
+
+    displayColumnSaveButtonElement.disabled = false;
+    displayColumnCancelButtonElement.disabled = false;
+    setFieldModalOpen(true);
+  }
+
+  function closeDisplayColumnModal() {
+    setFieldModalOpen(false);
+  }
 
   function applySavedSidebarSettings(savedSettings) {
     if (!savedSettings) {
@@ -359,6 +473,8 @@ export function initRandomControls() {
   }
 
   function syncSidebarActions() {
+    syncDisplayColumnControls();
+
     if (!resetExclusionsButtonElement || !resetExclusionsDescriptionElement) {
       return;
     }
@@ -413,6 +529,7 @@ export function initRandomControls() {
         submitDisabled: true,
       });
       syncSidebarActions();
+      syncDrawAvailability();
       return;
     }
 
@@ -424,6 +541,7 @@ export function initRandomControls() {
       state.session,
     );
     syncSidebarActions();
+    syncDrawAvailability();
   }
 
   function setImportingState(isImporting) {
@@ -435,6 +553,7 @@ export function initRandomControls() {
 
     importTriggerButtonElement.disabled = isImporting;
     importTriggerButtonElement.setAttribute("aria-busy", String(isImporting));
+    syncDrawAvailability();
   }
 
   async function hydrateSession(sessionId) {
@@ -478,6 +597,8 @@ export function initRandomControls() {
     const previousSession = state.session;
     const previousDraw = state.lastDraw;
 
+    closeDisplayColumnModal();
+
     setImportingState(true);
     setStatus(statusElement, "Импортируем Excel-файл и собираем пул участников…");
     renderPlaceholder(listWrapperElement, listElement, hintElement, submitButtonElement, {
@@ -491,17 +612,17 @@ export function initRandomControls() {
 
       state.session = response.session;
       state.lastDraw = null;
+      state.pendingDisplayColumn = response.session.defaults.displayColumn;
 
       window.localStorage.setItem(SESSION_STORAGE_KEY, response.session.id);
       window.localStorage.removeItem(DRAW_STORAGE_KEY);
       renderCurrentState();
       setStatus(
         statusElement,
-        `Файл загружен. В пуле ${response.session.counts.activeRecords} ${getRecordWord(
-          response.session.counts.activeRecords,
-        )}.`,
-        "success",
+        "Файл загружен. Выберите поле для розыгрыша и сохраните настройку.",
+        "info",
       );
+      openDisplayColumnModal();
     } catch (error) {
       randomLogger.error("Import failed", error);
       state.session = previousSession;
@@ -525,7 +646,13 @@ export function initRandomControls() {
       return;
     }
 
+    if (state.isFieldModalOpen) {
+      setStatus(statusElement, "Сначала выберите поле для розыгрыша и сохраните настройку.", "error");
+      return;
+    }
+
     const payload = {
+      displayColumn: getDisplayColumnLabel(),
       winnersCount: winnersCountInputElement?.value || "1",
       removeWinners: formElement.querySelector('input[name="removeWinners"]')?.value || "no",
       sortResults: formElement.querySelector('input[name="sortResults"]')?.value || "no",
@@ -565,7 +692,7 @@ export function initRandomControls() {
     } catch (error) {
       randomLogger.error("Draw failed", error);
       setStatus(statusElement, error.message, "error");
-      submitButtonElement.disabled = false;
+      syncDrawAvailability();
     }
   }
 
@@ -581,6 +708,57 @@ export function initRandomControls() {
 
   importTriggerButtonElement?.addEventListener("click", () => {
     openFilePicker();
+  });
+
+  displayColumnButtonElement?.addEventListener("click", () => {
+    openDisplayColumnModal();
+  });
+
+  displayColumnCancelButtonElement?.addEventListener("click", () => {
+    closeDisplayColumnModal();
+
+    if (state.session) {
+      setStatus(
+        statusElement,
+        `Используется поле «${getDisplayColumnLabel()}». При необходимости его можно изменить снова.`,
+        "info",
+      );
+    }
+  });
+
+  displayColumnSaveButtonElement?.addEventListener("click", async () => {
+    if (!state.session || !state.pendingDisplayColumn || state.isSavingDisplayColumn) {
+      return;
+    }
+
+    state.isSavingDisplayColumn = true;
+    displayColumnSaveButtonElement.disabled = true;
+    displayColumnCancelButtonElement.disabled = true;
+    syncDrawAvailability();
+    setStatus(statusElement, "Сохраняем поле для розыгрыша…");
+
+    try {
+      const response = await api.updateSessionSettings(state.session.id, {
+        displayColumn: state.pendingDisplayColumn,
+      });
+
+      state.session = response.session;
+      closeDisplayColumnModal();
+      renderCurrentState();
+      setStatus(
+        statusElement,
+        `Поле «${getDisplayColumnLabel()}» сохранено. Можно запускать розыгрыш.`,
+        "success",
+      );
+    } catch (error) {
+      randomLogger.error("Failed to update display column", error);
+      setStatus(statusElement, error.message, "error");
+    } finally {
+      state.isSavingDisplayColumn = false;
+      displayColumnSaveButtonElement.disabled = false;
+      displayColumnCancelButtonElement.disabled = false;
+      syncDrawAvailability();
+    }
   });
 
   randomSectionElement.querySelector("[data-settings-toggle]")?.addEventListener("click", () => {
