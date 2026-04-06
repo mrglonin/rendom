@@ -266,9 +266,26 @@ body {
   top: 99%;
   left: 0;
   right: 0;
+  max-height: 360rem;
+  overflow-y: auto;
+  overflow-x: hidden;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 178, 34, 0.9) rgba(255, 255, 255, 0.18);
+}
+.select__dropdown::-webkit-scrollbar {
+  width: 10rem;
+}
+.select__dropdown::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 20rem;
+}
+.select__dropdown::-webkit-scrollbar-thumb {
+  background: rgba(0, 178, 34, 0.9);
+  border-radius: 20rem;
+  border: 2rem solid rgba(255, 255, 255, 0.18);
 }
 .select__dropdown li {
   overflow: hidden;

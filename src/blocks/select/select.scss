@@ -110,9 +110,29 @@
     top: 99%;
     left: 0;
     right: 0;
+    max-height: 360rem;
+    overflow-y: auto;
+    overflow-x: hidden;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s;
+    scrollbar-width: thin;
+    scrollbar-color: rgba($color-accent, 0.9) rgba($color-white, 0.18);
+
+    &::-webkit-scrollbar {
+      width: 10rem;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: rgba($color-white, 0.18);
+      border-radius: 20rem;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba($color-accent, 0.9);
+      border-radius: 20rem;
+      border: 2rem solid rgba($color-white, 0.18);
+    }
 
     li {
       overflow: hidden;
