@@ -8,7 +8,6 @@
     <meta name="description"
           content="Страница случайного выбора" />
     <link rel="stylesheet" href="css/style.min.css" />
-    <link rel="stylesheet" href="js/main.min.css" />
   </head>
   <body class="page-random">
     <div class="wrapper">
@@ -22,23 +21,24 @@
   </picture>
   <div class="container">
     <div class="random__layout">
-      <a class="random__logo logo" href="#">
+      <a class="random__logo logo" href="/random.html">
         <img class="logo__image" src="images/logo.svg" alt="logo">
       </a>
       <div class="random__main">
         <h1 class="random__page-title">
           Случайный выбор из списка
         </h1>
-        <form class="random__form" action="#" method="post">
+        <form class="random__form" action="#" method="post" novalidate>
           <div class="random__workspace">
             <div class="random__picker">
               <div class="random__picker-head">
                 <div class="random__label">
                   Список
                 </div>
-                
+                <div class="random__select-mount" data-records-select>
+                  
   <div class="select js-select random__select">
-    <input class="select__input" type="hidden" name="listSource" value="current-list">
+    <input class="select__input" type="hidden" name="listState" value="0">
     <button class="select__trigger" type="button" aria-expanded="false" aria-haspopup="listbox">
       <span class="select__value">0 записей</span>
       <svg width="31" height="31" viewBox="0 0 31 31" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -50,47 +50,31 @@
       
         <li>
           <button class="select__option is-selected" type="button"
-            data-value="current-list" role="option" aria-selected="true">
+            data-value="0" role="option" aria-selected="true">
             0 записей
-          </button>
-        </li>
-      
-        <li>
-          <button class="select__option" type="button"
-            data-value="imported-list" role="option" aria-selected="false">
-            Одна из записей
           </button>
         </li>
       
     </ul>
   </div>
 
+                </div>
               </div>
-              <div class="random__list">
-                <ul class="random__list-scroll">
-                  <li class="random__list-item">
-                    <div class="random__list-item-digit"></div>
+              <input class="random__file-input" type="file" accept=".xlsx,.xls" data-file-input hidden>
+              <div class="random__list random__list--empty random__list--interactive" data-upload-zone tabindex="0"
+                role="button" aria-label="Загрузить файл">
+                <ul class="random__list-scroll" data-records-list>
+                  <li class="random__list-item random__list-item--empty">
                     <div class="random__list-item-text">
-                      Определенный текст списка
-                    </div>
-                  </li>
-                  <li class="random__list-item">
-                    <div class="random__list-item-digit"></div>
-                    <div class="random__list-item-text">
-                      Определенный текст списка который может занимать несколько строк и иметь произвольную длину
-                    </div>
-                  </li>
-                  <li class="random__list-item">
-                    <div class="random__list-item-digit"></div>
-                    <div class="random__list-item-text">
-                      Ну и так далее текст может быть любым и занимать сколько угодно строк в рамках одной записи списка
+                      Загрузите файл
                     </div>
                   </li>
                 </ul>
               </div>
-              <div class="random__hint">
-                Одна запись в строке. Пустые строки игнорируются.
+              <div class="random__hint" data-list-hint>
+                Нажмите на область списка, чтобы выбрать Excel-файл.
               </div>
+              <div class="random__status" data-status role="status" aria-live="polite"></div>
               <div class="random__actions">
                 <div class="random__quantity">
                   <div class="random__quantity-label">
@@ -127,7 +111,8 @@
                   </div>
                 </div>
                 <div class="random__tools">
-                  <div class="random__tool random__tool--check">
+                  <button class="random__tool random__tool--check" type="button" data-import-trigger
+                    aria-label="Подтвердить загрузку файла">
                     <svg width="30" height="33" viewBox="0 0 30 33" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path
                         d="M21.418 3.29688C25.0012 3.31665 26.9418 3.47691 28.207 4.74219C29.6551 6.19037 29.6553 8.51964 29.6553 13.1787V23.0635C29.6553 27.7243 29.6552 30.0531 28.207 31.5029C26.7605 32.9491 24.4292 32.9492 19.7705 32.9492H9.88477C5.2261 32.9492 2.89475 32.9492 1.44824 31.5029C6.92075e-05 30.0548 0 27.7243 0 23.0635V13.1787C0 8.51972 0.000252903 6.19037 1.44824 4.74219C2.7135 3.47693 4.65414 3.31665 8.2373 3.29688H21.418ZM19.8125 13.5957C19.485 13.5846 19.1662 13.704 18.9268 13.9277L12.709 19.7305L10.7285 17.8818C10.6103 17.7692 10.4708 17.6805 10.3184 17.6221C10.166 17.5637 10.003 17.5363 9.83984 17.541C9.67679 17.5458 9.51585 17.5832 9.36719 17.6504C9.21864 17.7176 9.08495 17.8135 8.97363 17.9326C8.86223 18.0519 8.77473 18.1918 8.71777 18.3447C8.66082 18.4977 8.63528 18.6611 8.6416 18.8242C8.64794 18.9873 8.68626 19.1478 8.75488 19.2959C8.8235 19.444 8.92071 19.5772 9.04102 19.6875L11.8652 22.3232C12.0941 22.537 12.3958 22.6562 12.709 22.6562C13.0221 22.6562 13.3239 22.537 13.5527 22.3232L20.6133 15.7334C20.8527 15.5097 20.9938 15.1996 21.0049 14.8721C21.016 14.5446 20.8965 14.2257 20.6729 13.9863C20.4493 13.7472 20.1397 13.6069 19.8125 13.5957Z"
@@ -136,21 +121,22 @@
                         d="M8.24414 2.47129C8.24414 1.81586 8.50451 1.18728 8.96796 0.723823C9.43142 0.260367 10.06 0 10.7154 0H18.953C19.6085 0 20.2371 0.260367 20.7005 0.723823C21.164 1.18728 21.4243 1.81586 21.4243 2.47129V4.11881C21.4243 4.77423 21.164 5.40282 20.7005 5.86627C20.2371 6.32973 19.6085 6.59009 18.953 6.59009H10.7154C10.06 6.59009 9.43142 6.32973 8.96796 5.86627C8.50451 5.40282 8.24414 4.77423 8.24414 4.11881V2.47129Z"
                         fill="#666666" />
                     </svg>
-                  </div>
-                  <div class="random__tool random__tool--setup">
+                  </button>
+                  <button class="random__tool random__tool--setup" type="button" data-settings-toggle
+                    aria-label="Показать настройки">
                     <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path
                         d="M31.1941 13.137L27.6808 12.5572C27.4273 11.6874 27.0832 10.8448 26.6395 10.0476L28.6768 7.19366C28.9394 6.8222 28.9032 6.30578 28.5773 5.98868L25.9242 3.33409C25.5982 3.00793 25.0911 2.97169 24.7199 3.23443L21.8676 5.27294C21.0707 4.82899 20.2286 4.48471 19.3594 4.23103L18.7889 0.779162C18.7165 0.326161 18.318 0 17.8653 0H14.1166C13.6548 0 13.2654 0.335221 13.193 0.779162L12.6225 4.23103C11.7533 4.48471 10.9111 4.82899 10.1143 5.27294L7.26202 3.23443C6.89077 2.97169 6.37465 3.00793 6.05773 3.33409L3.40462 5.98868C3.07865 6.31484 3.03338 6.8222 3.30503 7.19366L5.34238 10.0476C4.89869 10.8448 4.55461 11.6874 4.30108 12.5572L0.787772 13.137C0.335027 13.2095 0 13.5991 0 14.0612V17.812C0 18.2741 0.335027 18.6636 0.787772 18.7361L4.30108 19.316C4.55461 20.1857 4.89869 21.0283 5.34238 21.8256L3.30503 24.6795C3.04244 25.051 3.07865 25.5674 3.40462 25.8845L6.05773 28.5391C6.3837 28.8652 6.89077 28.9015 7.26202 28.6387L10.1143 26.6002C10.9111 27.0442 11.7533 27.3884 12.6225 27.6421L13.202 31.2118C13.2745 31.6648 13.6638 32 14.1256 32H17.8744C18.3362 32 18.7255 31.6648 18.7979 31.2118L19.3775 27.6421C20.2467 27.3884 21.0888 27.0442 21.8857 26.6002L24.738 28.6387C25.1092 28.9015 25.6254 28.8652 25.9423 28.5391L28.5954 25.8845C28.9213 25.5583 28.9576 25.051 28.695 24.6795L26.6576 21.8256C27.1013 21.0283 27.4454 20.1857 27.6989 19.316L31.2122 18.7361C31.665 18.6636 32 18.2741 32 17.812V14.0612C32 13.5991 31.665 13.2095 31.2122 13.137H31.1941ZM15.9819 24.3715C11.3277 24.3715 7.55178 20.5844 7.55178 15.9366C7.55178 11.2888 11.3367 7.5017 15.9819 7.5017C20.627 7.5017 24.4211 11.2888 24.4211 15.9366C24.4211 20.5844 20.6361 24.3715 15.9819 24.3715Z"
                         fill="white" />
                     </svg>
-                  </div>
+                  </button>
                 </div>
               </div>
-              <button class="random__submit" type="submit">
+              <button class="random__submit" type="submit" disabled data-draw-submit>
                 Найти победителей
               </button>
             </div>
-            <aside class="random__sidebar">
+            <aside class="random__sidebar" data-settings-sidebar aria-hidden="true">
               <div class="random__sidebar-item">
                 <div class="random__sidebar-header">
                   <div class="random__sidebar-title">
@@ -178,9 +164,9 @@
                 </div>
                 
   <div class="select js-select random__sidebar-select random__select">
-    <input class="select__input" type="hidden" name="removeWinners" value="no">
+    <input class="select__input" type="hidden" name="removeWinners" value="yes">
     <button class="select__trigger" type="button" aria-expanded="false" aria-haspopup="listbox">
-      <span class="select__value">Нет</span>
+      <span class="select__value">Да</span>
       <svg width="31" height="31" viewBox="0 0 31 31" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M2.5 9.5L15.5 21.5L28.5 9.5" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"
           stroke-linejoin="round" />
@@ -189,15 +175,15 @@
     <ul class="select__dropdown" role="listbox">
       
         <li>
-          <button class="select__option is-selected" type="button"
-            data-value="no" role="option" aria-selected="true">
+          <button class="select__option" type="button"
+            data-value="no" role="option" aria-selected="false">
             Нет
           </button>
         </li>
       
         <li>
-          <button class="select__option" type="button"
-            data-value="yes" role="option" aria-selected="false">
+          <button class="select__option is-selected" type="button"
+            data-value="yes" role="option" aria-selected="true">
             Да
           </button>
         </li>
@@ -249,6 +235,19 @@
   </div>
 
               </div>
+              <div class="random__sidebar-item">
+                <div class="random__sidebar-header">
+                  <div class="random__sidebar-title">
+                    Очистить все исключения
+                  </div>
+                  <div class="random__sidebar-description" data-reset-exclusions-description>
+                    Кнопка станет доступна после загрузки файла.
+                  </div>
+                </div>
+                <button class="random__sidebar-button" type="button" data-reset-exclusions-button disabled>
+                  Очистить все
+                </button>
+              </div>
             </aside>
           </div>
         </form>
@@ -256,6 +255,7 @@
     </div>
   </div>
 </section>
+
 
       </main>
     </div>

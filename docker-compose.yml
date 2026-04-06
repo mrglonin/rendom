@@ -1,0 +1,15 @@
+services:
+  freedom-generator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: freedom-generator
+    ports:
+      - "3000:3000"
+    environment:
+      HOST: 0.0.0.0
+      PORT: 3000
+    volumes:
+      - ./logs:/app/logs
+      - ./storage:/app/storage
+    restart: unless-stopped

@@ -1,0 +1,97 @@
+import { createLogger } from "./logger.js";
+
+const apiLogger = createLogger("api");
+
+async function readPayload(response) {
+  const contentType = response.headers.get("content-type") || "";
+
+  if (contentType.includes("application/json")) {
+    return response.json();
+  }
+
+  return response.text();
+}
+
+async function request(url, options = {}) {
+  apiLogger.debug("Request started", {
+    url,
+    method: options.method || "GET",
+  });
+
+  const response = await fetch(url, options);
+  const payload = await readPayload(response);
+
+  if (!response.ok) {
+    const message =
+      typeof payload === "object" && payload && "error" in payload
+        ? payload.error
+        : `HTTP ${response.status}`;
+    apiLogger.error("Request failed", {
+      url,
+      status: response.status,
+      payload,
+    });
+    throw new Error(message);
+  }
+
+  apiLogger.debug("Request finished", {
+    url,
+    status: response.status,
+  });
+
+  return payload;
+}
+
+export const api = {
+  importReport(file) {
+    const formData = new FormData();
+    formData.append("reportFile", file);
+
+    return request("/api/import", {
+      method: "POST",
+      body: formData,
+    });
+  },
+  getSession(sessionId) {
+    return request(`/api/sessions/${sessionId}`);
+  },
+  getPreview(sessionId, payload) {
+    return request(`/api/sessions/${sessionId}/preview`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+  },
+  draw(sessionId, payload) {
+    return request(`/api/sessions/${sessionId}/draw`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+  },
+  getDraw(sessionId, drawId) {
+    return request(`/api/sessions/${sessionId}/draws/${drawId}`);
+  },
+  excludeDraw(sessionId, drawId) {
+    return request(`/api/sessions/${sessionId}/exclude-draw`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ drawId }),
+    });
+  },
+  resetExclusions(sessionId) {
+    return request(`/api/sessions/${sessionId}/reset-exclusions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({}),
+    });
+  },
+};

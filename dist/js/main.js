@@ -382,131 +382,7 @@ var require_aos = __commonJS({
 });
 
 // src/js/app.js
-function initScreenFlow() {
-  const startElement = document.querySelector(".start");
-  const testElement = document.querySelector(".test");
-  const endElement = document.querySelector(".end");
-  const resetPopupElement = document.querySelector('[data-popup="reset"]');
-  const languagesPopupElement = document.querySelector('[data-popup="languages"]');
-  const endSubmitButton = endElement?.querySelector(".end__submit");
-  document.documentElement.classList.add("js-ready");
-  if (!startElement || !testElement) {
-    return;
-  }
-  const openPopup = (popupElement) => {
-    if (!popupElement) {
-      return;
-    }
-    popupElement.classList.add("popup--open");
-    popupElement.setAttribute("aria-hidden", "false");
-  };
-  const closePopup = (popupElement) => {
-    if (!popupElement) {
-      return;
-    }
-    popupElement.classList.remove("popup--open");
-    popupElement.setAttribute("aria-hidden", "true");
-  };
-  startElement.addEventListener("click", () => {
-    if (startElement.classList.contains("start--hidden")) {
-      return;
-    }
-    startElement.classList.add("start--hidden");
-    testElement.classList.remove("test--hidden");
-    testElement.classList.add("test--active");
-  });
-  document.querySelectorAll(".navigation__item--home").forEach((homeButton) => {
-    homeButton.addEventListener("click", () => {
-      openPopup(resetPopupElement);
-    });
-  });
-  document.querySelectorAll(".navigation__item--lang").forEach((languageButton) => {
-    languageButton.addEventListener("click", () => {
-      openPopup(languagesPopupElement);
-    });
-  });
-  if (endSubmitButton) {
-    endSubmitButton.addEventListener("click", () => {
-      openPopup(resetPopupElement);
-    });
-  }
-  document.querySelectorAll("[data-popup-close]").forEach((closeTrigger) => {
-    closeTrigger.addEventListener("click", (event) => {
-      const popupElement = closeTrigger.closest("[data-popup]");
-      if (!popupElement) {
-        return;
-      }
-      if (event.target === closeTrigger || closeTrigger.hasAttribute("data-popup-action") === false) {
-        closePopup(popupElement);
-      }
-    });
-  });
-  document.querySelectorAll('[data-popup-action="reset-app"]').forEach((resetButton) => {
-    resetButton.addEventListener("click", () => {
-      window.location.reload();
-    });
-  });
-  document.querySelectorAll("[data-language]").forEach((languageButton) => {
-    languageButton.addEventListener("click", () => {
-      const languageValue = languageButton.getAttribute("data-language");
-      const languagePopup = languageButton.closest('[data-popup="languages"]');
-      if (!languagePopup || !languageValue) {
-        return;
-      }
-      languagePopup.querySelectorAll("[data-language]").forEach((item) => {
-        item.classList.toggle(
-          "popup-card__action--active",
-          item.getAttribute("data-language") === languageValue
-        );
-      });
-      closePopup(languagePopup);
-    });
-  });
-  document.addEventListener("keydown", (event) => {
-    if (event.key !== "Escape") {
-      return;
-    }
-    closePopup(resetPopupElement);
-    closePopup(languagesPopupElement);
-  });
-  [resetPopupElement, languagesPopupElement].forEach((popupElement) => {
-    popupElement?.querySelector(".popup__inner")?.addEventListener("click", (event) => {
-      event.stopPropagation();
-    });
-  });
-}
-function initAnimatedTestTitle() {
-  const testTitleElement = document.querySelector(".test__title");
-  const testTitleTextElement = testTitleElement?.querySelector(".test__title-text");
-  if (!testTitleElement || !testTitleTextElement) {
-    return;
-  }
-  const state = {
-    currentTitle: testTitleTextElement.textContent.trim(),
-    timerId: null
-  };
-  window.__setAnimatedTestTitle = (nextTitle) => {
-    if (!testTitleTextElement || typeof nextTitle !== "string") {
-      return;
-    }
-    if (state.currentTitle === nextTitle) {
-      return;
-    }
-    if (state.timerId) {
-      window.clearTimeout(state.timerId);
-      state.timerId = null;
-    }
-    testTitleTextElement.classList.add("test__title-text--changing");
-    state.timerId = window.setTimeout(() => {
-      testTitleTextElement.textContent = nextTitle;
-      state.currentTitle = nextTitle;
-      testTitleTextElement.classList.remove("test__title-text--changing");
-      state.timerId = null;
-    }, 90);
-  };
-}
-initAnimatedTestTitle();
-initScreenFlow();
+document.documentElement.classList.add("js-ready");
 
 // src/js/main.js
 var import_aos = __toESM(require_aos());
@@ -652,7 +528,160 @@ function initSelects(root = document) {
   });
 }
 
+// src/js/lib/logger.js
+function createLogger(scope) {
+  const prefix = `[Freedom/${scope}]`;
+  return {
+    debug(message, payload) {
+      console.log(prefix, message, payload ?? "");
+    },
+    info(message, payload) {
+      console.info(prefix, message, payload ?? "");
+    },
+    warn(message, payload) {
+      console.warn(prefix, message, payload ?? "");
+    },
+    error(message, payload) {
+      console.error(prefix, message, payload ?? "");
+    }
+  };
+}
+
+// src/js/lib/api.js
+var apiLogger = createLogger("api");
+async function readPayload(response) {
+  const contentType = response.headers.get("content-type") || "";
+  if (contentType.includes("application/json")) {
+    return response.json();
+  }
+  return response.text();
+}
+async function request(url, options = {}) {
+  apiLogger.debug("Request started", {
+    url,
+    method: options.method || "GET"
+  });
+  const response = await fetch(url, options);
+  const payload = await readPayload(response);
+  if (!response.ok) {
+    const message = typeof payload === "object" && payload && "error" in payload ? payload.error : `HTTP ${response.status}`;
+    apiLogger.error("Request failed", {
+      url,
+      status: response.status,
+      payload
+    });
+    throw new Error(message);
+  }
+  apiLogger.debug("Request finished", {
+    url,
+    status: response.status
+  });
+  return payload;
+}
+var api = {
+  importReport(file) {
+    const formData = new FormData();
+    formData.append("reportFile", file);
+    return request("/api/import", {
+      method: "POST",
+      body: formData
+    });
+  },
+  getSession(sessionId) {
+    return request(`/api/sessions/${sessionId}`);
+  },
+  getPreview(sessionId, payload) {
+    return request(`/api/sessions/${sessionId}/preview`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+  },
+  draw(sessionId, payload) {
+    return request(`/api/sessions/${sessionId}/draw`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+  },
+  getDraw(sessionId, drawId) {
+    return request(`/api/sessions/${sessionId}/draws/${drawId}`);
+  },
+  excludeDraw(sessionId, drawId) {
+    return request(`/api/sessions/${sessionId}/exclude-draw`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ drawId })
+    });
+  },
+  resetExclusions(sessionId) {
+    return request(`/api/sessions/${sessionId}/reset-exclusions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({})
+    });
+  }
+};
+
+// src/js/lib/dynamic-select.js
+function escapeHtml(value) {
+  return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
+}
+function buildOptionsMarkup(options, selectedValue) {
+  return options.map((option) => {
+    const isSelected = option.value === selectedValue;
+    return `
+        <li>
+          <button class="select__option${isSelected ? " is-selected" : ""}" type="button"
+            data-value="${escapeHtml(option.value)}" role="option" aria-selected="${isSelected ? "true" : "false"}">
+            ${escapeHtml(option.label)}
+          </button>
+        </li>
+      `;
+  }).join("");
+}
+function mountDynamicSelect(targetElement, { name, value, options, classes = "" }) {
+  const safeOptions = options.length > 0 ? options : [{ value: "", label: "\u041D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u043D\u044B\u0445 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0439" }];
+  const selectedValue = safeOptions.some((option) => option.value === value) ? value : safeOptions[0].value;
+  const selectedOption = safeOptions.find((option) => option.value === selectedValue) || safeOptions[0];
+  targetElement.innerHTML = `
+    <div class="select js-select${classes ? ` ${classes}` : ""}">
+      <input class="select__input" type="hidden" name="${escapeHtml(name)}" value="${escapeHtml(selectedValue)}">
+      <button class="select__trigger" type="button" aria-expanded="false" aria-haspopup="listbox">
+        <span class="select__value">${escapeHtml(selectedOption.label)}</span>
+        <svg width="31" height="31" viewBox="0 0 31 31" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M2.5 9.5L15.5 21.5L28.5 9.5" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"
+            stroke-linejoin="round" />
+        </svg>
+      </button>
+      <ul class="select__dropdown" role="listbox">
+        ${buildOptionsMarkup(safeOptions, selectedValue)}
+      </ul>
+    </div>
+  `;
+  initSelects(targetElement);
+  return targetElement.querySelector(".select__input");
+}
+
 // src/pages/random/random.js
+var randomLogger = createLogger("random-page");
+var SESSION_STORAGE_KEY = "freedom-generator:last-session-id";
+var DRAW_STORAGE_KEY = "freedom-generator:last-draw-id";
+var DRAW_SETTINGS_STORAGE_KEY = "freedom-generator:last-draw-settings";
+var DRAW_SETTINGS_VERSION = 2;
+var PREVIEW_BATCH_SIZE = 120;
+var PREVIEW_LOAD_AHEAD_PX = 80;
+function escapeHtml2(value) {
+  return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
+}
 function getRecordWord(value) {
   const normalized = Math.abs(value) % 100;
   const tail = normalized % 10;
@@ -666,6 +695,54 @@ function getRecordWord(value) {
     return "\u0437\u0430\u043F\u0438\u0441\u044C";
   }
   return "\u0437\u0430\u043F\u0438\u0441\u0435\u0439";
+}
+function readSavedSettings() {
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(DRAW_SETTINGS_STORAGE_KEY) || "null");
+    if (!parsed || typeof parsed !== "object") {
+      return null;
+    }
+    if (!parsed.version || parsed.version < DRAW_SETTINGS_VERSION) {
+      return {
+        ...parsed,
+        version: DRAW_SETTINGS_VERSION,
+        removeWinners: "yes"
+      };
+    }
+    return parsed;
+  } catch (error) {
+    randomLogger.warn("Failed to parse saved draw settings", error);
+    return null;
+  }
+}
+function saveDrawSettings(settings) {
+  window.localStorage.setItem(
+    DRAW_SETTINGS_STORAGE_KEY,
+    JSON.stringify({
+      ...settings,
+      version: DRAW_SETTINGS_VERSION
+    })
+  );
+}
+function applySelectValue(selectElement, value) {
+  if (!selectElement) {
+    return;
+  }
+  const hiddenInputElement = selectElement.querySelector(".select__input");
+  const valueElement = selectElement.querySelector(".select__value");
+  const optionElements = Array.from(selectElement.querySelectorAll(".select__option"));
+  if (!hiddenInputElement || !valueElement || optionElements.length === 0) {
+    return;
+  }
+  const targetOption = optionElements.find((optionElement) => optionElement.getAttribute("data-value") === value) || optionElements[0];
+  optionElements.forEach((optionElement) => {
+    const isSelected = optionElement === targetOption;
+    optionElement.classList.toggle("is-selected", isSelected);
+    optionElement.setAttribute("aria-selected", String(isSelected));
+  });
+  hiddenInputElement.value = targetOption.getAttribute("data-value") || "";
+  selectElement.dataset.value = hiddenInputElement.value;
+  valueElement.textContent = targetOption.textContent.trim();
 }
 function initCounter(counterElement) {
   const inputElement = counterElement.querySelector(".random__quantity-input");
@@ -682,7 +759,9 @@ function initCounter(counterElement) {
   };
   counterElement.querySelectorAll(".random__quantity-stepper-button").forEach((buttonElement) => {
     buttonElement.addEventListener("click", () => {
-      const direction = buttonElement.classList.contains("random__quantity-stepper-button--increase") ? "increase" : "decrease";
+      const direction = buttonElement.classList.contains(
+        "random__quantity-stepper-button--increase"
+      ) ? "increase" : "decrease";
       const currentValue = Number.parseInt(inputElement.value, 10) || minValue;
       const nextValue = direction === "increase" ? currentValue + 1 : currentValue - 1;
       inputElement.value = String(Math.max(minValue, nextValue));
@@ -694,22 +773,553 @@ function initCounter(counterElement) {
   inputElement.addEventListener("blur", normalizeValue);
   normalizeValue();
 }
+function setStatus(statusElement, message, kind = "info") {
+  statusElement.textContent = message;
+  if (!message) {
+    delete statusElement.dataset.kind;
+    return;
+  }
+  statusElement.dataset.kind = kind;
+}
+function toggleSidebar(sidebarElement, isOpen) {
+  sidebarElement.classList.toggle("random__sidebar--open", isOpen);
+  sidebarElement.setAttribute("aria-hidden", String(!isOpen));
+}
+function setListInteractivity(listWrapperElement, isInteractive) {
+  listWrapperElement.classList.toggle("random__list--interactive", isInteractive);
+  listWrapperElement.setAttribute("role", isInteractive ? "button" : "region");
+  listWrapperElement.setAttribute("tabindex", isInteractive ? "0" : "-1");
+  listWrapperElement.setAttribute(
+    "aria-label",
+    isInteractive ? "\u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0444\u0430\u0439\u043B" : "\u0421\u043F\u0438\u0441\u043E\u043A \u0434\u043E\u0441\u0442\u0443\u043F\u043D\u044B\u0445 \u0437\u0430\u043F\u0438\u0441\u0435\u0439 \u0434\u043B\u044F \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448\u0430"
+  );
+}
+function renderRecordsCounter(targetElement, visibleCount, totalCount = visibleCount) {
+  const safeVisibleCount = Math.max(0, Number(visibleCount) || 0);
+  const safeTotalCount = Math.max(safeVisibleCount, Number(totalCount) || 0);
+  const label = safeVisibleCount < safeTotalCount ? `${safeVisibleCount} \u0438\u0437 ${safeTotalCount} ${getRecordWord(safeTotalCount)}` : `${safeTotalCount} ${getRecordWord(safeTotalCount)}`;
+  mountDynamicSelect(targetElement, {
+    name: "recordsCounter",
+    value: String(safeTotalCount),
+    options: [
+      {
+        value: String(safeTotalCount),
+        label
+      }
+    ],
+    classes: "random__select"
+  });
+}
+function renderPlaceholder(listWrapperElement, listElement, hintElement, submitButtonElement, config) {
+  listWrapperElement.classList.add("random__list--empty");
+  setListInteractivity(listWrapperElement, config.isInteractive);
+  listElement.innerHTML = `
+    <li class="random__list-item random__list-item--empty">
+      <div class="random__list-item-text">
+        ${escapeHtml2(config.label)}
+      </div>
+    </li>
+  `;
+  hintElement.textContent = config.hint;
+  submitButtonElement.disabled = true;
+}
+function renderPreview(listWrapperElement, listElement, hintElement, submitButtonElement, preview) {
+  if (!preview || preview.preview.length === 0) {
+    renderPlaceholder(listWrapperElement, listElement, hintElement, submitButtonElement, {
+      label: "\u041D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u043D\u044B\u0445 \u0437\u0430\u043F\u0438\u0441\u0435\u0439",
+      hint: "\u0412 \u044D\u0442\u043E\u043C \u0444\u0430\u0439\u043B\u0435 \u0431\u043E\u043B\u044C\u0448\u0435 \u043D\u0435 \u043E\u0441\u0442\u0430\u043B\u043E\u0441\u044C \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432 \u0434\u043B\u044F \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448\u0430.",
+      isInteractive: false
+    });
+    return;
+  }
+  listWrapperElement.classList.remove("random__list--empty");
+  setListInteractivity(listWrapperElement, false);
+  listElement.innerHTML = preview.preview.map(
+    (item) => `
+        <li class="random__list-item" data-record-id="${escapeHtml2(item.recordId)}">
+          <div class="random__list-item-digit"></div>
+          <div class="random__list-item-text">${escapeHtml2(item.displayValue)}</div>
+        </li>
+      `
+  ).join("");
+  hintElement.textContent = preview.preview.length < preview.eligibleCount ? `\u041F\u043E\u043A\u0430\u0437\u0430\u043D\u043E ${preview.preview.length} \u0438\u0437 ${preview.eligibleCount} ${getRecordWord(
+    preview.eligibleCount
+  )}. \u041F\u0440\u043E\u043A\u0440\u0443\u0442\u0438\u0442\u0435 \u0441\u043F\u0438\u0441\u043E\u043A \u043D\u0438\u0436\u0435, \u0447\u0442\u043E\u0431\u044B \u043F\u043E\u0434\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u043E\u0441\u0442\u0430\u043B\u044C\u043D\u044B\u0435.` : `\u041F\u043E\u043A\u0430\u0437\u0430\u043D\u043E ${preview.preview.length} \u0438\u0437 ${preview.eligibleCount} ${getRecordWord(
+    preview.eligibleCount
+  )}.`;
+  submitButtonElement.disabled = preview.eligibleCount === 0;
+}
+function highlightWinners(listElement, winners, shouldAutoScroll) {
+  const winnerIds = new Set(winners.map((winner) => winner.recordId));
+  const firstWinnerId = winners[0]?.recordId;
+  listElement.querySelectorAll(".random__list-item").forEach((itemElement) => {
+    itemElement.classList.toggle(
+      "random__list-item--winner",
+      winnerIds.has(itemElement.dataset.recordId)
+    );
+  });
+  const winnerElement = firstWinnerId ? listElement.querySelector(`[data-record-id="${firstWinnerId}"]`) : null;
+  if (winnerElement && shouldAutoScroll) {
+    winnerElement.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+  }
+}
 function initRandomControls() {
   const randomSectionElement = document.querySelector(".random");
   if (!randomSectionElement) {
     return;
   }
+  const state = {
+    session: null,
+    preview: null,
+    lastDraw: null,
+    pendingFile: null,
+    isSidebarOpen: false,
+    previewLimit: PREVIEW_BATCH_SIZE,
+    isLoadingMorePreview: false
+  };
+  const formElement = randomSectionElement.querySelector(".random__form");
+  const fileInputElement = randomSectionElement.querySelector("[data-file-input]");
+  const listWrapperElement = randomSectionElement.querySelector("[data-upload-zone]");
+  const listElement = randomSectionElement.querySelector("[data-records-list]");
+  const hintElement = randomSectionElement.querySelector("[data-list-hint]");
+  const statusElement = randomSectionElement.querySelector("[data-status]");
+  const submitButtonElement = randomSectionElement.querySelector("[data-draw-submit]");
+  const sidebarElement = randomSectionElement.querySelector("[data-settings-sidebar]");
+  const recordsSelectMountElement = randomSectionElement.querySelector("[data-records-select]");
+  const autoScrollElement = randomSectionElement.querySelector('input[name="autoScroll"]');
+  const winnersCountInputElement = randomSectionElement.querySelector(".random__quantity-input");
+  const listScrollElement = randomSectionElement.querySelector(".random__list-scroll");
+  const resetExclusionsButtonElement = randomSectionElement.querySelector(
+    "[data-reset-exclusions-button]"
+  );
+  const resetExclusionsDescriptionElement = randomSectionElement.querySelector(
+    "[data-reset-exclusions-description]"
+  );
   randomSectionElement.querySelectorAll(".random__quantity-field--counter").forEach((counterElement) => {
     initCounter(counterElement);
   });
+  function applySavedSidebarSettings(savedSettings) {
+    if (!savedSettings) {
+      return;
+    }
+    if (savedSettings.winnersCount && winnersCountInputElement) {
+      winnersCountInputElement.value = String(savedSettings.winnersCount);
+      winnersCountInputElement.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    if (typeof savedSettings.autoScroll === "boolean" && autoScrollElement) {
+      autoScrollElement.checked = savedSettings.autoScroll;
+    }
+    applySelectValue(
+      formElement.querySelector('input[name="removeWinners"]')?.closest(".select"),
+      savedSettings.removeWinners || "yes"
+    );
+    applySelectValue(
+      formElement.querySelector('input[name="sortResults"]')?.closest(".select"),
+      savedSettings.sortResults || "no"
+    );
+  }
+  function syncRecordsCounter() {
+    if (state.pendingFile) {
+      renderRecordsCounter(recordsSelectMountElement, 0, 0);
+      return;
+    }
+    const visibleCount = state.preview?.preview?.length ?? state.session?.counts?.activeRecords ?? 0;
+    const totalCount = state.preview?.eligibleCount ?? state.session?.counts?.activeRecords ?? visibleCount;
+    renderRecordsCounter(recordsSelectMountElement, visibleCount, totalCount);
+  }
+  function syncSidebarActions() {
+    if (!resetExclusionsButtonElement || !resetExclusionsDescriptionElement) {
+      return;
+    }
+    const excludedCount = state.session?.counts?.excludedRecords ?? 0;
+    resetExclusionsButtonElement.textContent = excludedCount > 0 ? `\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435 (${excludedCount})` : "\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435";
+    if (state.pendingFile) {
+      resetExclusionsButtonElement.disabled = true;
+      resetExclusionsDescriptionElement.textContent = "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u0435 \u0432\u044B\u0431\u0440\u0430\u043D\u043D\u044B\u0439 \u0444\u0430\u0439\u043B, \u0437\u0430\u0442\u0435\u043C \u043C\u043E\u0436\u043D\u043E \u043E\u0447\u0438\u0449\u0430\u0442\u044C \u0438\u0441\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F.";
+      return;
+    }
+    if (!state.session) {
+      resetExclusionsButtonElement.disabled = true;
+      resetExclusionsDescriptionElement.textContent = "\u041A\u043D\u043E\u043F\u043A\u0430 \u0441\u0442\u0430\u043D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u043D\u0430 \u043F\u043E\u0441\u043B\u0435 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0438 \u0444\u0430\u0439\u043B\u0430.";
+      return;
+    }
+    if (excludedCount === 0) {
+      resetExclusionsButtonElement.disabled = true;
+      resetExclusionsDescriptionElement.textContent = "\u0414\u043B\u044F \u0442\u0435\u043A\u0443\u0449\u0435\u0433\u043E \u0444\u0430\u0439\u043B\u0430 \u0441\u0435\u0439\u0447\u0430\u0441 \u043D\u0435\u0442 \u0438\u0441\u043A\u043B\u044E\u0447\u0451\u043D\u043D\u044B\u0445 \u0437\u0430\u043F\u0438\u0441\u0435\u0439.";
+      return;
+    }
+    resetExclusionsButtonElement.disabled = false;
+    resetExclusionsDescriptionElement.textContent = `\u0414\u043B\u044F \u0442\u0435\u043A\u0443\u0449\u0435\u0433\u043E \u0444\u0430\u0439\u043B\u0430 \u0438\u0441\u043A\u043B\u044E\u0447\u0435\u043D\u043E ${excludedCount} ${getRecordWord(
+      excludedCount
+    )}.`;
+  }
+  function syncInitialState() {
+    state.previewLimit = PREVIEW_BATCH_SIZE;
+    renderRecordsCounter(recordsSelectMountElement, 0, 0);
+    renderPlaceholder(listWrapperElement, listElement, hintElement, submitButtonElement, {
+      label: "\u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u0435 \u0444\u0430\u0439\u043B",
+      hint: "\u041D\u0430\u0436\u043C\u0438\u0442\u0435 \u043D\u0430 \u043E\u0431\u043B\u0430\u0441\u0442\u044C \u0441\u043F\u0438\u0441\u043A\u0430, \u0447\u0442\u043E\u0431\u044B \u0432\u044B\u0431\u0440\u0430\u0442\u044C Excel-\u0444\u0430\u0439\u043B.",
+      isInteractive: true
+    });
+    syncSidebarActions();
+  }
+  function handlePendingFile(file) {
+    state.pendingFile = file;
+    state.previewLimit = PREVIEW_BATCH_SIZE;
+    syncRecordsCounter();
+    renderPlaceholder(listWrapperElement, listElement, hintElement, submitButtonElement, {
+      label: file.name,
+      hint: "\u0424\u0430\u0439\u043B \u0432\u044B\u0431\u0440\u0430\u043D. \u041D\u0430\u0436\u043C\u0438\u0442\u0435 \u043D\u0430 \u0438\u043A\u043E\u043D\u043A\u0443 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u044F \u0441\u043F\u0440\u0430\u0432\u0430, \u0447\u0442\u043E\u0431\u044B \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0441\u043F\u0438\u0441\u043E\u043A.",
+      isInteractive: true
+    });
+    setStatus(statusElement, "\u0424\u0430\u0439\u043B \u0432\u044B\u0431\u0440\u0430\u043D \u0438 \u043E\u0436\u0438\u0434\u0430\u0435\u0442 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0438.", "success");
+    syncSidebarActions();
+  }
+  async function refreshPreview(options = {}) {
+    if (!state.session) {
+      return;
+    }
+    const {
+      limit = state.previewLimit,
+      silent = false,
+      statusMessage = "\u041E\u0431\u043D\u043E\u0432\u043B\u044F\u0435\u043C \u0441\u043F\u0438\u0441\u043E\u043A \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432\u2026"
+    } = options;
+    state.previewLimit = Math.max(PREVIEW_BATCH_SIZE, limit);
+    if (!silent) {
+      setStatus(statusElement, statusMessage);
+    }
+    try {
+      const response = await api.getPreview(state.session.id, {
+        limit: state.previewLimit
+      });
+      state.session = response.session;
+      state.preview = response.preview;
+      state.pendingFile = null;
+      renderPreview(
+        listWrapperElement,
+        listElement,
+        hintElement,
+        submitButtonElement,
+        state.preview
+      );
+      syncRecordsCounter();
+      syncSidebarActions();
+      if (!silent) {
+        setStatus(statusElement, "\u0421\u043F\u0438\u0441\u043E\u043A \u0433\u043E\u0442\u043E\u0432 \u043A \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448\u0443.", "success");
+      }
+    } catch (error) {
+      randomLogger.error("Preview refresh failed", error);
+      setStatus(statusElement, error.message, "error");
+      syncSidebarActions();
+    }
+  }
+  async function hydrateSession(sessionId) {
+    try {
+      const response = await api.getSession(sessionId);
+      state.session = response.session;
+      state.pendingFile = null;
+      state.previewLimit = PREVIEW_BATCH_SIZE;
+      window.localStorage.setItem(SESSION_STORAGE_KEY, response.session.id);
+      applySavedSidebarSettings(readSavedSettings());
+      syncSidebarActions();
+      await refreshPreview();
+    } catch (error) {
+      randomLogger.warn("Stored session restore failed", error);
+      setStatus(
+        statusElement,
+        "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0432\u043E\u0441\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u044C \u043F\u0440\u043E\u0448\u043B\u0443\u044E \u0441\u0435\u0441\u0441\u0438\u044E. \u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u0435 \u0444\u0430\u0439\u043B \u0437\u0430\u043D\u043E\u0432\u043E.",
+        "error"
+      );
+      syncInitialState();
+    }
+  }
+  function openFilePicker() {
+    fileInputElement?.click();
+  }
+  async function importPendingFile() {
+    if (!state.pendingFile) {
+      if (state.session) {
+        setStatus(
+          statusElement,
+          "\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u043D\u043E\u0432\u044B\u0439 \u0444\u0430\u0439\u043B, \u0437\u0430\u0442\u0435\u043C \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0434\u0438\u0442\u0435 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0443 \u044D\u0442\u043E\u0439 \u0438\u043A\u043E\u043D\u043A\u043E\u0439.",
+          "info"
+        );
+      } else {
+        setStatus(statusElement, "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0432\u044B\u0431\u0435\u0440\u0438\u0442\u0435 Excel-\u0444\u0430\u0439\u043B \u0432 \u043E\u0431\u043B\u0430\u0441\u0442\u0438 \u0441\u043F\u0438\u0441\u043A\u0430.", "info");
+      }
+      openFilePicker();
+      return;
+    }
+    setStatus(statusElement, "\u0418\u043C\u043F\u043E\u0440\u0442\u0438\u0440\u0443\u0435\u043C Excel-\u0444\u0430\u0439\u043B \u0438 \u0441\u043E\u0431\u0438\u0440\u0430\u0435\u043C \u0441\u043F\u0438\u0441\u043E\u043A \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432\u2026");
+    try {
+      const response = await api.importReport(state.pendingFile);
+      state.session = response.session;
+      state.preview = response.preview;
+      state.lastDraw = null;
+      state.pendingFile = null;
+      state.previewLimit = Math.max(PREVIEW_BATCH_SIZE, response.preview.preview.length);
+      window.localStorage.setItem(SESSION_STORAGE_KEY, response.session.id);
+      window.localStorage.removeItem(DRAW_STORAGE_KEY);
+      renderPreview(
+        listWrapperElement,
+        listElement,
+        hintElement,
+        submitButtonElement,
+        response.preview
+      );
+      syncRecordsCounter();
+      syncSidebarActions();
+      setStatus(statusElement, "\u0424\u0430\u0439\u043B \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D. \u041C\u043E\u0436\u043D\u043E \u0437\u0430\u043F\u0443\u0441\u043A\u0430\u0442\u044C \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448.", "success");
+    } catch (error) {
+      randomLogger.error("Import failed", error);
+      state.pendingFile = null;
+      setStatus(statusElement, error.message, "error");
+      if (state.session && state.preview) {
+        renderPreview(
+          listWrapperElement,
+          listElement,
+          hintElement,
+          submitButtonElement,
+          state.preview
+        );
+        syncRecordsCounter();
+        syncSidebarActions();
+      } else {
+        syncInitialState();
+      }
+    }
+  }
+  async function handleDraw(event) {
+    event.preventDefault();
+    if (state.pendingFile) {
+      setStatus(
+        statusElement,
+        "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0434\u0438\u0442\u0435 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0443 \u0432\u044B\u0431\u0440\u0430\u043D\u043D\u043E\u0433\u043E \u0444\u0430\u0439\u043B\u0430 \u0438\u043A\u043E\u043D\u043A\u043E\u0439 \u0441\u043F\u0440\u0430\u0432\u0430.",
+        "error"
+      );
+      return;
+    }
+    if (!state.session) {
+      setStatus(statusElement, "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u0435 Excel-\u0444\u0430\u0439\u043B.", "error");
+      return;
+    }
+    const payload = {
+      winnersCount: winnersCountInputElement?.value || "1",
+      removeWinners: formElement.querySelector('input[name="removeWinners"]')?.value || "no",
+      sortResults: formElement.querySelector('input[name="sortResults"]')?.value || "no"
+    };
+    setStatus(statusElement, "\u0417\u0430\u043F\u0443\u0441\u043A\u0430\u0435\u043C \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448\u2026");
+    submitButtonElement.disabled = true;
+    try {
+      const response = await api.draw(state.session.id, payload);
+      state.session = response.session;
+      state.lastDraw = response.draw;
+      highlightWinners(listElement, response.draw.winners, autoScrollElement?.checked);
+      saveDrawSettings({
+        ...payload,
+        autoScroll: Boolean(autoScrollElement?.checked)
+      });
+      window.localStorage.setItem(SESSION_STORAGE_KEY, response.session.id);
+      window.localStorage.setItem(DRAW_STORAGE_KEY, response.draw.id);
+      syncSidebarActions();
+      setStatus(statusElement, "\u041F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0438 \u043E\u043F\u0440\u0435\u0434\u0435\u043B\u0435\u043D\u044B. \u041F\u0435\u0440\u0435\u0445\u043E\u0434\u0438\u043C \u043A \u044D\u043A\u0440\u0430\u043D\u0443 \u0440\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442\u043E\u0432\u2026", "success");
+      const delay = autoScrollElement?.checked ? 1e3 : 250;
+      window.setTimeout(() => {
+        window.location.href = "/results.html";
+      }, delay);
+    } catch (error) {
+      randomLogger.error("Draw failed", error);
+      setStatus(statusElement, error.message, "error");
+      submitButtonElement.disabled = false;
+    }
+  }
+  listWrapperElement?.addEventListener("click", (event) => {
+    if (event.target.closest(".random__list-scroll") && !listWrapperElement.classList.contains("random__list--interactive")) {
+      return;
+    }
+    if (!listWrapperElement.classList.contains("random__list--interactive")) {
+      return;
+    }
+    openFilePicker();
+  });
+  listWrapperElement?.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") {
+      return;
+    }
+    if (!listWrapperElement.classList.contains("random__list--interactive")) {
+      return;
+    }
+    event.preventDefault();
+    openFilePicker();
+  });
+  listScrollElement?.addEventListener("scroll", () => {
+    if (!state.session || !state.preview || state.isLoadingMorePreview) {
+      return;
+    }
+    if (state.preview.preview.length >= state.preview.eligibleCount) {
+      return;
+    }
+    const distanceToBottom = listScrollElement.scrollHeight - listScrollElement.scrollTop - listScrollElement.clientHeight;
+    if (distanceToBottom > PREVIEW_LOAD_AHEAD_PX) {
+      return;
+    }
+    state.isLoadingMorePreview = true;
+    refreshPreview({
+      limit: state.preview.preview.length + PREVIEW_BATCH_SIZE,
+      silent: true
+    }).finally(() => {
+      state.isLoadingMorePreview = false;
+    });
+  });
+  fileInputElement?.addEventListener("change", () => {
+    const selectedFile = fileInputElement.files?.[0] || null;
+    if (!selectedFile) {
+      return;
+    }
+    handlePendingFile(selectedFile);
+  });
+  randomSectionElement.querySelector("[data-import-trigger]")?.addEventListener("click", () => {
+    importPendingFile();
+  });
+  randomSectionElement.querySelector("[data-settings-toggle]")?.addEventListener("click", () => {
+    state.isSidebarOpen = !state.isSidebarOpen;
+    toggleSidebar(sidebarElement, state.isSidebarOpen);
+  });
+  resetExclusionsButtonElement?.addEventListener("click", async () => {
+    if (!state.session || state.pendingFile) {
+      return;
+    }
+    setStatus(statusElement, "\u0412\u043E\u0437\u0432\u0440\u0430\u0449\u0430\u0435\u043C \u0432\u0441\u0435\u0445 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432 \u0432 \u0442\u0435\u043A\u0443\u0449\u0438\u0439 \u0441\u043F\u0438\u0441\u043E\u043A\u2026");
+    resetExclusionsButtonElement.disabled = true;
+    try {
+      const response = await api.resetExclusions(state.session.id);
+      state.session = response.session;
+      state.lastDraw = null;
+      syncSidebarActions();
+      await refreshPreview();
+      setStatus(statusElement, "\u0418\u0441\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F \u043E\u0447\u0438\u0449\u0435\u043D\u044B. \u0412\u0441\u0435 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u0438 \u0441\u043D\u043E\u0432\u0430 \u0432 \u043F\u0443\u043B\u0435.", "success");
+    } catch (error) {
+      randomLogger.error("Reset exclusions failed", error);
+      syncSidebarActions();
+      setStatus(statusElement, error.message, "error");
+    }
+  });
+  formElement?.addEventListener("submit", handleDraw);
+  const queryParams = new URLSearchParams(window.location.search);
+  const shouldOpenSettings = queryParams.get("openSettings") === "1";
+  const storedSessionId = queryParams.get("sessionId") || window.localStorage.getItem(SESSION_STORAGE_KEY) || "";
+  applySavedSidebarSettings(readSavedSettings());
+  syncInitialState();
+  if (shouldOpenSettings) {
+    state.isSidebarOpen = true;
+    toggleSidebar(sidebarElement, true);
+  }
+  if (storedSessionId) {
+    hydrateSession(storedSessionId);
+  }
 }
 
 // src/pages/results/results.js
-function initResultsPage() {
-  const resultsSectionElement = document.querySelector(".results");
-  if (!resultsSectionElement) {
+var resultsLogger = createLogger("results-page");
+var SESSION_STORAGE_KEY2 = "freedom-generator:last-session-id";
+var DRAW_STORAGE_KEY2 = "freedom-generator:last-draw-id";
+var REPEAT_MIN_DURATION_MS = 1600;
+function wait(ms) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+}
+function escapeHtml3(value) {
+  return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
+}
+function formatResultTimestamp(value) {
+  if (!value) {
+    return "\u0431\u0435\u0437 \u0434\u0430\u0442\u044B";
+  }
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+  const day = String(parsed.getDate()).padStart(2, "0");
+  const month = String(parsed.getMonth() + 1).padStart(2, "0");
+  const year = parsed.getFullYear();
+  const hours = String(parsed.getHours()).padStart(2, "0");
+  const minutes = String(parsed.getMinutes()).padStart(2, "0");
+  const seconds = String(parsed.getSeconds()).padStart(2, "0");
+  return `${day}.${month}.${year} \u0432 ${hours}:${minutes}:${seconds}`;
+}
+function setStatus2(statusElement, message, kind = "info") {
+  statusElement.textContent = message;
+  if (!message) {
+    delete statusElement.dataset.kind;
     return;
   }
+  statusElement.dataset.kind = kind;
+}
+function buildDisplayMarkup(value) {
+  const text = String(value ?? "").trim();
+  if (/^\d{8,}$/.test(text)) {
+    return {
+      className: " results__text--ticket",
+      markup: text.match(/.{1,4}/g).map((group) => `<span class="results__value-group">${escapeHtml3(group)}</span>`).join("")
+    };
+  }
+  return {
+    className: "",
+    markup: escapeHtml3(text)
+  };
+}
+function renderResults(listElement, draw) {
+  if (!draw || draw.winners.length === 0) {
+    listElement.innerHTML = `
+      <li class="results__item results__item--empty">
+        <div class="results__text">
+          \u0423 \u044D\u0442\u043E\u0433\u043E \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448\u0430 \u043D\u0435\u0442 \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0435\u0439.
+        </div>
+      </li>
+    `;
+    return;
+  }
+  listElement.innerHTML = draw.winners.map((winner) => {
+    const display = buildDisplayMarkup(winner.displayValue);
+    return `
+        <li class="results__item">
+          <div class="results__digit"></div>
+          <div class="results__text${display.className}">${display.markup}</div>
+        </li>
+      `;
+  }).join("");
+}
+function renderSkeletonResults(listElement, count = 1) {
+  const safeCount = Math.max(1, Number.parseInt(String(count), 10) || 1);
+  listElement.innerHTML = Array.from({ length: safeCount }, (_, index) => {
+    const lineWidth = 52 + (index % 4 * 10 + 8);
+    return `
+      <li class="results__item results__item--skeleton" aria-hidden="true">
+        <div class="results__digit"></div>
+        <div class="results__text">
+          <span class="results__skeleton-line" style="width:${lineWidth}%"></span>
+        </div>
+      </li>
+    `;
+  }).join("");
+}
+function buildRepeatPayload(draw) {
+  if (!draw) {
+    return null;
+  }
+  return {
+    displayColumn: draw.displayColumn,
+    filters: draw.filters || {},
+    winnersCount: draw.winnersCount || 1,
+    removeWinners: draw.removeWinners ? "yes" : "no",
+    sortResults: draw.sortResults || "no"
+  };
+}
+function initViewToggle(resultsSectionElement) {
   const typeElements = Array.from(resultsSectionElement.querySelectorAll(".results__type"));
   if (typeElements.length === 0) {
     return;
@@ -725,9 +1335,7 @@ function initResultsPage() {
       resultsSectionElement.classList.add("results--view-blocks");
       return;
     }
-    if (targetElement.classList.contains("results__type--list")) {
-      resultsSectionElement.classList.add("results--view-list");
-    }
+    resultsSectionElement.classList.add("results--view-list");
   };
   typeElements.forEach((typeElement) => {
     typeElement.addEventListener("click", () => {
@@ -740,8 +1348,198 @@ function initResultsPage() {
       }
     });
   });
-  const defaultTypeElement = resultsSectionElement.querySelector(".results__type--active") || typeElements[0];
-  applyType(defaultTypeElement);
+  applyType(resultsSectionElement.querySelector(".results__type--active") || typeElements[0]);
+}
+function buildActionSelectConfig(draw) {
+  if (!draw) {
+    return {
+      value: "disabled",
+      options: [{ value: "disabled", label: "\u0414\u0435\u0439\u0441\u0442\u0432\u0438\u044F \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u043D\u044B" }]
+    };
+  }
+  if (draw.appliedRemoval) {
+    return {
+      value: "removed",
+      options: [
+        { value: "removed", label: "\u041F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0438 \u0443\u0436\u0435 \u0443\u0431\u0440\u0430\u043D\u044B \u0438\u0437 \u0441\u043F\u0438\u0441\u043A\u0430" },
+        { value: "reset-exclusions", label: "\u0421\u0431\u0440\u043E\u0441\u0438\u0442\u044C \u0432\u0441\u0435 \u0438\u0441\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F" }
+      ]
+    };
+  }
+  return {
+    value: "exclude-draw",
+    options: [
+      { value: "exclude-draw", label: "\u0423\u0431\u0440\u0430\u0442\u044C \u0438\u0437 \u0441\u043F\u0438\u0441\u043A\u0430 \u0442\u0435\u043A\u0443\u0449\u0438\u0445 \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0435\u0439" },
+      { value: "reset-exclusions", label: "\u0421\u0431\u0440\u043E\u0441\u0438\u0442\u044C \u0432\u0441\u0435 \u0438\u0441\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F" }
+    ]
+  };
+}
+function initResultsPage() {
+  const resultsSectionElement = document.querySelector(".results");
+  if (!resultsSectionElement) {
+    return;
+  }
+  initViewToggle(resultsSectionElement);
+  const listElement = resultsSectionElement.querySelector("[data-results-list]");
+  const subtextElement = resultsSectionElement.querySelector("[data-results-subtext]");
+  const statusElement = resultsSectionElement.querySelector("[data-results-status]");
+  const actionSelectMountElement = resultsSectionElement.querySelector(
+    "[data-results-action-select]"
+  );
+  const backButtonElement = resultsSectionElement.querySelector("[data-back-button]");
+  const repeatButtonElement = resultsSectionElement.querySelector("[data-repeat-button]");
+  const queryParams = new URLSearchParams(window.location.search);
+  let sessionId = queryParams.get("sessionId") || window.localStorage.getItem(SESSION_STORAGE_KEY2) || "";
+  let drawId = queryParams.get("drawId") || window.localStorage.getItem(DRAW_STORAGE_KEY2) || "";
+  if (queryParams.get("sessionId") || queryParams.get("drawId")) {
+    if (sessionId) {
+      window.localStorage.setItem(SESSION_STORAGE_KEY2, sessionId);
+    }
+    if (drawId) {
+      window.localStorage.setItem(DRAW_STORAGE_KEY2, drawId);
+    }
+    window.history.replaceState({}, "", "/results.html");
+  }
+  const state = {
+    session: null,
+    draw: null,
+    isActionPending: false,
+    isRepeatPending: false
+  };
+  function renderActionSelect() {
+    const config = buildActionSelectConfig(state.draw);
+    mountDynamicSelect(actionSelectMountElement, {
+      name: "resultsAction",
+      value: config.value,
+      options: config.options,
+      classes: "select--up results__select"
+    });
+    actionSelectMountElement.querySelector(".select__input")?.addEventListener("change", async (event) => {
+      if (state.isActionPending) {
+        return;
+      }
+      if (event.target.value === "disabled" || event.target.value === "removed") {
+        return;
+      }
+      if (!state.session) {
+        return;
+      }
+      if (event.target.value === "exclude-draw") {
+        if (!state.draw) {
+          return;
+        }
+        state.isActionPending = true;
+        setStatus2(statusElement, "\u0423\u0431\u0438\u0440\u0430\u0435\u043C \u0442\u0435\u043A\u0443\u0449\u0438\u0445 \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0435\u0439 \u0438\u0437 \u0441\u043F\u0438\u0441\u043A\u0430\u2026");
+        try {
+          const response = await api.excludeDraw(state.session.id, state.draw.id);
+          state.session = response.session;
+          state.draw = response.draw;
+          renderActionSelect();
+          setStatus2(
+            statusElement,
+            "\u041F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0438 \u0438\u0441\u043A\u043B\u044E\u0447\u0435\u043D\u044B. \u041C\u043E\u0436\u043D\u043E \u0432\u043E\u0437\u0432\u0440\u0430\u0449\u0430\u0442\u044C\u0441\u044F \u043A \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0430\u043C.",
+            "success"
+          );
+        } catch (error) {
+          resultsLogger.error("Failed to exclude winners", error);
+          setStatus2(statusElement, error.message, "error");
+        } finally {
+          state.isActionPending = false;
+        }
+        return;
+      }
+      if (event.target.value === "reset-exclusions") {
+        state.isActionPending = true;
+        setStatus2(statusElement, "\u0421\u0431\u0440\u0430\u0441\u044B\u0432\u0430\u0435\u043C \u0432\u0441\u0435 \u0438\u0441\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F\u2026");
+        try {
+          const response = await api.resetExclusions(state.session.id);
+          state.session = response.session;
+          if (state.draw) {
+            state.draw.appliedRemoval = false;
+          }
+          renderActionSelect();
+          setStatus2(statusElement, "\u0412\u0441\u0435 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u0438 \u0441\u043D\u043E\u0432\u0430 \u0432\u043E\u0437\u0432\u0440\u0430\u0449\u0435\u043D\u044B \u0432 \u0441\u043F\u0438\u0441\u043E\u043A.", "success");
+        } catch (error) {
+          resultsLogger.error("Failed to reset exclusions", error);
+          setStatus2(statusElement, error.message, "error");
+        } finally {
+          state.isActionPending = false;
+        }
+      }
+    });
+  }
+  async function loadDraw() {
+    if (!sessionId || !drawId) {
+      setStatus2(statusElement, "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0432\u044B\u043F\u043E\u043B\u043D\u0438\u0442\u0435 \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448 \u043D\u0430 \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0435 \u043D\u0430\u0441\u0442\u0440\u043E\u0435\u043A.", "error");
+      return;
+    }
+    setStatus2(statusElement, "\u0417\u0430\u0433\u0440\u0443\u0436\u0430\u0435\u043C \u0440\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442\u044B \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448\u0430\u2026");
+    try {
+      const response = await api.getDraw(sessionId, drawId);
+      state.session = response.session;
+      state.draw = response.draw;
+      window.localStorage.setItem(SESSION_STORAGE_KEY2, response.session.id);
+      window.localStorage.setItem(DRAW_STORAGE_KEY2, response.draw.id);
+      renderResults(listElement, response.draw);
+      renderActionSelect();
+      subtextElement.textContent = formatResultTimestamp(response.draw.createdAt);
+      setStatus2(statusElement, "");
+    } catch (error) {
+      resultsLogger.error("Failed to load draw", error);
+      setStatus2(statusElement, error.message, "error");
+    }
+  }
+  backButtonElement?.addEventListener("click", () => {
+    if (!sessionId) {
+      window.location.href = "/random.html";
+      return;
+    }
+    window.location.href = "/random.html?openSettings=1";
+  });
+  repeatButtonElement?.addEventListener("click", async () => {
+    if (!state.session || !state.draw || state.isRepeatPending) {
+      return;
+    }
+    const previousDraw = state.draw;
+    const payload = buildRepeatPayload(state.draw);
+    if (!payload) {
+      return;
+    }
+    state.isRepeatPending = true;
+    repeatButtonElement.disabled = true;
+    repeatButtonElement.textContent = "\u0420\u0430\u0437\u044B\u0433\u0440\u044B\u0432\u0430\u0435\u043C...";
+    resultsSectionElement.classList.add("results--refreshing");
+    renderSkeletonResults(listElement, previousDraw.winnersCount || previousDraw.winners.length || 1);
+    setStatus2(statusElement, "\u041F\u0440\u043E\u0432\u043E\u0434\u0438\u043C \u0441\u043B\u0435\u0434\u0443\u044E\u0449\u0438\u0439 \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448...");
+    try {
+      const [response] = await Promise.all([
+        api.draw(state.session.id, payload),
+        wait(REPEAT_MIN_DURATION_MS)
+      ]);
+      state.session = response.session;
+      state.draw = response.draw;
+      sessionId = response.session.id;
+      drawId = response.draw.id;
+      window.localStorage.setItem(SESSION_STORAGE_KEY2, response.session.id);
+      window.localStorage.setItem(DRAW_STORAGE_KEY2, response.draw.id);
+      window.history.replaceState({}, "", "/results.html");
+      renderResults(listElement, response.draw);
+      renderActionSelect();
+      subtextElement.textContent = formatResultTimestamp(response.draw.createdAt);
+      setStatus2(statusElement, "\u041D\u043E\u0432\u044B\u0435 \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0438 \u043E\u043F\u0440\u0435\u0434\u0435\u043B\u0435\u043D\u044B.", "success");
+    } catch (error) {
+      resultsLogger.error("Failed to repeat draw", error);
+      renderResults(listElement, previousDraw);
+      setStatus2(statusElement, error.message, "error");
+    } finally {
+      state.isRepeatPending = false;
+      repeatButtonElement.disabled = false;
+      repeatButtonElement.textContent = "\u0420\u0430\u0437\u044B\u0433\u0440\u0430\u0442\u044C \u0435\u0449\u0451";
+      resultsSectionElement.classList.remove("results--refreshing");
+    }
+  });
+  renderActionSelect();
+  loadDraw();
 }
 
 // src/js/main.js

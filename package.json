@@ -4,14 +4,14 @@
   "description": "Modern Gulp starter for static layout projects with blocks and page templates",
   "private": true,
   "scripts": {
-    "dev": "node scripts/dev-server.js",
-    "start": "node scripts/dev-server.js",
+    "dev": "node server/index.js",
+    "start": "node server/index.js",
     "fonts": "node scripts/convert-fonts.js",
     "build": "gulp build",
     "clean": "gulp clean",
     "format": "npm run format:templates && npm run format:assets",
     "format:templates": "python3 scripts/format_njk.py",
-    "format:assets": "prettier --write \"src/**/*.{js,scss,css,json}\" \".vscode/*.json\" \"*.{json,md}\""
+    "format:assets": "prettier --write \"src/**/*.{js,scss,css,json}\" \"server/**/*.js\" \".vscode/*.json\" \"*.{json,md,yml}\""
   },
   "author": "Deorfeal",
   "license": "ISC",
@@ -38,5 +38,10 @@
     "sass": "^1.93.2",
     "ttf2woff": "^3.0.0",
     "ttf2woff2": "^8.0.1"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "multer": "^2.0.2",
+    "xlsx": "^0.18.5"
   }
 }

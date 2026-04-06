@@ -8,7 +8,6 @@
     <meta name="description"
           content="Страница результатов" />
     <link rel="stylesheet" href="css/style.min.css" />
-    <link rel="stylesheet" href="js/main.min.css" />
   </head>
   <body class="page-results">
     <div class="wrapper">
@@ -22,7 +21,7 @@
   </picture>
   <div class="container">
     <div class="results__layout">
-      <a class="results__logo logo" href="#">
+      <a class="results__logo logo" href="/random.html">
         <img class="logo__image" src="images/logo.svg" alt="logo">
       </a>
       <div class="results__main">
@@ -31,8 +30,8 @@
             <h2 class="results__title">
               Результаты
             </h2>
-            <p class="results__subtext">
-              09.04.2026 в 19:22:04 UTC+3
+            <p class="results__subtext" data-results-subtext>
+              Загружаем данные розыгрыша…
             </p>
           </div>
           <ul class="results__types">
@@ -46,64 +45,28 @@
           </ul>
         </div>
         <div class="results__body">
-          <ul class="results__list">
-            <li class="results__item">
-              <div class="results__digit">
-
-              </div>
+          <ul class="results__list" data-results-list>
+            <li class="results__item results__item--empty">
               <div class="results__text">
-                4748492839402812
-              </div>
-            </li>
-            <li class="results__item">
-              <div class="results__digit">
-
-              </div>
-              <div class="results__text">
-                4748492839405812
-              </div>
-            </li>
-            <li class="results__item">
-              <div class="results__digit">
-
-              </div>
-              <div class="results__text">
-                4748492839405812
-              </div>
-            </li>
-            <li class="results__item">
-              <div class="results__digit">
-
-              </div>
-              <div class="results__text">
-                4748492839402812
-              </div>
-            </li>
-            <li class="results__item">
-              <div class="results__digit">
-
-              </div>
-              <div class="results__text">
-                4748492839405812
-              </div>
-            </li>
-            <li class="results__item">
-              <div class="results__digit">
-
-              </div>
-              <div class="results__text">
-                4748492839405812
+                Результаты будут доступны после первого розыгрыша.
               </div>
             </li>
           </ul>
         </div>
-
-        <form class="results__form" action="#" method="post">
-          
+        <div class="results__primary">
+          <button class="random__submit results__repeat" type="button" data-repeat-button>
+            Разыграть ещё
+          </button>
+        </div>
+        <div class="results__footer">
+          <form class="results__form" action="#" method="post" novalidate>
+            <div class="results__controls">
+              <div class="results__select-mount" data-results-action-select>
+                
   <div class="select js-select select--up results__select">
-    <input class="select__input" type="hidden" name="listSource" value="current-list">
+    <input class="select__input" type="hidden" name="resultsAction" value="disabled">
     <button class="select__trigger" type="button" aria-expanded="false" aria-haspopup="listbox">
-      <span class="select__value">Убрать из списка текущих победителей</span>
+      <span class="select__value">Действия недоступны</span>
       <svg width="31" height="31" viewBox="0 0 31 31" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M2.5 9.5L15.5 21.5L28.5 9.5" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"
           stroke-linejoin="round" />
@@ -113,26 +76,32 @@
       
         <li>
           <button class="select__option is-selected" type="button"
-            data-value="current-list" role="option" aria-selected="true">
-            Убрать из списка текущих победителей
-          </button>
-        </li>
-      
-        <li>
-          <button class="select__option" type="button"
-            data-value="imported-list" role="option" aria-selected="false">
-            другое
+            data-value="disabled" role="option" aria-selected="true">
+            Действия недоступны
           </button>
         </li>
       
     </ul>
   </div>
 
-        </form>
+              </div>
+              <button class="results__setup random__tool random__tool--setup" type="button" data-back-button
+                aria-label="Вернуться к настройкам">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M31.1941 13.137L27.6808 12.5572C27.4273 11.6874 27.0832 10.8448 26.6395 10.0476L28.6768 7.19366C28.9394 6.8222 28.9032 6.30578 28.5773 5.98868L25.9242 3.33409C25.5982 3.00793 25.0911 2.97169 24.7199 3.23443L21.8676 5.27294C21.0707 4.82899 20.2286 4.48471 19.3594 4.23103L18.7889 0.779162C18.7165 0.326161 18.318 0 17.8653 0H14.1166C13.6548 0 13.2654 0.335221 13.193 0.779162L12.6225 4.23103C11.7533 4.48471 10.9111 4.82899 10.1143 5.27294L7.26202 3.23443C6.89077 2.97169 6.37465 3.00793 6.05773 3.33409L3.40462 5.98868C3.07865 6.31484 3.03338 6.8222 3.30503 7.19366L5.34238 10.0476C4.89869 10.8448 4.55461 11.6874 4.30108 12.5572L0.787772 13.137C0.335027 13.2095 0 13.5991 0 14.0612V17.812C0 18.2741 0.335027 18.6636 0.787772 18.7361L4.30108 19.316C4.55461 20.1857 4.89869 21.0283 5.34238 21.8256L3.30503 24.6795C3.04244 25.051 3.07865 25.5674 3.40462 25.8845L6.05773 28.5391C6.3837 28.8652 6.89077 28.9015 7.26202 28.6387L10.1143 26.6002C10.9111 27.0442 11.7533 27.3884 12.6225 27.6421L13.202 31.2118C13.2745 31.6648 13.6638 32 14.1256 32H17.8744C18.3362 32 18.7255 31.6648 18.7979 31.2118L19.3775 27.6421C20.2467 27.3884 21.0888 27.0442 21.8857 26.6002L24.738 28.6387C25.1092 28.9015 25.6254 28.8652 25.9423 28.5391L28.5954 25.8845C28.9213 25.5583 28.9576 25.051 28.695 24.6795L26.6576 21.8256C27.1013 21.0283 27.4454 20.1857 27.6989 19.316L31.2122 18.7361C31.665 18.6636 32 18.2741 32 17.812V14.0612C32 13.5991 31.665 13.2095 31.2122 13.137H31.1941ZM15.9819 24.3715C11.3277 24.3715 7.55178 20.5844 7.55178 15.9366C7.55178 11.2888 11.3367 7.5017 15.9819 7.5017C20.627 7.5017 24.4211 11.2888 24.4211 15.9366C24.4211 20.5844 20.6361 24.3715 15.9819 24.3715Z"
+                    fill="white" />
+                </svg>
+              </button>
+            </div>
+          </form>
+          <div class="results__status" data-results-status role="status" aria-live="polite"></div>
+        </div>
       </div>
     </div>
   </div>
 </section>
+
 
       </main>
     </div>
