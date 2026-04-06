@@ -689,10 +689,15 @@ var SESSION_STORAGE_KEY = "freedom-generator:last-session-id";
 var DRAW_STORAGE_KEY = "freedom-generator:last-draw-id";
 var DRAW_SETTINGS_STORAGE_KEY = "freedom-generator:last-draw-settings";
 var DRAW_SETTINGS_VERSION = 2;
-var PREVIEW_BATCH_SIZE = 120;
-var PREVIEW_LOAD_AHEAD_PX = 80;
 function escapeHtml2(value) {
   return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
+}
+function formatDisplayValue(value) {
+  const text = String(value ?? "").trim();
+  if (/^\d{8,}$/.test(text)) {
+    return text.match(/.{1,4}/g)?.join(" ") || text;
+  }
+  return text;
 }
 function getRecordWord(value) {
   const normalized = Math.abs(value) % 100;
@@ -707,6 +712,20 @@ function getRecordWord(value) {
     return "\u0437\u0430\u043F\u0438\u0441\u044C";
   }
   return "\u0437\u0430\u043F\u0438\u0441\u0435\u0439";
+}
+function getWinnerWord(value) {
+  const normalized = Math.abs(value) % 100;
+  const tail = normalized % 10;
+  if (normalized > 10 && normalized < 20) {
+    return "\u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0435\u0439";
+  }
+  if (tail > 1 && tail < 5) {
+    return "\u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u044F";
+  }
+  if (tail === 1) {
+    return "\u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u044C";
+  }
+  return "\u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0435\u0439";
 }
 function readSavedSettings() {
   try {
@@ -797,26 +816,15 @@ function toggleSidebar(sidebarElement, isOpen) {
   sidebarElement.classList.toggle("random__sidebar--open", isOpen);
   sidebarElement.setAttribute("aria-hidden", String(!isOpen));
 }
-function setListInteractivity(listWrapperElement, isInteractive) {
-  listWrapperElement.classList.toggle("random__list--interactive", isInteractive);
-  listWrapperElement.setAttribute("role", isInteractive ? "button" : "region");
-  listWrapperElement.setAttribute("tabindex", isInteractive ? "0" : "-1");
-  listWrapperElement.setAttribute(
-    "aria-label",
-    isInteractive ? "\u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0444\u0430\u0439\u043B" : "\u0421\u043F\u0438\u0441\u043E\u043A \u0434\u043E\u0441\u0442\u0443\u043F\u043D\u044B\u0445 \u0437\u0430\u043F\u0438\u0441\u0435\u0439 \u0434\u043B\u044F \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448\u0430"
-  );
-}
-function renderRecordsCounter(targetElement, visibleCount, totalCount = visibleCount) {
-  const safeVisibleCount = Math.max(0, Number(visibleCount) || 0);
-  const safeTotalCount = Math.max(safeVisibleCount, Number(totalCount) || 0);
-  const label = safeVisibleCount < safeTotalCount ? `${safeVisibleCount} \u0438\u0437 ${safeTotalCount} ${getRecordWord(safeTotalCount)}` : `${safeTotalCount} ${getRecordWord(safeTotalCount)}`;
+function renderHistoryCounter(targetElement, count) {
+  const safeCount = Math.max(0, Number(count) || 0);
   mountDynamicSelect(targetElement, {
-    name: "recordsCounter",
-    value: String(safeTotalCount),
+    name: "winnersCounter",
+    value: String(safeCount),
     options: [
       {
-        value: String(safeTotalCount),
-        label
+        value: String(safeCount),
+        label: `${safeCount} ${getWinnerWord(safeCount)}`
       }
     ],
     classes: "random__select"
@@ -824,7 +832,6 @@ function renderRecordsCounter(targetElement, visibleCount, totalCount = visibleC
 }
 function renderPlaceholder(listWrapperElement, listElement, hintElement, submitButtonElement, config) {
   listWrapperElement.classList.add("random__list--empty");
-  setListInteractivity(listWrapperElement, config.isInteractive);
   listElement.innerHTML = `
     <li class="random__list-item random__list-item--empty">
       <div class="random__list-item-text">
@@ -833,46 +840,63 @@ function renderPlaceholder(listWrapperElement, listElement, hintElement, submitB
     </li>
   `;
   hintElement.textContent = config.hint;
-  submitButtonElement.disabled = true;
+  submitButtonElement.disabled = config.submitDisabled;
 }
-function renderPreview(listWrapperElement, listElement, hintElement, submitButtonElement, preview) {
-  if (!preview || preview.preview.length === 0) {
+function buildSessionHint(session) {
+  const totalCount = session?.counts?.totalRecords ?? 0;
+  const activeCount = session?.counts?.activeRecords ?? 0;
+  const excludedCount = session?.counts?.excludedRecords ?? 0;
+  const parts = [];
+  if (session?.source?.originalName) {
+    parts.push(`\u0424\u0430\u0439\u043B: ${session.source.originalName}.`);
+  }
+  if (totalCount > 0) {
+    parts.push(`\u0417\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u043E ${totalCount} ${getRecordWord(totalCount)}.`);
+  }
+  if (activeCount > 0) {
+    parts.push(`\u0421\u0435\u0439\u0447\u0430\u0441 \u0432 \u043F\u0443\u043B\u0435 ${activeCount} ${getRecordWord(activeCount)}.`);
+  } else if (totalCount > 0) {
+    parts.push("\u0412 \u0442\u0435\u043A\u0443\u0449\u0435\u043C \u0444\u0430\u0439\u043B\u0435 \u0431\u043E\u043B\u044C\u0448\u0435 \u043D\u0435 \u043E\u0441\u0442\u0430\u043B\u043E\u0441\u044C \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432 \u0434\u043B\u044F \u043D\u043E\u0432\u043E\u0433\u043E \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448\u0430.");
+  }
+  if (excludedCount > 0) {
+    parts.push(`\u0423\u0436\u0435 \u0438\u0441\u043A\u043B\u044E\u0447\u0435\u043D\u043E ${excludedCount} ${getRecordWord(excludedCount)}.`);
+  }
+  return parts.join(" ");
+}
+function renderWinnerHistory(listWrapperElement, listElement, hintElement, submitButtonElement, session) {
+  const winnerHistory = Array.isArray(session?.winnerHistory) ? [...session.winnerHistory].reverse() : [];
+  if (winnerHistory.length === 0) {
     renderPlaceholder(listWrapperElement, listElement, hintElement, submitButtonElement, {
-      label: "\u041D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u043D\u044B\u0445 \u0437\u0430\u043F\u0438\u0441\u0435\u0439",
-      hint: "\u0412 \u044D\u0442\u043E\u043C \u0444\u0430\u0439\u043B\u0435 \u0431\u043E\u043B\u044C\u0448\u0435 \u043D\u0435 \u043E\u0441\u0442\u0430\u043B\u043E\u0441\u044C \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432 \u0434\u043B\u044F \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448\u0430.",
-      isInteractive: false
+      label: "\u041F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0438 \u043F\u043E\u044F\u0432\u044F\u0442\u0441\u044F \u043F\u043E\u0441\u043B\u0435 \u043F\u0435\u0440\u0432\u043E\u0433\u043E \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448\u0430",
+      hint: buildSessionHint(session),
+      submitDisabled: (session?.counts?.activeRecords ?? 0) === 0
     });
     return;
   }
   listWrapperElement.classList.remove("random__list--empty");
-  setListInteractivity(listWrapperElement, false);
-  listElement.innerHTML = preview.preview.map(
-    (item) => `
-        <li class="random__list-item" data-record-id="${escapeHtml2(item.recordId)}">
+  listElement.innerHTML = winnerHistory.map(
+    (entry) => `
+        <li class="random__list-item" data-history-entry-id="${escapeHtml2(entry.id)}">
           <div class="random__list-item-digit"></div>
-          <div class="random__list-item-text">${escapeHtml2(item.displayValue)}</div>
+          <div class="random__list-item-text">${escapeHtml2(formatDisplayValue(entry.displayValue))}</div>
         </li>
       `
   ).join("");
-  hintElement.textContent = preview.preview.length < preview.eligibleCount ? `\u041F\u043E\u043A\u0430\u0437\u0430\u043D\u043E ${preview.preview.length} \u0438\u0437 ${preview.eligibleCount} ${getRecordWord(
-    preview.eligibleCount
-  )}. \u041F\u0440\u043E\u043A\u0440\u0443\u0442\u0438\u0442\u0435 \u0441\u043F\u0438\u0441\u043E\u043A \u043D\u0438\u0436\u0435, \u0447\u0442\u043E\u0431\u044B \u043F\u043E\u0434\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u043E\u0441\u0442\u0430\u043B\u044C\u043D\u044B\u0435.` : `\u041F\u043E\u043A\u0430\u0437\u0430\u043D\u043E ${preview.preview.length} \u0438\u0437 ${preview.eligibleCount} ${getRecordWord(
-    preview.eligibleCount
-  )}.`;
-  submitButtonElement.disabled = preview.eligibleCount === 0;
+  hintElement.textContent = buildSessionHint(session);
+  submitButtonElement.disabled = (session?.counts?.activeRecords ?? 0) === 0;
 }
-function highlightWinners(listElement, winners, shouldAutoScroll) {
-  const winnerIds = new Set(winners.map((winner) => winner.recordId));
-  const firstWinnerId = winners[0]?.recordId;
+function highlightWinnerHistory(listElement, historyEntryIds, shouldAutoScroll) {
+  const targetIds = new Set(historyEntryIds);
+  let firstWinnerElement = null;
   listElement.querySelectorAll(".random__list-item").forEach((itemElement) => {
-    itemElement.classList.toggle(
-      "random__list-item--winner",
-      winnerIds.has(itemElement.dataset.recordId)
-    );
+    const isWinner = targetIds.has(itemElement.dataset.historyEntryId);
+    itemElement.classList.toggle("random__list-item--winner", isWinner);
+    if (!firstWinnerElement && isWinner) {
+      firstWinnerElement = itemElement;
+    }
   });
-  const winnerElement = firstWinnerId ? listElement.querySelector(`[data-record-id="${firstWinnerId}"]`) : null;
-  if (winnerElement && shouldAutoScroll) {
-    winnerElement.scrollIntoView({
+  if (firstWinnerElement && shouldAutoScroll) {
+    firstWinnerElement.scrollIntoView({
       behavior: "smooth",
       block: "center"
     });
@@ -885,12 +909,9 @@ function initRandomControls() {
   }
   const state = {
     session: null,
-    preview: null,
     lastDraw: null,
-    pendingFile: null,
     isSidebarOpen: false,
-    previewLimit: PREVIEW_BATCH_SIZE,
-    isLoadingMorePreview: false
+    isImporting: false
   };
   const formElement = randomSectionElement.querySelector(".random__form");
   const fileInputElement = randomSectionElement.querySelector("[data-file-input]");
@@ -903,7 +924,7 @@ function initRandomControls() {
   const recordsSelectMountElement = randomSectionElement.querySelector("[data-records-select]");
   const autoScrollElement = randomSectionElement.querySelector('input[name="autoScroll"]');
   const winnersCountInputElement = randomSectionElement.querySelector(".random__quantity-input");
-  const listScrollElement = randomSectionElement.querySelector(".random__list-scroll");
+  const importTriggerButtonElement = randomSectionElement.querySelector("[data-import-trigger]");
   const resetExclusionsButtonElement = randomSectionElement.querySelector(
     "[data-reset-exclusions-button]"
   );
@@ -933,111 +954,72 @@ function initRandomControls() {
       savedSettings.sortResults || "no"
     );
   }
-  function syncRecordsCounter() {
-    if (state.pendingFile) {
-      renderRecordsCounter(recordsSelectMountElement, 0, 0);
-      return;
-    }
-    const visibleCount = state.preview?.preview?.length ?? state.session?.counts?.activeRecords ?? 0;
-    const totalCount = state.preview?.eligibleCount ?? state.session?.counts?.activeRecords ?? visibleCount;
-    renderRecordsCounter(recordsSelectMountElement, visibleCount, totalCount);
-  }
   function syncSidebarActions() {
     if (!resetExclusionsButtonElement || !resetExclusionsDescriptionElement) {
       return;
     }
     const excludedCount = state.session?.counts?.excludedRecords ?? 0;
-    resetExclusionsButtonElement.textContent = excludedCount > 0 ? `\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435 (${excludedCount})` : "\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435";
-    if (state.pendingFile) {
-      resetExclusionsButtonElement.disabled = true;
-      resetExclusionsDescriptionElement.textContent = "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u0435 \u0432\u044B\u0431\u0440\u0430\u043D\u043D\u044B\u0439 \u0444\u0430\u0439\u043B, \u0437\u0430\u0442\u0435\u043C \u043C\u043E\u0436\u043D\u043E \u043E\u0447\u0438\u0449\u0430\u0442\u044C \u0438\u0441\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F.";
-      return;
-    }
+    const winnerHistoryCount = state.session?.counts?.winnerHistory ?? state.session?.winnerHistory?.length ?? 0;
+    resetExclusionsButtonElement.textContent = excludedCount > 0 || winnerHistoryCount > 0 ? `\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435 (${Math.max(excludedCount, winnerHistoryCount)})` : "\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435";
     if (!state.session) {
       resetExclusionsButtonElement.disabled = true;
-      resetExclusionsDescriptionElement.textContent = "\u041A\u043D\u043E\u043F\u043A\u0430 \u0441\u0442\u0430\u043D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u043D\u0430 \u043F\u043E\u0441\u043B\u0435 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0438 \u0444\u0430\u0439\u043B\u0430.";
+      resetExclusionsDescriptionElement.textContent = "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u0435 \u0444\u0430\u0439\u043B. \u041F\u043E\u0441\u043B\u0435 \u044D\u0442\u043E\u0433\u043E \u0437\u0434\u0435\u0441\u044C \u043C\u043E\u0436\u043D\u043E \u043E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0438\u0441\u0442\u043E\u0440\u0438\u044E \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0435\u0439 \u0438 \u0438\u0441\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F.";
       return;
     }
-    if (excludedCount === 0) {
+    if (excludedCount === 0 && winnerHistoryCount === 0) {
       resetExclusionsButtonElement.disabled = true;
-      resetExclusionsDescriptionElement.textContent = "\u0414\u043B\u044F \u0442\u0435\u043A\u0443\u0449\u0435\u0433\u043E \u0444\u0430\u0439\u043B\u0430 \u0441\u0435\u0439\u0447\u0430\u0441 \u043D\u0435\u0442 \u0438\u0441\u043A\u043B\u044E\u0447\u0451\u043D\u043D\u044B\u0445 \u0437\u0430\u043F\u0438\u0441\u0435\u0439.";
+      resetExclusionsDescriptionElement.textContent = "\u0414\u043B\u044F \u0442\u0435\u043A\u0443\u0449\u0435\u0433\u043E \u0444\u0430\u0439\u043B\u0430 \u043F\u043E\u043A\u0430 \u043D\u0435\u0447\u0435\u0433\u043E \u043E\u0447\u0438\u0449\u0430\u0442\u044C.";
       return;
+    }
+    const details = [];
+    if (winnerHistoryCount > 0) {
+      details.push(`\u043E\u0447\u0438\u0441\u0442\u0438\u0442 \u0438\u0441\u0442\u043E\u0440\u0438\u044E \u0438\u0437 ${winnerHistoryCount} ${getWinnerWord(winnerHistoryCount)}`);
+    }
+    if (excludedCount > 0) {
+      details.push(`\u0432\u0435\u0440\u043D\u0451\u0442 \u0432 \u043F\u0443\u043B ${excludedCount} ${getRecordWord(excludedCount)}`);
     }
     resetExclusionsButtonElement.disabled = false;
-    resetExclusionsDescriptionElement.textContent = `\u0414\u043B\u044F \u0442\u0435\u043A\u0443\u0449\u0435\u0433\u043E \u0444\u0430\u0439\u043B\u0430 \u0438\u0441\u043A\u043B\u044E\u0447\u0435\u043D\u043E ${excludedCount} ${getRecordWord(
-      excludedCount
-    )}.`;
+    resetExclusionsDescriptionElement.textContent = `\u041A\u043D\u043E\u043F\u043A\u0430 ${details.join(" \u0438 ")}.`;
   }
-  function syncInitialState() {
-    state.previewLimit = PREVIEW_BATCH_SIZE;
-    renderRecordsCounter(recordsSelectMountElement, 0, 0);
-    renderPlaceholder(listWrapperElement, listElement, hintElement, submitButtonElement, {
-      label: "\u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u0435 \u0444\u0430\u0439\u043B",
-      hint: "\u041D\u0430\u0436\u043C\u0438\u0442\u0435 \u043D\u0430 \u043E\u0431\u043B\u0430\u0441\u0442\u044C \u0441\u043F\u0438\u0441\u043A\u0430, \u0447\u0442\u043E\u0431\u044B \u0432\u044B\u0431\u0440\u0430\u0442\u044C Excel-\u0444\u0430\u0439\u043B.",
-      isInteractive: true
-    });
-    syncSidebarActions();
-  }
-  function handlePendingFile(file) {
-    state.pendingFile = file;
-    state.previewLimit = PREVIEW_BATCH_SIZE;
-    syncRecordsCounter();
-    renderPlaceholder(listWrapperElement, listElement, hintElement, submitButtonElement, {
-      label: file.name,
-      hint: "\u0424\u0430\u0439\u043B \u0432\u044B\u0431\u0440\u0430\u043D. \u041D\u0430\u0436\u043C\u0438\u0442\u0435 \u043D\u0430 \u0438\u043A\u043E\u043D\u043A\u0443 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0438\u044F \u0441\u043F\u0440\u0430\u0432\u0430, \u0447\u0442\u043E\u0431\u044B \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0441\u043F\u0438\u0441\u043E\u043A.",
-      isInteractive: true
-    });
-    setStatus(statusElement, "\u0424\u0430\u0439\u043B \u0432\u044B\u0431\u0440\u0430\u043D \u0438 \u043E\u0436\u0438\u0434\u0430\u0435\u0442 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0438.", "success");
-    syncSidebarActions();
-  }
-  async function refreshPreview(options = {}) {
+  function renderCurrentState() {
+    const winnerHistoryCount = state.session?.counts?.winnerHistory ?? state.session?.winnerHistory?.length ?? 0;
+    renderHistoryCounter(recordsSelectMountElement, winnerHistoryCount);
     if (!state.session) {
+      renderPlaceholder(listWrapperElement, listElement, hintElement, submitButtonElement, {
+        label: "\u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u0435 \u0444\u0430\u0439\u043B",
+        hint: "\u041D\u0430\u0436\u043C\u0438\u0442\u0435 \u043D\u0430 \u0438\u043A\u043E\u043D\u043A\u0443 \u0441\u043F\u0440\u0430\u0432\u0430, \u0447\u0442\u043E\u0431\u044B \u0432\u044B\u0431\u0440\u0430\u0442\u044C \u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C Excel-\u0444\u0430\u0439\u043B.",
+        submitDisabled: true
+      });
+      syncSidebarActions();
       return;
     }
-    const {
-      limit = state.previewLimit,
-      silent = false,
-      statusMessage = "\u041E\u0431\u043D\u043E\u0432\u043B\u044F\u0435\u043C \u0441\u043F\u0438\u0441\u043E\u043A \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432\u2026"
-    } = options;
-    state.previewLimit = Math.max(PREVIEW_BATCH_SIZE, limit);
-    if (!silent) {
-      setStatus(statusElement, statusMessage);
+    renderWinnerHistory(
+      listWrapperElement,
+      listElement,
+      hintElement,
+      submitButtonElement,
+      state.session
+    );
+    syncSidebarActions();
+  }
+  function setImportingState(isImporting) {
+    state.isImporting = isImporting;
+    if (!importTriggerButtonElement) {
+      return;
     }
-    try {
-      const response = await api.getPreview(state.session.id, {
-        limit: state.previewLimit
-      });
-      state.session = response.session;
-      state.preview = response.preview;
-      state.pendingFile = null;
-      renderPreview(
-        listWrapperElement,
-        listElement,
-        hintElement,
-        submitButtonElement,
-        state.preview
-      );
-      syncRecordsCounter();
-      syncSidebarActions();
-      if (!silent) {
-        setStatus(statusElement, "\u0421\u043F\u0438\u0441\u043E\u043A \u0433\u043E\u0442\u043E\u0432 \u043A \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448\u0443.", "success");
-      }
-    } catch (error) {
-      randomLogger.error("Preview refresh failed", error);
-      setStatus(statusElement, error.message, "error");
-      syncSidebarActions();
-    }
+    importTriggerButtonElement.disabled = isImporting;
+    importTriggerButtonElement.setAttribute("aria-busy", String(isImporting));
   }
   async function hydrateSession(sessionId) {
     try {
+      setStatus(statusElement, "\u0417\u0430\u0433\u0440\u0443\u0436\u0430\u0435\u043C \u0442\u0435\u043A\u0443\u0449\u0443\u044E \u0441\u0435\u0441\u0441\u0438\u044E\u2026");
       const response = await api.getSession(sessionId);
       state.session = response.session;
-      state.pendingFile = null;
-      state.previewLimit = PREVIEW_BATCH_SIZE;
+      state.lastDraw = response.session.lastDraw || null;
       window.localStorage.setItem(SESSION_STORAGE_KEY, response.session.id);
       applySavedSidebarSettings(readSavedSettings());
-      syncSidebarActions();
-      await refreshPreview();
+      renderCurrentState();
+      setStatus(statusElement, "");
     } catch (error) {
       randomLogger.warn("Stored session restore failed", error);
       setStatus(
@@ -1045,75 +1027,59 @@ function initRandomControls() {
         "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0432\u043E\u0441\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u044C \u043F\u0440\u043E\u0448\u043B\u0443\u044E \u0441\u0435\u0441\u0441\u0438\u044E. \u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u0435 \u0444\u0430\u0439\u043B \u0437\u0430\u043D\u043E\u0432\u043E.",
         "error"
       );
-      syncInitialState();
+      state.session = null;
+      state.lastDraw = null;
+      renderCurrentState();
     }
   }
   function openFilePicker() {
-    fileInputElement?.click();
-  }
-  async function importPendingFile() {
-    if (!state.pendingFile) {
-      if (state.session) {
-        setStatus(
-          statusElement,
-          "\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u043D\u043E\u0432\u044B\u0439 \u0444\u0430\u0439\u043B, \u0437\u0430\u0442\u0435\u043C \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0434\u0438\u0442\u0435 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0443 \u044D\u0442\u043E\u0439 \u0438\u043A\u043E\u043D\u043A\u043E\u0439.",
-          "info"
-        );
-      } else {
-        setStatus(statusElement, "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0432\u044B\u0431\u0435\u0440\u0438\u0442\u0435 Excel-\u0444\u0430\u0439\u043B \u0432 \u043E\u0431\u043B\u0430\u0441\u0442\u0438 \u0441\u043F\u0438\u0441\u043A\u0430.", "info");
-      }
-      openFilePicker();
+    if (state.isImporting) {
       return;
     }
-    setStatus(statusElement, "\u0418\u043C\u043F\u043E\u0440\u0442\u0438\u0440\u0443\u0435\u043C Excel-\u0444\u0430\u0439\u043B \u0438 \u0441\u043E\u0431\u0438\u0440\u0430\u0435\u043C \u0441\u043F\u0438\u0441\u043E\u043A \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432\u2026");
+    fileInputElement?.click();
+  }
+  async function importFile(file) {
+    if (!file || state.isImporting) {
+      return;
+    }
+    const previousSession = state.session;
+    const previousDraw = state.lastDraw;
+    setImportingState(true);
+    setStatus(statusElement, "\u0418\u043C\u043F\u043E\u0440\u0442\u0438\u0440\u0443\u0435\u043C Excel-\u0444\u0430\u0439\u043B \u0438 \u0441\u043E\u0431\u0438\u0440\u0430\u0435\u043C \u043F\u0443\u043B \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432\u2026");
+    renderPlaceholder(listWrapperElement, listElement, hintElement, submitButtonElement, {
+      label: file.name,
+      hint: "\u0424\u0430\u0439\u043B \u0432\u044B\u0431\u0440\u0430\u043D. \u0416\u0434\u0451\u043C \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043D\u0438\u044F \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0438 \u0438 \u0438\u043D\u0432\u0435\u043D\u0442\u0430\u0440\u0438\u0437\u0430\u0446\u0438\u0438 \u0441\u043F\u0438\u0441\u043A\u0430.",
+      submitDisabled: true
+    });
     try {
-      const response = await api.importReport(state.pendingFile);
+      const response = await api.importReport(file);
       state.session = response.session;
-      state.preview = response.preview;
       state.lastDraw = null;
-      state.pendingFile = null;
-      state.previewLimit = Math.max(PREVIEW_BATCH_SIZE, response.preview.preview.length);
       window.localStorage.setItem(SESSION_STORAGE_KEY, response.session.id);
       window.localStorage.removeItem(DRAW_STORAGE_KEY);
-      renderPreview(
-        listWrapperElement,
-        listElement,
-        hintElement,
-        submitButtonElement,
-        response.preview
+      renderCurrentState();
+      setStatus(
+        statusElement,
+        `\u0424\u0430\u0439\u043B \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D. \u0412 \u043F\u0443\u043B\u0435 ${response.session.counts.activeRecords} ${getRecordWord(
+          response.session.counts.activeRecords
+        )}.`,
+        "success"
       );
-      syncRecordsCounter();
-      syncSidebarActions();
-      setStatus(statusElement, "\u0424\u0430\u0439\u043B \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D. \u041C\u043E\u0436\u043D\u043E \u0437\u0430\u043F\u0443\u0441\u043A\u0430\u0442\u044C \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448.", "success");
     } catch (error) {
       randomLogger.error("Import failed", error);
-      state.pendingFile = null;
+      state.session = previousSession;
+      state.lastDraw = previousDraw;
+      renderCurrentState();
       setStatus(statusElement, error.message, "error");
-      if (state.session && state.preview) {
-        renderPreview(
-          listWrapperElement,
-          listElement,
-          hintElement,
-          submitButtonElement,
-          state.preview
-        );
-        syncRecordsCounter();
-        syncSidebarActions();
-      } else {
-        syncInitialState();
+    } finally {
+      setImportingState(false);
+      if (fileInputElement) {
+        fileInputElement.value = "";
       }
     }
   }
   async function handleDraw(event) {
     event.preventDefault();
-    if (state.pendingFile) {
-      setStatus(
-        statusElement,
-        "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0434\u0438\u0442\u0435 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0443 \u0432\u044B\u0431\u0440\u0430\u043D\u043D\u043E\u0433\u043E \u0444\u0430\u0439\u043B\u0430 \u0438\u043A\u043E\u043D\u043A\u043E\u0439 \u0441\u043F\u0440\u0430\u0432\u0430.",
-        "error"
-      );
-      return;
-    }
     if (!state.session) {
       setStatus(statusElement, "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u0435 Excel-\u0444\u0430\u0439\u043B.", "error");
       return;
@@ -1127,9 +1093,12 @@ function initRandomControls() {
     submitButtonElement.disabled = true;
     try {
       const response = await api.draw(state.session.id, payload);
+      const latestHistory = Array.isArray(response.session.winnerHistory) ? response.session.winnerHistory : [];
+      const latestEntryIds = latestHistory.slice(-response.draw.winners.length).map((entry) => entry.id);
       state.session = response.session;
       state.lastDraw = response.draw;
-      highlightWinners(listElement, response.draw.winners, autoScrollElement?.checked);
+      renderCurrentState();
+      highlightWinnerHistory(listElement, latestEntryIds, Boolean(autoScrollElement?.checked));
       saveDrawSettings({
         ...payload,
         autoScroll: Boolean(autoScrollElement?.checked)
@@ -1148,74 +1117,39 @@ function initRandomControls() {
       submitButtonElement.disabled = false;
     }
   }
-  listWrapperElement?.addEventListener("click", (event) => {
-    if (event.target.closest(".random__list-scroll") && !listWrapperElement.classList.contains("random__list--interactive")) {
-      return;
-    }
-    if (!listWrapperElement.classList.contains("random__list--interactive")) {
-      return;
-    }
-    openFilePicker();
-  });
-  listWrapperElement?.addEventListener("keydown", (event) => {
-    if (event.key !== "Enter" && event.key !== " ") {
-      return;
-    }
-    if (!listWrapperElement.classList.contains("random__list--interactive")) {
-      return;
-    }
-    event.preventDefault();
-    openFilePicker();
-  });
-  listScrollElement?.addEventListener("scroll", () => {
-    if (!state.session || !state.preview || state.isLoadingMorePreview) {
-      return;
-    }
-    if (state.preview.preview.length >= state.preview.eligibleCount) {
-      return;
-    }
-    const distanceToBottom = listScrollElement.scrollHeight - listScrollElement.scrollTop - listScrollElement.clientHeight;
-    if (distanceToBottom > PREVIEW_LOAD_AHEAD_PX) {
-      return;
-    }
-    state.isLoadingMorePreview = true;
-    refreshPreview({
-      limit: state.preview.preview.length + PREVIEW_BATCH_SIZE,
-      silent: true
-    }).finally(() => {
-      state.isLoadingMorePreview = false;
-    });
-  });
   fileInputElement?.addEventListener("change", () => {
     const selectedFile = fileInputElement.files?.[0] || null;
     if (!selectedFile) {
       return;
     }
-    handlePendingFile(selectedFile);
+    importFile(selectedFile);
   });
-  randomSectionElement.querySelector("[data-import-trigger]")?.addEventListener("click", () => {
-    importPendingFile();
+  importTriggerButtonElement?.addEventListener("click", () => {
+    openFilePicker();
   });
   randomSectionElement.querySelector("[data-settings-toggle]")?.addEventListener("click", () => {
     state.isSidebarOpen = !state.isSidebarOpen;
     toggleSidebar(sidebarElement, state.isSidebarOpen);
   });
   resetExclusionsButtonElement?.addEventListener("click", async () => {
-    if (!state.session || state.pendingFile) {
+    if (!state.session) {
       return;
     }
-    setStatus(statusElement, "\u0412\u043E\u0437\u0432\u0440\u0430\u0449\u0430\u0435\u043C \u0432\u0441\u0435\u0445 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432 \u0432 \u0442\u0435\u043A\u0443\u0449\u0438\u0439 \u0441\u043F\u0438\u0441\u043E\u043A\u2026");
+    setStatus(statusElement, "\u041E\u0447\u0438\u0449\u0430\u0435\u043C \u0438\u0441\u0442\u043E\u0440\u0438\u044E \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0435\u0439 \u0438 \u0432\u043E\u0437\u0432\u0440\u0430\u0449\u0430\u0435\u043C \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432 \u0432 \u043F\u0443\u043B\u2026");
     resetExclusionsButtonElement.disabled = true;
     try {
       const response = await api.resetExclusions(state.session.id);
       state.session = response.session;
       state.lastDraw = null;
-      syncSidebarActions();
-      await refreshPreview();
-      setStatus(statusElement, "\u0418\u0441\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F \u043E\u0447\u0438\u0449\u0435\u043D\u044B. \u0412\u0441\u0435 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u0438 \u0441\u043D\u043E\u0432\u0430 \u0432 \u043F\u0443\u043B\u0435.", "success");
+      renderCurrentState();
+      setStatus(
+        statusElement,
+        "\u0418\u0441\u0442\u043E\u0440\u0438\u044F \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0435\u0439 \u043E\u0447\u0438\u0449\u0435\u043D\u0430. \u0412\u0441\u0435 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u0438 \u0441\u043D\u043E\u0432\u0430 \u0434\u043E\u0441\u0442\u0443\u043F\u043D\u044B \u0434\u043B\u044F \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448\u0430.",
+        "success"
+      );
     } catch (error) {
       randomLogger.error("Reset exclusions failed", error);
-      syncSidebarActions();
+      renderCurrentState();
       setStatus(statusElement, error.message, "error");
     }
   });
@@ -1224,7 +1158,7 @@ function initRandomControls() {
   const shouldOpenSettings = queryParams.get("openSettings") === "1";
   const storedSessionId = queryParams.get("sessionId") || window.localStorage.getItem(SESSION_STORAGE_KEY) || "";
   applySavedSidebarSettings(readSavedSettings());
-  syncInitialState();
+  renderCurrentState();
   if (shouldOpenSettings) {
     state.isSidebarOpen = true;
     toggleSidebar(sidebarElement, true);
@@ -1374,7 +1308,7 @@ function buildActionSelectConfig(draw) {
       value: "removed",
       options: [
         { value: "removed", label: "\u041F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0438 \u0443\u0436\u0435 \u0443\u0431\u0440\u0430\u043D\u044B \u0438\u0437 \u0441\u043F\u0438\u0441\u043A\u0430" },
-        { value: "reset-exclusions", label: "\u0421\u0431\u0440\u043E\u0441\u0438\u0442\u044C \u0432\u0441\u0435 \u0438\u0441\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F" }
+        { value: "reset-exclusions", label: "\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0438\u0441\u0442\u043E\u0440\u0438\u044E \u0438 \u0438\u0441\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F" }
       ]
     };
   }
@@ -1382,7 +1316,7 @@ function buildActionSelectConfig(draw) {
     value: "exclude-draw",
     options: [
       { value: "exclude-draw", label: "\u0423\u0431\u0440\u0430\u0442\u044C \u0438\u0437 \u0441\u043F\u0438\u0441\u043A\u0430 \u0442\u0435\u043A\u0443\u0449\u0438\u0445 \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0435\u0439" },
-      { value: "reset-exclusions", label: "\u0421\u0431\u0440\u043E\u0441\u0438\u0442\u044C \u0432\u0441\u0435 \u0438\u0441\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F" }
+      { value: "reset-exclusions", label: "\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0438\u0441\u0442\u043E\u0440\u0438\u044E \u0438 \u0438\u0441\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F" }
     ]
   };
 }
@@ -1470,7 +1404,11 @@ function initResultsPage() {
             state.draw.appliedRemoval = false;
           }
           renderActionSelect();
-          setStatus2(statusElement, "\u0412\u0441\u0435 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u0438 \u0441\u043D\u043E\u0432\u0430 \u0432\u043E\u0437\u0432\u0440\u0430\u0449\u0435\u043D\u044B \u0432 \u0441\u043F\u0438\u0441\u043E\u043A.", "success");
+          setStatus2(
+            statusElement,
+            "\u0418\u0441\u0442\u043E\u0440\u0438\u044F \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0435\u0439 \u043E\u0447\u0438\u0449\u0435\u043D\u0430. \u0412\u0441\u0435 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u0438 \u0441\u043D\u043E\u0432\u0430 \u0432\u043E\u0437\u0432\u0440\u0430\u0449\u0435\u043D\u044B \u0432 \u0441\u043F\u0438\u0441\u043E\u043A.",
+            "success"
+          );
         } catch (error) {
           resultsLogger.error("Failed to reset exclusions", error);
           setStatus2(statusElement, error.message, "error");

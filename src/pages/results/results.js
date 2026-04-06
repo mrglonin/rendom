@@ -185,7 +185,7 @@ function buildActionSelectConfig(draw) {
       value: "removed",
       options: [
         { value: "removed", label: "Победители уже убраны из списка" },
-        { value: "reset-exclusions", label: "Сбросить все исключения" },
+        { value: "reset-exclusions", label: "Очистить историю и исключения" },
       ],
     };
   }
@@ -194,7 +194,7 @@ function buildActionSelectConfig(draw) {
     value: "exclude-draw",
     options: [
       { value: "exclude-draw", label: "Убрать из списка текущих победителей" },
-      { value: "reset-exclusions", label: "Сбросить все исключения" },
+      { value: "reset-exclusions", label: "Очистить историю и исключения" },
     ],
   };
 }
@@ -306,7 +306,11 @@ export function initResultsPage() {
             }
 
             renderActionSelect();
-            setStatus(statusElement, "Все участники снова возвращены в список.", "success");
+            setStatus(
+              statusElement,
+              "История победителей очищена. Все участники снова возвращены в список.",
+              "success",
+            );
           } catch (error) {
             resultsLogger.error("Failed to reset exclusions", error);
             setStatus(statusElement, error.message, "error");

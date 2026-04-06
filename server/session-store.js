@@ -29,6 +29,17 @@ const META_COLUMNS = [
   "Дата сеанса",
 ];
 
+function buildWinnerHistoryEntry(winner, draw, index) {
+  return {
+    id: winner.historyEntryId || `${draw.id}:${index}`,
+    drawId: draw.id,
+    createdAt: draw.createdAt,
+    recordId: winner.recordId,
+    displayValue: winner.displayValue,
+    meta: Array.isArray(winner.meta) ? winner.meta : [],
+  };
+}
+
 function normalizeFilterValue(value) {
   return String(value ?? "").trim();
 }
@@ -113,7 +124,25 @@ function serializeRecord(record, displayColumn) {
   };
 }
 
+function getWinnerHistory(session) {
+  if (Array.isArray(session.winnerHistory)) {
+    return session.winnerHistory;
+  }
+
+  const draws = Array.isArray(session.draws) ? session.draws : [];
+
+  return draws.flatMap((draw) =>
+    (Array.isArray(draw.winners) ? draw.winners : []).map((winner, index) =>
+      buildWinnerHistoryEntry(winner, draw, index + 1),
+    ),
+  );
+}
+
 function buildSessionSummary(session) {
+  const winnerHistory = getWinnerHistory(session);
+  const excludedRecordIds = Array.isArray(session.excludedRecordIds) ? session.excludedRecordIds : [];
+  const draws = Array.isArray(session.draws) ? session.draws : [];
+
   return {
     id: session.id,
     createdAt: session.createdAt,
@@ -124,11 +153,13 @@ function buildSessionSummary(session) {
     filters: session.filters,
     counts: {
       totalRecords: session.records.length,
-      excludedRecords: session.excludedRecordIds.length,
-      activeRecords: Math.max(session.records.length - session.excludedRecordIds.length, 0),
-      draws: session.draws.length,
+      excludedRecords: excludedRecordIds.length,
+      activeRecords: Math.max(session.records.length - excludedRecordIds.length, 0),
+      draws: draws.length,
+      winnerHistory: winnerHistory.length,
     },
-    lastDraw: session.draws.at(-1) || null,
+    lastDraw: draws.at(-1) || null,
+    winnerHistory,
   };
 }
 
@@ -155,6 +186,7 @@ function createSession({ originalName, savedFileName, fileSize, parsedReport }) 
     records: parsedReport.records,
     excludedRecordIds: [],
     draws: [],
+    winnerHistory: [],
   };
 
   storeLogger.info("Session created", {
@@ -167,7 +199,7 @@ function createSession({ originalName, savedFileName, fileSize, parsedReport }) 
 }
 
 function getActiveRecords(session) {
-  const excludedIds = new Set(session.excludedRecordIds);
+  const excludedIds = new Set(Array.isArray(session.excludedRecordIds) ? session.excludedRecordIds : []);
   return session.records.filter((record) => !excludedIds.has(record.__recordId));
 }
 
@@ -219,11 +251,13 @@ function excludeWinnerIds(session, winnerIds) {
 
 module.exports = {
   applyFilters,
+  buildWinnerHistoryEntry,
   buildSessionSummary,
   createPreview,
   createSession,
   excludeWinnerIds,
   getActiveRecords,
+  getWinnerHistory,
   loadSession,
   saveSession,
   serializeRecord,

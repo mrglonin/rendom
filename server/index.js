@@ -9,11 +9,13 @@ const { logger, requestLogger } = require("./logger");
 const { pickWinners, sortDrawResults } = require("./randomizer");
 const {
   applyFilters,
+  buildWinnerHistoryEntry,
   buildSessionSummary,
   createPreview,
   createSession,
   excludeWinnerIds,
   getActiveRecords,
+  getWinnerHistory,
   loadSession,
   saveSession,
   serializeRecord,
@@ -232,10 +234,14 @@ app.post("/api/sessions/:sessionId/draw", (request, response, next) => {
       eligibleCountAtDraw: eligibleRecords.length,
       winners: winners.map((record) => serializeRecord(record, displayColumn)),
     };
+    const winnerHistoryEntries = draw.winners.map((winner, index) =>
+      buildWinnerHistoryEntry(winner, draw, index + 1),
+    );
 
     let nextSession = {
       ...session,
-      draws: [...session.draws, draw],
+      draws: [...(session.draws || []), draw],
+      winnerHistory: [...getWinnerHistory(session), ...winnerHistoryEntries],
     };
 
     if (removeWinners) {
@@ -332,7 +338,8 @@ app.post("/api/sessions/:sessionId/reset-exclusions", (request, response, next) 
     const nextSession = saveSession({
       ...session,
       excludedRecordIds: [],
-      draws: session.draws.map((draw) => ({
+      winnerHistory: [],
+      draws: (session.draws || []).map((draw) => ({
         ...draw,
         appliedRemoval: false,
         removeWinners: false,

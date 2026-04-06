@@ -8,8 +8,6 @@ const SESSION_STORAGE_KEY = "freedom-generator:last-session-id";
 const DRAW_STORAGE_KEY = "freedom-generator:last-draw-id";
 const DRAW_SETTINGS_STORAGE_KEY = "freedom-generator:last-draw-settings";
 const DRAW_SETTINGS_VERSION = 2;
-const PREVIEW_BATCH_SIZE = 120;
-const PREVIEW_LOAD_AHEAD_PX = 80;
 
 function escapeHtml(value) {
   return String(value)
@@ -18,6 +16,16 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function formatDisplayValue(value) {
+  const text = String(value ?? "").trim();
+
+  if (/^\d{8,}$/.test(text)) {
+    return text.match(/.{1,4}/g)?.join(" ") || text;
+  }
+
+  return text;
 }
 
 function getRecordWord(value) {
@@ -37,6 +45,25 @@ function getRecordWord(value) {
   }
 
   return "записей";
+}
+
+function getWinnerWord(value) {
+  const normalized = Math.abs(value) % 100;
+  const tail = normalized % 10;
+
+  if (normalized > 10 && normalized < 20) {
+    return "победителей";
+  }
+
+  if (tail > 1 && tail < 5) {
+    return "победителя";
+  }
+
+  if (tail === 1) {
+    return "победитель";
+  }
+
+  return "победителей";
 }
 
 function readSavedSettings() {
@@ -68,7 +95,7 @@ function saveDrawSettings(settings) {
     JSON.stringify({
       ...settings,
       version: DRAW_SETTINGS_VERSION,
-    })
+    }),
   );
 }
 
@@ -123,7 +150,7 @@ function initCounter(counterElement) {
   counterElement.querySelectorAll(".random__quantity-stepper-button").forEach((buttonElement) => {
     buttonElement.addEventListener("click", () => {
       const direction = buttonElement.classList.contains(
-        "random__quantity-stepper-button--increase"
+        "random__quantity-stepper-button--increase",
       )
         ? "increase"
         : "decrease";
@@ -157,46 +184,24 @@ function toggleSidebar(sidebarElement, isOpen) {
   sidebarElement.setAttribute("aria-hidden", String(!isOpen));
 }
 
-function setListInteractivity(listWrapperElement, isInteractive) {
-  listWrapperElement.classList.toggle("random__list--interactive", isInteractive);
-  listWrapperElement.setAttribute("role", isInteractive ? "button" : "region");
-  listWrapperElement.setAttribute("tabindex", isInteractive ? "0" : "-1");
-  listWrapperElement.setAttribute(
-    "aria-label",
-    isInteractive ? "Загрузить файл" : "Список доступных записей для розыгрыша"
-  );
-}
-
-function renderRecordsCounter(targetElement, visibleCount, totalCount = visibleCount) {
-  const safeVisibleCount = Math.max(0, Number(visibleCount) || 0);
-  const safeTotalCount = Math.max(safeVisibleCount, Number(totalCount) || 0);
-  const label =
-    safeVisibleCount < safeTotalCount
-      ? `${safeVisibleCount} из ${safeTotalCount} ${getRecordWord(safeTotalCount)}`
-      : `${safeTotalCount} ${getRecordWord(safeTotalCount)}`;
+function renderHistoryCounter(targetElement, count) {
+  const safeCount = Math.max(0, Number(count) || 0);
 
   mountDynamicSelect(targetElement, {
-    name: "recordsCounter",
-    value: String(safeTotalCount),
+    name: "winnersCounter",
+    value: String(safeCount),
     options: [
       {
-        value: String(safeTotalCount),
-        label,
+        value: String(safeCount),
+        label: `${safeCount} ${getWinnerWord(safeCount)}`,
       },
     ],
     classes: "random__select",
   });
 }
 
-function renderPlaceholder(
-  listWrapperElement,
-  listElement,
-  hintElement,
-  submitButtonElement,
-  config
-) {
+function renderPlaceholder(listWrapperElement, listElement, hintElement, submitButtonElement, config) {
   listWrapperElement.classList.add("random__list--empty");
-  setListInteractivity(listWrapperElement, config.isInteractive);
   listElement.innerHTML = `
     <li class="random__list-item random__list-item--empty">
       <div class="random__list-item-text">
@@ -205,59 +210,85 @@ function renderPlaceholder(
     </li>
   `;
   hintElement.textContent = config.hint;
-  submitButtonElement.disabled = true;
+  submitButtonElement.disabled = config.submitDisabled;
 }
 
-function renderPreview(listWrapperElement, listElement, hintElement, submitButtonElement, preview) {
-  if (!preview || preview.preview.length === 0) {
+function buildSessionHint(session) {
+  const totalCount = session?.counts?.totalRecords ?? 0;
+  const activeCount = session?.counts?.activeRecords ?? 0;
+  const excludedCount = session?.counts?.excludedRecords ?? 0;
+  const parts = [];
+
+  if (session?.source?.originalName) {
+    parts.push(`Файл: ${session.source.originalName}.`);
+  }
+
+  if (totalCount > 0) {
+    parts.push(`Загружено ${totalCount} ${getRecordWord(totalCount)}.`);
+  }
+
+  if (activeCount > 0) {
+    parts.push(`Сейчас в пуле ${activeCount} ${getRecordWord(activeCount)}.`);
+  } else if (totalCount > 0) {
+    parts.push("В текущем файле больше не осталось участников для нового розыгрыша.");
+  }
+
+  if (excludedCount > 0) {
+    parts.push(`Уже исключено ${excludedCount} ${getRecordWord(excludedCount)}.`);
+  }
+
+  return parts.join(" ");
+}
+
+function renderWinnerHistory(
+  listWrapperElement,
+  listElement,
+  hintElement,
+  submitButtonElement,
+  session,
+) {
+  const winnerHistory = Array.isArray(session?.winnerHistory) ? [...session.winnerHistory].reverse() : [];
+
+  if (winnerHistory.length === 0) {
     renderPlaceholder(listWrapperElement, listElement, hintElement, submitButtonElement, {
-      label: "Нет доступных записей",
-      hint: "В этом файле больше не осталось участников для розыгрыша.",
-      isInteractive: false,
+      label: "Победители появятся после первого розыгрыша",
+      hint: buildSessionHint(session),
+      submitDisabled: (session?.counts?.activeRecords ?? 0) === 0,
     });
     return;
   }
 
   listWrapperElement.classList.remove("random__list--empty");
-  setListInteractivity(listWrapperElement, false);
-  listElement.innerHTML = preview.preview
+  listElement.innerHTML = winnerHistory
     .map(
-      (item) => `
-        <li class="random__list-item" data-record-id="${escapeHtml(item.recordId)}">
+      (entry) => `
+        <li class="random__list-item" data-history-entry-id="${escapeHtml(entry.id)}">
           <div class="random__list-item-digit"></div>
-          <div class="random__list-item-text">${escapeHtml(item.displayValue)}</div>
+          <div class="random__list-item-text">${escapeHtml(formatDisplayValue(entry.displayValue))}</div>
         </li>
-      `
+      `,
     )
     .join("");
-  hintElement.textContent =
-    preview.preview.length < preview.eligibleCount
-      ? `Показано ${preview.preview.length} из ${preview.eligibleCount} ${getRecordWord(
-          preview.eligibleCount
-        )}. Прокрутите список ниже, чтобы подгрузить остальные.`
-      : `Показано ${preview.preview.length} из ${preview.eligibleCount} ${getRecordWord(
-          preview.eligibleCount
-        )}.`;
-  submitButtonElement.disabled = preview.eligibleCount === 0;
+  hintElement.textContent = buildSessionHint(session);
+  submitButtonElement.disabled = (session?.counts?.activeRecords ?? 0) === 0;
 }
 
-function highlightWinners(listElement, winners, shouldAutoScroll) {
-  const winnerIds = new Set(winners.map((winner) => winner.recordId));
-  const firstWinnerId = winners[0]?.recordId;
+function highlightWinnerHistory(listElement, historyEntryIds, shouldAutoScroll) {
+  const targetIds = new Set(historyEntryIds);
+  let firstWinnerElement = null;
 
   listElement.querySelectorAll(".random__list-item").forEach((itemElement) => {
-    itemElement.classList.toggle(
-      "random__list-item--winner",
-      winnerIds.has(itemElement.dataset.recordId)
-    );
+    const isWinner = targetIds.has(itemElement.dataset.historyEntryId);
+
+    itemElement.classList.toggle("random__list-item--winner", isWinner);
+
+    if (!firstWinnerElement && isWinner) {
+      firstWinnerElement = itemElement;
+    }
   });
 
-  const winnerElement = firstWinnerId
-    ? listElement.querySelector(`[data-record-id="${firstWinnerId}"]`)
-    : null;
-
-  if (winnerElement && shouldAutoScroll) {
-    winnerElement.scrollIntoView({
+  if (firstWinnerElement && shouldAutoScroll) {
+    firstWinnerElement.scrollIntoView({
       behavior: "smooth",
       block: "center",
     });
@@ -273,12 +304,9 @@ export function initRandomControls() {
 
   const state = {
     session: null,
-    preview: null,
     lastDraw: null,
-    pendingFile: null,
     isSidebarOpen: false,
-    previewLimit: PREVIEW_BATCH_SIZE,
-    isLoadingMorePreview: false,
+    isImporting: false,
   };
 
   const formElement = randomSectionElement.querySelector(".random__form");
@@ -292,12 +320,12 @@ export function initRandomControls() {
   const recordsSelectMountElement = randomSectionElement.querySelector("[data-records-select]");
   const autoScrollElement = randomSectionElement.querySelector('input[name="autoScroll"]');
   const winnersCountInputElement = randomSectionElement.querySelector(".random__quantity-input");
-  const listScrollElement = randomSectionElement.querySelector(".random__list-scroll");
+  const importTriggerButtonElement = randomSectionElement.querySelector("[data-import-trigger]");
   const resetExclusionsButtonElement = randomSectionElement.querySelector(
-    "[data-reset-exclusions-button]"
+    "[data-reset-exclusions-button]",
   );
   const resetExclusionsDescriptionElement = randomSectionElement.querySelector(
-    "[data-reset-exclusions-description]"
+    "[data-reset-exclusions-description]",
   );
 
   randomSectionElement
@@ -322,23 +350,12 @@ export function initRandomControls() {
 
     applySelectValue(
       formElement.querySelector('input[name="removeWinners"]')?.closest(".select"),
-      savedSettings.removeWinners || "yes"
+      savedSettings.removeWinners || "yes",
     );
     applySelectValue(
       formElement.querySelector('input[name="sortResults"]')?.closest(".select"),
-      savedSettings.sortResults || "no"
+      savedSettings.sortResults || "no",
     );
-  }
-
-  function syncRecordsCounter() {
-    if (state.pendingFile) {
-      renderRecordsCounter(recordsSelectMountElement, 0, 0);
-      return;
-    }
-
-    const visibleCount = state.preview?.preview?.length ?? state.session?.counts?.activeRecords ?? 0;
-    const totalCount = state.preview?.eligibleCount ?? state.session?.counts?.activeRecords ?? visibleCount;
-    renderRecordsCounter(recordsSelectMountElement, visibleCount, totalCount);
   }
 
   function syncSidebarActions() {
@@ -347,198 +364,161 @@ export function initRandomControls() {
     }
 
     const excludedCount = state.session?.counts?.excludedRecords ?? 0;
+    const winnerHistoryCount =
+      state.session?.counts?.winnerHistory ?? state.session?.winnerHistory?.length ?? 0;
 
     resetExclusionsButtonElement.textContent =
-      excludedCount > 0 ? `Очистить все (${excludedCount})` : "Очистить все";
-
-    if (state.pendingFile) {
-      resetExclusionsButtonElement.disabled = true;
-      resetExclusionsDescriptionElement.textContent =
-        "Сначала загрузите выбранный файл, затем можно очищать исключения.";
-      return;
-    }
+      excludedCount > 0 || winnerHistoryCount > 0
+        ? `Очистить все (${Math.max(excludedCount, winnerHistoryCount)})`
+        : "Очистить все";
 
     if (!state.session) {
       resetExclusionsButtonElement.disabled = true;
       resetExclusionsDescriptionElement.textContent =
-        "Кнопка станет доступна после загрузки файла.";
+        "Сначала загрузите файл. После этого здесь можно очистить историю победителей и исключения.";
       return;
     }
 
-    if (excludedCount === 0) {
+    if (excludedCount === 0 && winnerHistoryCount === 0) {
       resetExclusionsButtonElement.disabled = true;
       resetExclusionsDescriptionElement.textContent =
-        "Для текущего файла сейчас нет исключённых записей.";
+        "Для текущего файла пока нечего очищать.";
       return;
+    }
+
+    const details = [];
+
+    if (winnerHistoryCount > 0) {
+      details.push(`очистит историю из ${winnerHistoryCount} ${getWinnerWord(winnerHistoryCount)}`);
+    }
+
+    if (excludedCount > 0) {
+      details.push(`вернёт в пул ${excludedCount} ${getRecordWord(excludedCount)}`);
     }
 
     resetExclusionsButtonElement.disabled = false;
-    resetExclusionsDescriptionElement.textContent = `Для текущего файла исключено ${excludedCount} ${getRecordWord(
-      excludedCount
-    )}.`;
+    resetExclusionsDescriptionElement.textContent = `Кнопка ${details.join(" и ")}.`;
   }
 
-  function syncInitialState() {
-    state.previewLimit = PREVIEW_BATCH_SIZE;
-    renderRecordsCounter(recordsSelectMountElement, 0, 0);
-    renderPlaceholder(listWrapperElement, listElement, hintElement, submitButtonElement, {
-      label: "Загрузите файл",
-      hint: "Нажмите на область списка, чтобы выбрать Excel-файл.",
-      isInteractive: true,
-    });
-    syncSidebarActions();
-  }
+  function renderCurrentState() {
+    const winnerHistoryCount =
+      state.session?.counts?.winnerHistory ?? state.session?.winnerHistory?.length ?? 0;
 
-  function handlePendingFile(file) {
-    state.pendingFile = file;
-    state.previewLimit = PREVIEW_BATCH_SIZE;
-    syncRecordsCounter();
-    renderPlaceholder(listWrapperElement, listElement, hintElement, submitButtonElement, {
-      label: file.name,
-      hint: "Файл выбран. Нажмите на иконку подтверждения справа, чтобы загрузить список.",
-      isInteractive: true,
-    });
-    setStatus(statusElement, "Файл выбран и ожидает загрузки.", "success");
-    syncSidebarActions();
-  }
+    renderHistoryCounter(recordsSelectMountElement, winnerHistoryCount);
 
-  async function refreshPreview(options = {}) {
     if (!state.session) {
+      renderPlaceholder(listWrapperElement, listElement, hintElement, submitButtonElement, {
+        label: "Загрузите файл",
+        hint: "Нажмите на иконку справа, чтобы выбрать и загрузить Excel-файл.",
+        submitDisabled: true,
+      });
+      syncSidebarActions();
       return;
     }
 
-    const {
-      limit = state.previewLimit,
-      silent = false,
-      statusMessage = "Обновляем список участников…",
-    } = options;
+    renderWinnerHistory(
+      listWrapperElement,
+      listElement,
+      hintElement,
+      submitButtonElement,
+      state.session,
+    );
+    syncSidebarActions();
+  }
 
-    state.previewLimit = Math.max(PREVIEW_BATCH_SIZE, limit);
+  function setImportingState(isImporting) {
+    state.isImporting = isImporting;
 
-    if (!silent) {
-      setStatus(statusElement, statusMessage);
+    if (!importTriggerButtonElement) {
+      return;
     }
 
-    try {
-      const response = await api.getPreview(state.session.id, {
-        limit: state.previewLimit,
-      });
-      state.session = response.session;
-      state.preview = response.preview;
-      state.pendingFile = null;
-      renderPreview(
-        listWrapperElement,
-        listElement,
-        hintElement,
-        submitButtonElement,
-        state.preview
-      );
-      syncRecordsCounter();
-      syncSidebarActions();
-      if (!silent) {
-        setStatus(statusElement, "Список готов к розыгрышу.", "success");
-      }
-    } catch (error) {
-      randomLogger.error("Preview refresh failed", error);
-      setStatus(statusElement, error.message, "error");
-      syncSidebarActions();
-    }
+    importTriggerButtonElement.disabled = isImporting;
+    importTriggerButtonElement.setAttribute("aria-busy", String(isImporting));
   }
 
   async function hydrateSession(sessionId) {
     try {
+      setStatus(statusElement, "Загружаем текущую сессию…");
       const response = await api.getSession(sessionId);
+
       state.session = response.session;
-      state.pendingFile = null;
-      state.previewLimit = PREVIEW_BATCH_SIZE;
+      state.lastDraw = response.session.lastDraw || null;
       window.localStorage.setItem(SESSION_STORAGE_KEY, response.session.id);
+
       applySavedSidebarSettings(readSavedSettings());
-      syncSidebarActions();
-      await refreshPreview();
+      renderCurrentState();
+      setStatus(statusElement, "");
     } catch (error) {
       randomLogger.warn("Stored session restore failed", error);
       setStatus(
         statusElement,
         "Не удалось восстановить прошлую сессию. Загрузите файл заново.",
-        "error"
+        "error",
       );
-      syncInitialState();
+      state.session = null;
+      state.lastDraw = null;
+      renderCurrentState();
     }
   }
 
   function openFilePicker() {
-    fileInputElement?.click();
-  }
-
-  async function importPendingFile() {
-    if (!state.pendingFile) {
-      if (state.session) {
-        setStatus(
-          statusElement,
-          "Выберите новый файл, затем подтвердите загрузку этой иконкой.",
-          "info"
-        );
-      } else {
-        setStatus(statusElement, "Сначала выберите Excel-файл в области списка.", "info");
-      }
-      openFilePicker();
+    if (state.isImporting) {
       return;
     }
 
-    setStatus(statusElement, "Импортируем Excel-файл и собираем список участников…");
+    fileInputElement?.click();
+  }
+
+  async function importFile(file) {
+    if (!file || state.isImporting) {
+      return;
+    }
+
+    const previousSession = state.session;
+    const previousDraw = state.lastDraw;
+
+    setImportingState(true);
+    setStatus(statusElement, "Импортируем Excel-файл и собираем пул участников…");
+    renderPlaceholder(listWrapperElement, listElement, hintElement, submitButtonElement, {
+      label: file.name,
+      hint: "Файл выбран. Ждём завершения загрузки и инвентаризации списка.",
+      submitDisabled: true,
+    });
 
     try {
-      const response = await api.importReport(state.pendingFile);
+      const response = await api.importReport(file);
+
       state.session = response.session;
-      state.preview = response.preview;
       state.lastDraw = null;
-      state.pendingFile = null;
-      state.previewLimit = Math.max(PREVIEW_BATCH_SIZE, response.preview.preview.length);
 
       window.localStorage.setItem(SESSION_STORAGE_KEY, response.session.id);
       window.localStorage.removeItem(DRAW_STORAGE_KEY);
-      renderPreview(
-        listWrapperElement,
-        listElement,
-        hintElement,
-        submitButtonElement,
-        response.preview
+      renderCurrentState();
+      setStatus(
+        statusElement,
+        `Файл загружен. В пуле ${response.session.counts.activeRecords} ${getRecordWord(
+          response.session.counts.activeRecords,
+        )}.`,
+        "success",
       );
-      syncRecordsCounter();
-      syncSidebarActions();
-      setStatus(statusElement, "Файл загружен. Можно запускать розыгрыш.", "success");
     } catch (error) {
       randomLogger.error("Import failed", error);
-      state.pendingFile = null;
+      state.session = previousSession;
+      state.lastDraw = previousDraw;
+      renderCurrentState();
       setStatus(statusElement, error.message, "error");
+    } finally {
+      setImportingState(false);
 
-      if (state.session && state.preview) {
-        renderPreview(
-          listWrapperElement,
-          listElement,
-          hintElement,
-          submitButtonElement,
-          state.preview
-        );
-        syncRecordsCounter();
-        syncSidebarActions();
-      } else {
-        syncInitialState();
+      if (fileInputElement) {
+        fileInputElement.value = "";
       }
     }
   }
 
   async function handleDraw(event) {
     event.preventDefault();
-
-    if (state.pendingFile) {
-      setStatus(
-        statusElement,
-        "Сначала подтвердите загрузку выбранного файла иконкой справа.",
-        "error"
-      );
-      return;
-    }
 
     if (!state.session) {
       setStatus(statusElement, "Сначала загрузите Excel-файл.", "error");
@@ -556,11 +536,18 @@ export function initRandomControls() {
 
     try {
       const response = await api.draw(state.session.id, payload);
+      const latestHistory = Array.isArray(response.session.winnerHistory)
+        ? response.session.winnerHistory
+        : [];
+      const latestEntryIds = latestHistory
+        .slice(-response.draw.winners.length)
+        .map((entry) => entry.id);
 
       state.session = response.session;
       state.lastDraw = response.draw;
 
-      highlightWinners(listElement, response.draw.winners, autoScrollElement?.checked);
+      renderCurrentState();
+      highlightWinnerHistory(listElement, latestEntryIds, Boolean(autoScrollElement?.checked));
       saveDrawSettings({
         ...payload,
         autoScroll: Boolean(autoScrollElement?.checked),
@@ -582,60 +569,6 @@ export function initRandomControls() {
     }
   }
 
-  listWrapperElement?.addEventListener("click", (event) => {
-    if (
-      event.target.closest(".random__list-scroll") &&
-      !listWrapperElement.classList.contains("random__list--interactive")
-    ) {
-      return;
-    }
-
-    if (!listWrapperElement.classList.contains("random__list--interactive")) {
-      return;
-    }
-
-    openFilePicker();
-  });
-
-  listWrapperElement?.addEventListener("keydown", (event) => {
-    if (event.key !== "Enter" && event.key !== " ") {
-      return;
-    }
-
-    if (!listWrapperElement.classList.contains("random__list--interactive")) {
-      return;
-    }
-
-    event.preventDefault();
-    openFilePicker();
-  });
-
-  listScrollElement?.addEventListener("scroll", () => {
-    if (!state.session || !state.preview || state.isLoadingMorePreview) {
-      return;
-    }
-
-    if (state.preview.preview.length >= state.preview.eligibleCount) {
-      return;
-    }
-
-    const distanceToBottom =
-      listScrollElement.scrollHeight - listScrollElement.scrollTop - listScrollElement.clientHeight;
-
-    if (distanceToBottom > PREVIEW_LOAD_AHEAD_PX) {
-      return;
-    }
-
-    state.isLoadingMorePreview = true;
-
-    refreshPreview({
-      limit: state.preview.preview.length + PREVIEW_BATCH_SIZE,
-      silent: true,
-    }).finally(() => {
-      state.isLoadingMorePreview = false;
-    });
-  });
-
   fileInputElement?.addEventListener("change", () => {
     const selectedFile = fileInputElement.files?.[0] || null;
 
@@ -643,11 +576,11 @@ export function initRandomControls() {
       return;
     }
 
-    handlePendingFile(selectedFile);
+    importFile(selectedFile);
   });
 
-  randomSectionElement.querySelector("[data-import-trigger]")?.addEventListener("click", () => {
-    importPendingFile();
+  importTriggerButtonElement?.addEventListener("click", () => {
+    openFilePicker();
   });
 
   randomSectionElement.querySelector("[data-settings-toggle]")?.addEventListener("click", () => {
@@ -656,23 +589,26 @@ export function initRandomControls() {
   });
 
   resetExclusionsButtonElement?.addEventListener("click", async () => {
-    if (!state.session || state.pendingFile) {
+    if (!state.session) {
       return;
     }
 
-    setStatus(statusElement, "Возвращаем всех участников в текущий список…");
+    setStatus(statusElement, "Очищаем историю победителей и возвращаем участников в пул…");
     resetExclusionsButtonElement.disabled = true;
 
     try {
       const response = await api.resetExclusions(state.session.id);
       state.session = response.session;
       state.lastDraw = null;
-      syncSidebarActions();
-      await refreshPreview();
-      setStatus(statusElement, "Исключения очищены. Все участники снова в пуле.", "success");
+      renderCurrentState();
+      setStatus(
+        statusElement,
+        "История победителей очищена. Все участники снова доступны для розыгрыша.",
+        "success",
+      );
     } catch (error) {
       randomLogger.error("Reset exclusions failed", error);
-      syncSidebarActions();
+      renderCurrentState();
       setStatus(statusElement, error.message, "error");
     }
   });
@@ -685,7 +621,7 @@ export function initRandomControls() {
     queryParams.get("sessionId") || window.localStorage.getItem(SESSION_STORAGE_KEY) || "";
 
   applySavedSidebarSettings(readSavedSettings());
-  syncInitialState();
+  renderCurrentState();
 
   if (shouldOpenSettings) {
     state.isSidebarOpen = true;

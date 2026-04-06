@@ -562,6 +562,18 @@ body {
 .random__tool:hover::after {
   opacity: 1;
 }
+.random__tool:disabled {
+  opacity: 0.45;
+  pointer-events: none;
+  transform: none;
+  box-shadow: 0 24rem 48rem rgba(0, 0, 0, 0.04);
+}
+.random__tool:disabled::before {
+  opacity: 1;
+}
+.random__tool:disabled::after {
+  opacity: 0;
+}
 .random__tool svg {
   width: 32rem;
   height: 32rem;

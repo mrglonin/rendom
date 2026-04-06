@@ -348,6 +348,21 @@
       }
     }
 
+    &:disabled {
+      opacity: 0.45;
+      pointer-events: none;
+      transform: none;
+      box-shadow: 0 24rem 48rem rgba($color-shadow, 0.04);
+
+      &::before {
+        opacity: 1;
+      }
+
+      &::after {
+        opacity: 0;
+      }
+    }
+
     svg {
       width: 32rem;
       height: 32rem;
