@@ -1,6 +1,7 @@
 import { api } from "../../js/lib/api.js";
 import { mountDynamicSelect } from "../../js/lib/dynamic-select.js";
 import { createLogger } from "../../js/lib/logger.js";
+import { buildAppPath, buildAppUrl } from "../../js/lib/paths.js";
 
 const resultsLogger = createLogger("results-page");
 const SESSION_STORAGE_KEY = "freedom-generator:last-session-id";
@@ -229,7 +230,7 @@ export function initResultsPage() {
       window.localStorage.setItem(DRAW_STORAGE_KEY, drawId);
     }
 
-    window.history.replaceState({}, "", "/results.html");
+    window.history.replaceState({}, "", buildAppPath("results.html"));
   }
 
   const state = {
@@ -343,11 +344,11 @@ export function initResultsPage() {
 
   backButtonElement?.addEventListener("click", () => {
     if (!sessionId) {
-      window.location.href = "/random.html";
+      window.location.href = buildAppUrl("random.html");
       return;
     }
 
-    window.location.href = "/random.html?openSettings=1";
+    window.location.href = buildAppUrl("random.html?openSettings=1");
   });
 
   repeatButtonElement?.addEventListener("click", async () => {
@@ -382,7 +383,7 @@ export function initResultsPage() {
 
       window.localStorage.setItem(SESSION_STORAGE_KEY, response.session.id);
       window.localStorage.setItem(DRAW_STORAGE_KEY, response.draw.id);
-      window.history.replaceState({}, "", "/results.html");
+      window.history.replaceState({}, "", buildAppPath("results.html"));
 
       renderResults(listElement, response.draw);
       renderActionSelect();

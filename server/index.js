@@ -23,6 +23,22 @@ ensureRuntimeDirs();
 
 const app = express();
 
+function stripPreviewPrefix(url) {
+  const [pathname, search = ""] = String(url || "").split("?");
+  const normalizedPathname = pathname.replace(
+    /^\/plesk-site-preview\/[^/]+\/https?\/[^/]+(?=\/|$)/,
+    "",
+  );
+
+  if (normalizedPathname === pathname) {
+    return url;
+  }
+
+  const nextPathname = normalizedPathname || "/";
+
+  return search ? `${nextPathname}?${search}` : nextPathname;
+}
+
 const upload = multer({
   storage: multer.diskStorage({
     destination: (_, __, callback) => {
@@ -51,6 +67,10 @@ const upload = multer({
 });
 
 app.use(express.json({ limit: "1mb" }));
+app.use((request, _, next) => {
+  request.url = stripPreviewPrefix(request.url);
+  next();
+});
 app.use(requestLogger);
 
 function createHttpError(statusCode, message, details = undefined) {
@@ -348,7 +368,7 @@ app.use((request, response, next) => {
     return;
   }
 
-  response.redirect("/");
+  response.sendFile(path.join(config.distDir, "index.html"));
 });
 
 app.use((error, request, response, _) => {

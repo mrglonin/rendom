@@ -1,6 +1,7 @@
 import { api } from "../../js/lib/api.js";
 import { mountDynamicSelect } from "../../js/lib/dynamic-select.js";
 import { createLogger } from "../../js/lib/logger.js";
+import { buildAppUrl } from "../../js/lib/paths.js";
 
 const randomLogger = createLogger("random-page");
 const SESSION_STORAGE_KEY = "freedom-generator:last-session-id";
@@ -572,7 +573,7 @@ export function initRandomControls() {
       const delay = autoScrollElement?.checked ? 1000 : 250;
 
       window.setTimeout(() => {
-        window.location.href = "/results.html";
+        window.location.href = buildAppUrl("results.html");
       }, delay);
     } catch (error) {
       randomLogger.error("Draw failed", error);

@@ -1,4 +1,5 @@
 import { createLogger } from "./logger.js";
+import { buildAppUrl } from "./paths.js";
 
 const apiLogger = createLogger("api");
 
@@ -47,16 +48,16 @@ export const api = {
     const formData = new FormData();
     formData.append("reportFile", file);
 
-    return request("/api/import", {
+    return request(buildAppUrl("api/import"), {
       method: "POST",
       body: formData,
     });
   },
   getSession(sessionId) {
-    return request(`/api/sessions/${sessionId}`);
+    return request(buildAppUrl(`api/sessions/${sessionId}`));
   },
   getPreview(sessionId, payload) {
-    return request(`/api/sessions/${sessionId}/preview`, {
+    return request(buildAppUrl(`api/sessions/${sessionId}/preview`), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -65,7 +66,7 @@ export const api = {
     });
   },
   draw(sessionId, payload) {
-    return request(`/api/sessions/${sessionId}/draw`, {
+    return request(buildAppUrl(`api/sessions/${sessionId}/draw`), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -74,10 +75,10 @@ export const api = {
     });
   },
   getDraw(sessionId, drawId) {
-    return request(`/api/sessions/${sessionId}/draws/${drawId}`);
+    return request(buildAppUrl(`api/sessions/${sessionId}/draws/${drawId}`));
   },
   excludeDraw(sessionId, drawId) {
-    return request(`/api/sessions/${sessionId}/exclude-draw`, {
+    return request(buildAppUrl(`api/sessions/${sessionId}/exclude-draw`), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -86,7 +87,7 @@ export const api = {
     });
   },
   resetExclusions(sessionId) {
-    return request(`/api/sessions/${sessionId}/reset-exclusions`, {
+    return request(buildAppUrl(`api/sessions/${sessionId}/reset-exclusions`), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

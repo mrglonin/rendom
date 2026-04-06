@@ -547,6 +547,18 @@ function createLogger(scope) {
   };
 }
 
+// src/js/lib/paths.js
+function normalizeTarget(target) {
+  return String(target || "").replace(/^\/+/, "");
+}
+function buildAppUrl(target) {
+  return new URL(normalizeTarget(target), window.location.href).toString();
+}
+function buildAppPath(target) {
+  const url = new URL(normalizeTarget(target), window.location.href);
+  return `${url.pathname}${url.search}${url.hash}`;
+}
+
 // src/js/lib/api.js
 var apiLogger = createLogger("api");
 async function readPayload(response) {
@@ -582,16 +594,16 @@ var api = {
   importReport(file) {
     const formData = new FormData();
     formData.append("reportFile", file);
-    return request("/api/import", {
+    return request(buildAppUrl("api/import"), {
       method: "POST",
       body: formData
     });
   },
   getSession(sessionId) {
-    return request(`/api/sessions/${sessionId}`);
+    return request(buildAppUrl(`api/sessions/${sessionId}`));
   },
   getPreview(sessionId, payload) {
-    return request(`/api/sessions/${sessionId}/preview`, {
+    return request(buildAppUrl(`api/sessions/${sessionId}/preview`), {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -600,7 +612,7 @@ var api = {
     });
   },
   draw(sessionId, payload) {
-    return request(`/api/sessions/${sessionId}/draw`, {
+    return request(buildAppUrl(`api/sessions/${sessionId}/draw`), {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -609,10 +621,10 @@ var api = {
     });
   },
   getDraw(sessionId, drawId) {
-    return request(`/api/sessions/${sessionId}/draws/${drawId}`);
+    return request(buildAppUrl(`api/sessions/${sessionId}/draws/${drawId}`));
   },
   excludeDraw(sessionId, drawId) {
-    return request(`/api/sessions/${sessionId}/exclude-draw`, {
+    return request(buildAppUrl(`api/sessions/${sessionId}/exclude-draw`), {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -621,7 +633,7 @@ var api = {
     });
   },
   resetExclusions(sessionId) {
-    return request(`/api/sessions/${sessionId}/reset-exclusions`, {
+    return request(buildAppUrl(`api/sessions/${sessionId}/reset-exclusions`), {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -1128,7 +1140,7 @@ function initRandomControls() {
       setStatus(statusElement, "\u041F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0438 \u043E\u043F\u0440\u0435\u0434\u0435\u043B\u0435\u043D\u044B. \u041F\u0435\u0440\u0435\u0445\u043E\u0434\u0438\u043C \u043A \u044D\u043A\u0440\u0430\u043D\u0443 \u0440\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442\u043E\u0432\u2026", "success");
       const delay = autoScrollElement?.checked ? 1e3 : 250;
       window.setTimeout(() => {
-        window.location.href = "/results.html";
+        window.location.href = buildAppUrl("results.html");
       }, delay);
     } catch (error) {
       randomLogger.error("Draw failed", error);
@@ -1398,7 +1410,7 @@ function initResultsPage() {
     if (drawId) {
       window.localStorage.setItem(DRAW_STORAGE_KEY2, drawId);
     }
-    window.history.replaceState({}, "", "/results.html");
+    window.history.replaceState({}, "", buildAppPath("results.html"));
   }
   const state = {
     session: null,
@@ -1491,10 +1503,10 @@ function initResultsPage() {
   }
   backButtonElement?.addEventListener("click", () => {
     if (!sessionId) {
-      window.location.href = "/random.html";
+      window.location.href = buildAppUrl("random.html");
       return;
     }
-    window.location.href = "/random.html?openSettings=1";
+    window.location.href = buildAppUrl("random.html?openSettings=1");
   });
   repeatButtonElement?.addEventListener("click", async () => {
     if (!state.session || !state.draw || state.isRepeatPending) {
@@ -1522,7 +1534,7 @@ function initResultsPage() {
       drawId = response.draw.id;
       window.localStorage.setItem(SESSION_STORAGE_KEY2, response.session.id);
       window.localStorage.setItem(DRAW_STORAGE_KEY2, response.draw.id);
-      window.history.replaceState({}, "", "/results.html");
+      window.history.replaceState({}, "", buildAppPath("results.html"));
       renderResults(listElement, response.draw);
       renderActionSelect();
       subtextElement.textContent = formatResultTimestamp(response.draw.createdAt);
