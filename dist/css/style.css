@@ -235,7 +235,8 @@ body {
   border-radius: 55rem;
   color: #ffffff;
   cursor: pointer;
-  transition: border-radius 0.3s, background 0.3s, color 0.3s;
+  box-shadow: 0 8rem 18rem rgba(0, 0, 0, 0.12);
+  transition: border-radius 0.3s, background 0.3s, color 0.3s, box-shadow 0.3s;
 }
 .select__trigger svg {
   width: 31rem;
@@ -245,6 +246,9 @@ body {
 }
 .select__trigger svg path {
   transition: stroke 0.3s;
+}
+.select:hover .select__trigger {
+  box-shadow: 0 12rem 24rem rgba(0, 87, 40, 0.24);
 }
 .select__value {
   flex: 1 1 auto;
@@ -585,6 +589,11 @@ body {
   border-radius: 30rem;
   background: #00b222;
   position: relative;
+  box-shadow: 0 8rem 18rem rgba(0, 0, 0, 0.12);
+  transition: box-shadow 0.3s;
+}
+.random__quantity-field:hover, .random__quantity-field:focus-within {
+  box-shadow: 0 12rem 24rem rgba(0, 87, 40, 0.24);
 }
 .random__quantity-input {
   width: 100%;
@@ -597,6 +606,11 @@ body {
   line-height: 49rem;
   font-weight: 500;
   background: transparent;
+  -moz-appearance: textfield;
+}
+.random__quantity-input::-webkit-outer-spin-button, .random__quantity-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 .random__quantity-unit {
   font-size: 32rem;
@@ -636,6 +650,9 @@ body {
   border-radius: 50rem;
   cursor: pointer;
 }
+.random__switch:hover .random__switch-track {
+  box-shadow: 0 12rem 24rem rgba(0, 87, 40, 0.24);
+}
 .random__switch-input {
   position: absolute;
   width: 100%;
@@ -660,7 +677,8 @@ body {
   display: flex;
   border: 3rem solid #ffffff;
   border-radius: 50rem;
-  transition: border-color 0.3s;
+  box-shadow: 0 8rem 18rem rgba(0, 0, 0, 0.12);
+  transition: border-color 0.3s, box-shadow 0.3s;
 }
 .random__switch-thumb {
   display: block;
@@ -728,6 +746,8 @@ body {
   position: relative;
   isolation: isolate;
   cursor: pointer;
+  box-shadow: 0 8rem 18rem rgba(0, 0, 0, 0.12);
+  transition: box-shadow 0.3s;
 }
 .results__type::before {
   content: "";
@@ -758,11 +778,17 @@ body {
 .results__type {
   margin-left: -30rem;
 }
+.results__type--active {
+  box-shadow: 0 12rem 24rem rgba(0, 87, 40, 0.24);
+}
 .results__type--active::before {
   opacity: 0;
 }
 .results__type--active::after {
   opacity: 1;
+}
+.results__type:hover {
+  box-shadow: 0 12rem 24rem rgba(0, 87, 40, 0.24);
 }
 .results__body {
   flex-grow: 1;

@@ -398,6 +398,13 @@
     border-radius: 30rem;
     background: $color-accent;
     position: relative;
+    box-shadow: 0 8rem 18rem rgba($color-shadow, 0.12);
+    transition: box-shadow 0.3s;
+
+    &:hover,
+    &:focus-within {
+      box-shadow: 0 12rem 24rem rgba($color-surface, 0.24);
+    }
   }
 
   &__quantity-input {
@@ -411,6 +418,13 @@
     line-height: 49rem;
     font-weight: 500;
     background: transparent;
+    -moz-appearance: textfield;
+
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
   }
 
   &__quantity-unit {
@@ -454,6 +468,10 @@
     height: 65rem;
     border-radius: 50rem;
     cursor: pointer;
+
+    &:hover .random__switch-track {
+      box-shadow: 0 12rem 24rem rgba($color-surface, 0.24);
+    }
   }
 
   &__switch-input {
@@ -484,7 +502,10 @@
     display: flex;
     border: 3rem solid $color-white;
     border-radius: 50rem;
-    transition: border-color 0.3s;
+    box-shadow: 0 8rem 18rem rgba($color-shadow, 0.12);
+    transition:
+      border-color 0.3s,
+      box-shadow 0.3s;
   }
 
   &__switch-thumb {

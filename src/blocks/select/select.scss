@@ -72,10 +72,12 @@
     border-radius: 55rem;
     color: $color-white;
     cursor: pointer;
+    box-shadow: 0 8rem 18rem rgba($color-shadow, 0.12);
     transition:
       border-radius 0.3s,
       background 0.3s,
-      color 0.3s;
+      color 0.3s,
+      box-shadow 0.3s;
 
     svg {
       width: 31rem;
@@ -87,6 +89,10 @@
         transition: stroke 0.3s;
       }
     }
+  }
+
+  &:hover .select__trigger {
+    box-shadow: 0 12rem 24rem rgba($color-surface, 0.24);
   }
 
   &__value {
