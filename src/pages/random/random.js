@@ -722,11 +722,23 @@ export function initRandomControls() {
       setStatus(statusElement, "");
     } catch (error) {
       randomLogger.warn("Stored session restore failed", error);
-      setStatus(
-        statusElement,
-        "Не удалось восстановить прошлую сессию. Загрузите файл заново.",
-        "error"
-      );
+
+      if (error?.status === 404) {
+        window.localStorage.removeItem(SESSION_STORAGE_KEY);
+        window.localStorage.removeItem(DRAW_STORAGE_KEY);
+        setStatus(
+          statusElement,
+          "Прошлая сессия больше недоступна. Загрузите новый файл.",
+          "info"
+        );
+      } else {
+        setStatus(
+          statusElement,
+          "Не удалось восстановить прошлую сессию. Загрузите файл заново.",
+          "error"
+        );
+      }
+
       state.session = null;
       state.lastDraw = null;
       renderCurrentState();

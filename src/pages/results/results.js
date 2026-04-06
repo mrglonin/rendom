@@ -350,6 +350,20 @@ export function initResultsPage() {
       setStatus(statusElement, "");
     } catch (error) {
       resultsLogger.error("Failed to load draw", error);
+
+      if (error?.status === 404) {
+        window.localStorage.removeItem(SESSION_STORAGE_KEY);
+        window.localStorage.removeItem(DRAW_STORAGE_KEY);
+        sessionId = "";
+        drawId = "";
+        setStatus(
+          statusElement,
+          "Этот результат больше недоступен. Выполните новый розыгрыш на странице настроек.",
+          "info"
+        );
+        return;
+      }
+
       setStatus(statusElement, error.message, "error");
     }
   }

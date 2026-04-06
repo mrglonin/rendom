@@ -27,12 +27,16 @@ async function request(url, options = {}) {
       typeof payload === "object" && payload && "error" in payload
         ? payload.error
         : `HTTP ${response.status}`;
+    const error = new Error(message);
+
+    error.status = response.status;
+    error.payload = payload;
     apiLogger.error("Request failed", {
       url,
       status: response.status,
       payload,
     });
-    throw new Error(message);
+    throw error;
   }
 
   apiLogger.debug("Request finished", {

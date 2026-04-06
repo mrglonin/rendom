@@ -577,12 +577,15 @@ async function request(url, options = {}) {
   const payload = await readPayload(response);
   if (!response.ok) {
     const message = typeof payload === "object" && payload && "error" in payload ? payload.error : `HTTP ${response.status}`;
+    const error = new Error(message);
+    error.status = response.status;
+    error.payload = payload;
     apiLogger.error("Request failed", {
       url,
       status: response.status,
       payload
     });
-    throw new Error(message);
+    throw error;
   }
   apiLogger.debug("Request finished", {
     url,
@@ -1242,11 +1245,21 @@ function initRandomControls() {
       setStatus(statusElement, "");
     } catch (error) {
       randomLogger.warn("Stored session restore failed", error);
-      setStatus(
-        statusElement,
-        "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0432\u043E\u0441\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u044C \u043F\u0440\u043E\u0448\u043B\u0443\u044E \u0441\u0435\u0441\u0441\u0438\u044E. \u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u0435 \u0444\u0430\u0439\u043B \u0437\u0430\u043D\u043E\u0432\u043E.",
-        "error"
-      );
+      if (error?.status === 404) {
+        window.localStorage.removeItem(SESSION_STORAGE_KEY);
+        window.localStorage.removeItem(DRAW_STORAGE_KEY);
+        setStatus(
+          statusElement,
+          "\u041F\u0440\u043E\u0448\u043B\u0430\u044F \u0441\u0435\u0441\u0441\u0438\u044F \u0431\u043E\u043B\u044C\u0448\u0435 \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u043D\u0430. \u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u0435 \u043D\u043E\u0432\u044B\u0439 \u0444\u0430\u0439\u043B.",
+          "info"
+        );
+      } else {
+        setStatus(
+          statusElement,
+          "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0432\u043E\u0441\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u044C \u043F\u0440\u043E\u0448\u043B\u0443\u044E \u0441\u0435\u0441\u0441\u0438\u044E. \u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u0435 \u0444\u0430\u0439\u043B \u0437\u0430\u043D\u043E\u0432\u043E.",
+          "error"
+        );
+      }
       state.session = null;
       state.lastDraw = null;
       renderCurrentState();
@@ -1756,6 +1769,18 @@ function initResultsPage() {
       setStatus2(statusElement, "");
     } catch (error) {
       resultsLogger.error("Failed to load draw", error);
+      if (error?.status === 404) {
+        window.localStorage.removeItem(SESSION_STORAGE_KEY2);
+        window.localStorage.removeItem(DRAW_STORAGE_KEY2);
+        sessionId = "";
+        drawId = "";
+        setStatus2(
+          statusElement,
+          "\u042D\u0442\u043E\u0442 \u0440\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442 \u0431\u043E\u043B\u044C\u0448\u0435 \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D. \u0412\u044B\u043F\u043E\u043B\u043D\u0438\u0442\u0435 \u043D\u043E\u0432\u044B\u0439 \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448 \u043D\u0430 \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0435 \u043D\u0430\u0441\u0442\u0440\u043E\u0435\u043A.",
+          "info"
+        );
+        return;
+      }
       setStatus2(statusElement, error.message, "error");
     }
   }
