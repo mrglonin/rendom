@@ -110,9 +110,11 @@
     top: 99%;
     left: 0;
     right: 0;
-    max-height: 360rem;
+    max-height: 320px;
     overflow-y: auto;
     overflow-x: hidden;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s;
@@ -162,5 +164,11 @@
       background: $color-accent;
       color: $color-white;
     }
+  }
+}
+
+.random__modal-select {
+  .select__dropdown {
+    max-height: min(320px, 42vh);
   }
 }
