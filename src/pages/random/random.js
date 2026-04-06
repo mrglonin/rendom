@@ -278,26 +278,14 @@ function renderWinnerHistory(
   submitButtonElement.disabled = (session?.counts?.activeRecords ?? 0) === 0;
 }
 
-function highlightWinnerHistory(listElement, historyEntryIds, shouldAutoScroll) {
+function highlightWinnerHistory(listElement, historyEntryIds) {
   const targetIds = new Set(historyEntryIds);
-  let firstWinnerElement = null;
 
   listElement.querySelectorAll(".random__list-item").forEach((itemElement) => {
     const isWinner = targetIds.has(itemElement.dataset.historyEntryId);
 
     itemElement.classList.toggle("random__list-item--winner", isWinner);
-
-    if (!firstWinnerElement && isWinner) {
-      firstWinnerElement = itemElement;
-    }
   });
-
-  if (firstWinnerElement && shouldAutoScroll) {
-    firstWinnerElement.scrollIntoView({
-      behavior: "smooth",
-      block: "center",
-    });
-  }
 }
 
 export function initRandomControls() {
@@ -326,7 +314,6 @@ export function initRandomControls() {
   const submitButtonElement = randomSectionElement.querySelector("[data-draw-submit]");
   const sidebarElement = randomSectionElement.querySelector("[data-settings-sidebar]");
   const recordsSelectMountElement = randomSectionElement.querySelector("[data-records-select]");
-  const autoScrollElement = randomSectionElement.querySelector('input[name="autoScroll"]');
   const winnersCountInputElement = randomSectionElement.querySelector(".random__quantity-input");
   const importTriggerButtonElement = randomSectionElement.querySelector("[data-import-trigger]");
   const displayColumnButtonElement = randomSectionElement.querySelector("[data-display-column-button]");
@@ -456,10 +443,6 @@ export function initRandomControls() {
     if (savedSettings.winnersCount && winnersCountInputElement) {
       winnersCountInputElement.value = String(savedSettings.winnersCount);
       winnersCountInputElement.dispatchEvent(new Event("input", { bubbles: true }));
-    }
-
-    if (typeof savedSettings.autoScroll === "boolean" && autoScrollElement) {
-      autoScrollElement.checked = savedSettings.autoScroll;
     }
 
     applySelectValue(
@@ -674,21 +657,18 @@ export function initRandomControls() {
       state.lastDraw = response.draw;
 
       renderCurrentState();
-      highlightWinnerHistory(listElement, latestEntryIds, Boolean(autoScrollElement?.checked));
+      highlightWinnerHistory(listElement, latestEntryIds);
       saveDrawSettings({
         ...payload,
-        autoScroll: Boolean(autoScrollElement?.checked),
       });
       window.localStorage.setItem(SESSION_STORAGE_KEY, response.session.id);
       window.localStorage.setItem(DRAW_STORAGE_KEY, response.draw.id);
       syncSidebarActions();
       setStatus(statusElement, "Победители определены. Переходим к экрану результатов…", "success");
 
-      const delay = autoScrollElement?.checked ? 1000 : 250;
-
       window.setTimeout(() => {
         window.location.href = buildAppUrl("results.html");
-      }, delay);
+      }, 250);
     } catch (error) {
       randomLogger.error("Draw failed", error);
       setStatus(statusElement, error.message, "error");

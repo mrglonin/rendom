@@ -830,53 +830,6 @@ body {
   width: 30rem;
   height: 16rem;
 }
-.random__switch {
-  position: relative;
-  display: inline-flex;
-  width: 140rem;
-  min-width: 140rem;
-  height: 65rem;
-  border-radius: 50rem;
-  cursor: pointer;
-}
-.random__switch:hover .random__switch-track {
-  box-shadow: 0 12rem 24rem rgba(0, 87, 40, 0.24);
-}
-.random__switch-input {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  inset: 0;
-  opacity: 0;
-  cursor: pointer;
-}
-.random__switch-input:checked + .random__switch-track {
-  border-color: #00b222;
-}
-.random__switch-input:checked + .random__switch-track .random__switch-thumb {
-  transform: translateX(75rem);
-  background: #00b222;
-}
-.random__switch-input:focus-visible + .random__switch-track {
-  box-shadow: 0 0 0 3rem rgba(10, 132, 255, 0.25);
-}
-.random__switch-track {
-  width: 100%;
-  padding: 5rem;
-  display: flex;
-  border: 3rem solid #ffffff;
-  border-radius: 50rem;
-  box-shadow: 0 8rem 18rem rgba(0, 0, 0, 0.12);
-  transition: border-color 0.3s, box-shadow 0.3s;
-}
-.random__switch-thumb {
-  display: block;
-  width: 50rem;
-  height: 50rem;
-  border-radius: 50%;
-  background: #ffffff;
-  transition: transform 0.3s, background-color 0.3s;
-}
 
 @media (max-width: 1280px) {
   .random__sidebar {

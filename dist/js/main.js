@@ -898,22 +898,12 @@ function renderWinnerHistory(listWrapperElement, listElement, hintElement, submi
   hintElement.textContent = buildSessionHint(session);
   submitButtonElement.disabled = (session?.counts?.activeRecords ?? 0) === 0;
 }
-function highlightWinnerHistory(listElement, historyEntryIds, shouldAutoScroll) {
+function highlightWinnerHistory(listElement, historyEntryIds) {
   const targetIds = new Set(historyEntryIds);
-  let firstWinnerElement = null;
   listElement.querySelectorAll(".random__list-item").forEach((itemElement) => {
     const isWinner = targetIds.has(itemElement.dataset.historyEntryId);
     itemElement.classList.toggle("random__list-item--winner", isWinner);
-    if (!firstWinnerElement && isWinner) {
-      firstWinnerElement = itemElement;
-    }
   });
-  if (firstWinnerElement && shouldAutoScroll) {
-    firstWinnerElement.scrollIntoView({
-      behavior: "smooth",
-      block: "center"
-    });
-  }
 }
 function initRandomControls() {
   const randomSectionElement = document.querySelector(".random");
@@ -938,7 +928,6 @@ function initRandomControls() {
   const submitButtonElement = randomSectionElement.querySelector("[data-draw-submit]");
   const sidebarElement = randomSectionElement.querySelector("[data-settings-sidebar]");
   const recordsSelectMountElement = randomSectionElement.querySelector("[data-records-select]");
-  const autoScrollElement = randomSectionElement.querySelector('input[name="autoScroll"]');
   const winnersCountInputElement = randomSectionElement.querySelector(".random__quantity-input");
   const importTriggerButtonElement = randomSectionElement.querySelector("[data-import-trigger]");
   const displayColumnButtonElement = randomSectionElement.querySelector("[data-display-column-button]");
@@ -1039,9 +1028,6 @@ function initRandomControls() {
     if (savedSettings.winnersCount && winnersCountInputElement) {
       winnersCountInputElement.value = String(savedSettings.winnersCount);
       winnersCountInputElement.dispatchEvent(new Event("input", { bubbles: true }));
-    }
-    if (typeof savedSettings.autoScroll === "boolean" && autoScrollElement) {
-      autoScrollElement.checked = savedSettings.autoScroll;
     }
     applySelectValue(
       formElement.querySelector('input[name="removeWinners"]')?.closest(".select"),
@@ -1206,19 +1192,17 @@ function initRandomControls() {
       state.session = response.session;
       state.lastDraw = response.draw;
       renderCurrentState();
-      highlightWinnerHistory(listElement, latestEntryIds, Boolean(autoScrollElement?.checked));
+      highlightWinnerHistory(listElement, latestEntryIds);
       saveDrawSettings({
-        ...payload,
-        autoScroll: Boolean(autoScrollElement?.checked)
+        ...payload
       });
       window.localStorage.setItem(SESSION_STORAGE_KEY, response.session.id);
       window.localStorage.setItem(DRAW_STORAGE_KEY, response.draw.id);
       syncSidebarActions();
       setStatus(statusElement, "\u041F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0438 \u043E\u043F\u0440\u0435\u0434\u0435\u043B\u0435\u043D\u044B. \u041F\u0435\u0440\u0435\u0445\u043E\u0434\u0438\u043C \u043A \u044D\u043A\u0440\u0430\u043D\u0443 \u0440\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442\u043E\u0432\u2026", "success");
-      const delay = autoScrollElement?.checked ? 1e3 : 250;
       window.setTimeout(() => {
         window.location.href = buildAppUrl("results.html");
-      }, delay);
+      }, 250);
     } catch (error) {
       randomLogger.error("Draw failed", error);
       setStatus(statusElement, error.message, "error");
