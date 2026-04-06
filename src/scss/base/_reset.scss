@@ -24,12 +24,15 @@ aside {
 html {
   scroll-behavior: smooth;
   font-size: 1px;
-  -ms-text-size-adjust: 100%;
-  -moz-text-size-adjust: 100%;
-  -webkit-text-size-adjust: 100%;
 }
 
 @media (min-width: 320px) {
+  html {
+    font-size: 0.031vw;
+  }
+}
+
+@media (min-width: 1921px) {
   html {
     font-size: 0.0346vw;
   }
