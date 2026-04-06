@@ -1090,6 +1090,54 @@ function initRandomControls() {
   function closeDisplayColumnModal() {
     setFieldModalOpen(false);
   }
+  async function saveDisplayColumnSelection() {
+    if (!state.session || !state.pendingDisplayColumn || state.isSavingDisplayColumn) {
+      return;
+    }
+    const currentDisplayColumn = getDisplayColumnLabel();
+    const nextDisplayColumn = String(state.pendingDisplayColumn || "").trim();
+    if (!nextDisplayColumn) {
+      setStatus(statusElement, "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0432\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u043F\u043E\u043B\u0435 \u0438\u0437 Excel.", "error");
+      return;
+    }
+    if (nextDisplayColumn === currentDisplayColumn) {
+      closeDisplayColumnModal();
+      renderCurrentState();
+      setStatus(
+        statusElement,
+        `\u041F\u043E\u043B\u0435 \xAB${currentDisplayColumn}\xBB \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u043E. \u041C\u043E\u0436\u043D\u043E \u0437\u0430\u043F\u0443\u0441\u043A\u0430\u0442\u044C \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448.`,
+        "success"
+      );
+      return;
+    }
+    state.isSavingDisplayColumn = true;
+    displayColumnSaveButtonElement.disabled = true;
+    displayColumnCancelButtonElement.disabled = true;
+    syncDrawAvailability();
+    setStatus(statusElement, "\u0421\u043E\u0445\u0440\u0430\u043D\u044F\u0435\u043C \u043F\u043E\u043B\u0435 \u0434\u043B\u044F \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448\u0430\u2026");
+    try {
+      const response = await api.updateSessionSettings(state.session.id, {
+        displayColumn: nextDisplayColumn
+      });
+      state.session = response.session;
+      state.lastDraw = response.session.lastDraw || state.lastDraw;
+      closeDisplayColumnModal();
+      renderCurrentState();
+      setStatus(
+        statusElement,
+        `\u041F\u043E\u043B\u0435 \xAB${getDisplayColumnLabel()}\xBB \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u043E. \u041C\u043E\u0436\u043D\u043E \u0437\u0430\u043F\u0443\u0441\u043A\u0430\u0442\u044C \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448.`,
+        "success"
+      );
+    } catch (error) {
+      randomLogger.error("Failed to update display column", error);
+      setStatus(statusElement, error.message, "error");
+    } finally {
+      state.isSavingDisplayColumn = false;
+      displayColumnSaveButtonElement.disabled = false;
+      displayColumnCancelButtonElement.disabled = false;
+      syncDrawAvailability();
+    }
+  }
   function applySavedSidebarSettings(savedSettings) {
     if (!savedSettings) {
       return;
@@ -1343,37 +1391,19 @@ function initRandomControls() {
       );
     }
   });
-  displayColumnSaveButtonElement?.addEventListener("click", async () => {
-    if (!state.session || !state.pendingDisplayColumn || state.isSavingDisplayColumn) {
+  displayColumnSaveButtonElement?.addEventListener("click", async (event) => {
+    event.preventDefault();
+    await saveDisplayColumnSelection();
+  });
+  displayColumnModalElement?.addEventListener("keydown", async (event) => {
+    if (event.key !== "Enter" || !state.isFieldModalOpen) {
       return;
     }
-    state.isSavingDisplayColumn = true;
-    displayColumnSaveButtonElement.disabled = true;
-    displayColumnCancelButtonElement.disabled = true;
-    syncDrawAvailability();
-    setStatus(statusElement, "\u0421\u043E\u0445\u0440\u0430\u043D\u044F\u0435\u043C \u043F\u043E\u043B\u0435 \u0434\u043B\u044F \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448\u0430\u2026");
-    try {
-      const response = await api.updateSessionSettings(state.session.id, {
-        displayColumn: state.pendingDisplayColumn
-      });
-      state.session = response.session;
-      state.lastDraw = response.session.lastDraw || state.lastDraw;
-      closeDisplayColumnModal();
-      renderCurrentState();
-      setStatus(
-        statusElement,
-        `\u041F\u043E\u043B\u0435 \xAB${getDisplayColumnLabel()}\xBB \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u043E. \u041C\u043E\u0436\u043D\u043E \u0437\u0430\u043F\u0443\u0441\u043A\u0430\u0442\u044C \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448.`,
-        "success"
-      );
-    } catch (error) {
-      randomLogger.error("Failed to update display column", error);
-      setStatus(statusElement, error.message, "error");
-    } finally {
-      state.isSavingDisplayColumn = false;
-      displayColumnSaveButtonElement.disabled = false;
-      displayColumnCancelButtonElement.disabled = false;
-      syncDrawAvailability();
+    if (event.target.closest(".select__trigger") || event.target.closest(".select__option")) {
+      return;
     }
+    event.preventDefault();
+    await saveDisplayColumnSelection();
   });
   randomSectionElement.querySelector("[data-settings-toggle]")?.addEventListener("click", () => {
     state.isSidebarOpen = !state.isSidebarOpen;

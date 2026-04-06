@@ -524,6 +524,61 @@ export function initRandomControls() {
     setFieldModalOpen(false);
   }
 
+  async function saveDisplayColumnSelection() {
+    if (!state.session || !state.pendingDisplayColumn || state.isSavingDisplayColumn) {
+      return;
+    }
+
+    const currentDisplayColumn = getDisplayColumnLabel();
+    const nextDisplayColumn = String(state.pendingDisplayColumn || "").trim();
+
+    if (!nextDisplayColumn) {
+      setStatus(statusElement, "Сначала выберите поле из Excel.", "error");
+      return;
+    }
+
+    if (nextDisplayColumn === currentDisplayColumn) {
+      closeDisplayColumnModal();
+      renderCurrentState();
+      setStatus(
+        statusElement,
+        `Поле «${currentDisplayColumn}» подтверждено. Можно запускать розыгрыш.`,
+        "success"
+      );
+      return;
+    }
+
+    state.isSavingDisplayColumn = true;
+    displayColumnSaveButtonElement.disabled = true;
+    displayColumnCancelButtonElement.disabled = true;
+    syncDrawAvailability();
+    setStatus(statusElement, "Сохраняем поле для розыгрыша…");
+
+    try {
+      const response = await api.updateSessionSettings(state.session.id, {
+        displayColumn: nextDisplayColumn,
+      });
+
+      state.session = response.session;
+      state.lastDraw = response.session.lastDraw || state.lastDraw;
+      closeDisplayColumnModal();
+      renderCurrentState();
+      setStatus(
+        statusElement,
+        `Поле «${getDisplayColumnLabel()}» сохранено. Можно запускать розыгрыш.`,
+        "success"
+      );
+    } catch (error) {
+      randomLogger.error("Failed to update display column", error);
+      setStatus(statusElement, error.message, "error");
+    } finally {
+      state.isSavingDisplayColumn = false;
+      displayColumnSaveButtonElement.disabled = false;
+      displayColumnCancelButtonElement.disabled = false;
+      syncDrawAvailability();
+    }
+  }
+
   function applySavedSidebarSettings(savedSettings) {
     if (!savedSettings) {
       return;
@@ -859,40 +914,22 @@ export function initRandomControls() {
     }
   });
 
-  displayColumnSaveButtonElement?.addEventListener("click", async () => {
-    if (!state.session || !state.pendingDisplayColumn || state.isSavingDisplayColumn) {
+  displayColumnSaveButtonElement?.addEventListener("click", async (event) => {
+    event.preventDefault();
+    await saveDisplayColumnSelection();
+  });
+
+  displayColumnModalElement?.addEventListener("keydown", async (event) => {
+    if (event.key !== "Enter" || !state.isFieldModalOpen) {
       return;
     }
 
-    state.isSavingDisplayColumn = true;
-    displayColumnSaveButtonElement.disabled = true;
-    displayColumnCancelButtonElement.disabled = true;
-    syncDrawAvailability();
-    setStatus(statusElement, "Сохраняем поле для розыгрыша…");
-
-    try {
-      const response = await api.updateSessionSettings(state.session.id, {
-        displayColumn: state.pendingDisplayColumn,
-      });
-
-      state.session = response.session;
-      state.lastDraw = response.session.lastDraw || state.lastDraw;
-      closeDisplayColumnModal();
-      renderCurrentState();
-      setStatus(
-        statusElement,
-        `Поле «${getDisplayColumnLabel()}» сохранено. Можно запускать розыгрыш.`,
-        "success"
-      );
-    } catch (error) {
-      randomLogger.error("Failed to update display column", error);
-      setStatus(statusElement, error.message, "error");
-    } finally {
-      state.isSavingDisplayColumn = false;
-      displayColumnSaveButtonElement.disabled = false;
-      displayColumnCancelButtonElement.disabled = false;
-      syncDrawAvailability();
+    if (event.target.closest(".select__trigger") || event.target.closest(".select__option")) {
+      return;
     }
+
+    event.preventDefault();
+    await saveDisplayColumnSelection();
   });
 
   randomSectionElement.querySelector("[data-settings-toggle]")?.addEventListener("click", () => {
