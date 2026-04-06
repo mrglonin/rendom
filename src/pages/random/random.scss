@@ -592,6 +592,17 @@
     margin-bottom: 32rem;
   }
 
+  &__modal-note {
+    margin-bottom: 28rem;
+    padding: 18rem 22rem;
+    border-radius: 24rem;
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba($color-white, 0.94);
+    font-size: 22rem;
+    line-height: 1.4;
+    font-weight: 500;
+  }
+
   &__modal-actions {
     display: flex;
     justify-content: flex-end;
@@ -822,7 +833,10 @@
     }
 
     &__hint,
-    &__sidebar-description {
+    &__sidebar-description,
+    &__modal-description,
+    &__modal-file,
+    &__modal-note {
       font-size: 18rem;
       line-height: 1.4;
     }
