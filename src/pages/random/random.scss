@@ -1,0 +1,500 @@
+@use "../../scss/base/vars" as *;
+
+.random {
+  position: relative;
+  &__layout {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 100rem 0;
+    min-height: 100svh;
+  }
+
+  &__logo {
+    margin-bottom: 50rem;
+  }
+
+  &__main {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+  }
+
+  &__page-title {
+    text-align: center;
+    font-size: 90rem;
+    line-height: 108rem;
+    font-weight: 700;
+    color: $color-white;
+    margin-bottom: 45rem;
+  }
+
+  &__form {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+  }
+
+  &__workspace {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    align-items: center;
+    position: relative;
+  }
+
+  &__picker {
+    width: 100%;
+    max-width: 905rem;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+  }
+
+  &__picker-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 30rem;
+    margin-bottom: 30rem;
+  }
+
+  &__label {
+    font-size: 32rem;
+    line-height: 38rem;
+    max-width: 600rem;
+    font-weight: 500;
+    color: $color-white;
+  }
+
+  &__list {
+    position: relative;
+    height: 650rem;
+    padding: 0 32rem;
+    background: rgba($color-surface, 0.24);
+    -webkit-backdrop-filter: blur(12rem);
+    backdrop-filter: blur(12rem);
+    border-radius: 80rem;
+    overflow: hidden;
+    margin-bottom: 30rem;
+    counter-reset: random-item;
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 6rem;
+      background: conic-gradient(
+        from 90deg,
+        $color-white 0deg,
+        $color-white 90deg,
+        $color-white 90deg,
+        $color-white 139.5deg,
+        transparent 151.5deg,
+        transparent 166.5deg,
+        $color-white 178.5deg,
+        $color-white 180deg,
+        $color-white 180deg,
+        $color-white 270deg,
+        $color-white 270deg,
+        $color-white 319.5deg,
+        transparent 331.5deg,
+        transparent 346.5deg,
+        $color-white 358.5deg,
+        $color-white 360deg
+      );
+      -webkit-mask:
+        linear-gradient($color-white 0 0) content-box,
+        linear-gradient($color-white 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+  }
+
+  &__list-scroll {
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 16rem;
+    margin-right: -16rem;
+    padding-top: 32rem;
+    padding-bottom: 32rem;
+    display: flex;
+    flex-direction: column;
+    gap: 32rem;
+    scrollbar-width: thin;
+    scrollbar-color: $color-accent rgba($color-surface, 0.24);
+
+    &::-webkit-scrollbar {
+      width: 6rem;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: rgba($color-surface, 0.24);
+      border-radius: 20rem;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      border: 2rem solid rgba($color-surface, 0.24);
+      border-radius: 20rem;
+      background: $color-accent;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+      background: $color-accent-dark;
+    }
+  }
+
+  &__list-item {
+    display: flex;
+    align-items: center;
+    counter-increment: random-item;
+  }
+
+  &__list-item-digit {
+    width: 70rem;
+    min-width: 70rem;
+    height: 70rem;
+    border-radius: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 32rem;
+    line-height: 46rem;
+    font-weight: 700;
+    background: $color-accent;
+
+    &::after {
+      content: counter(random-item);
+    }
+  }
+
+  &__list-item-text {
+    position: relative;
+    width: 100%;
+    padding: 12rem 32rem;
+    font-size: 32rem;
+    line-height: 46rem;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-left: -15rem;
+    border-radius: 1600rem;
+    background: rgba($color-surface, 0.24);
+    -webkit-backdrop-filter: blur(12rem);
+    backdrop-filter: blur(12rem);
+  }
+
+  &__hint {
+    margin-bottom: 75rem;
+    font-size: 24rem;
+    line-height: 29rem;
+    color: $color-white;
+    font-weight: 500;
+  }
+
+  &__actions {
+    padding-bottom: 55rem;
+    margin-bottom: auto;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 30rem;
+  }
+
+  &__tools {
+    display: flex;
+    align-items: center;
+    gap: 30rem;
+  }
+
+  &__tool {
+    position: relative;
+    isolation: isolate;
+    width: 65rem;
+    min-width: 65rem;
+    height: 65rem;
+    border-radius: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0rem 24rem 48rem rgba($color-shadow, 0.04);
+    transition: box-shadow 0.3s ease;
+    cursor: pointer;
+    &::before,
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      z-index: -1;
+      transition: opacity 0.3s ease;
+    }
+
+    &::before {
+      background: linear-gradient(
+        180deg,
+        rgba($color-white, 0.24) 0%,
+        rgba($color-white, 0.56) 100%
+      );
+      opacity: 1;
+    }
+
+    &::after {
+      background: $color-accent;
+      opacity: 0;
+    }
+
+    &:hover {
+      box-shadow: 0rem 24rem 48rem rgba($color-surface, 0.32);
+
+      &::before {
+        opacity: 0;
+      }
+
+      &::after {
+        opacity: 1;
+      }
+    }
+
+    svg {
+      width: 32rem;
+      height: 32rem;
+    }
+    &--check {
+    }
+
+    &--setup {
+    }
+  }
+
+  &__submit {
+    width: fit-content;
+    padding: 30rem 60rem;
+    font-size: 50rem;
+    line-height: 50rem;
+    font-weight: 700;
+    color: $color-white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(
+      90deg,
+      $color-accent-dark 0%,
+      $color-accent 50%,
+      $color-accent-dark 100%
+    );
+    background-size: 200% 100%;
+    background-position: 0% 50%;
+    border-radius: 300rem;
+    margin-left: auto;
+    margin-right: auto;
+    transition: background-position 0.3s ease;
+
+    &:hover {
+      background-position: 100% 50%;
+    }
+  }
+
+  &__sidebar {
+    width: 100%;
+    max-width: 865rem;
+    padding: 82rem;
+    background: rgba($color-surface, 0.24);
+    -webkit-backdrop-filter: blur(12rem);
+    backdrop-filter: blur(12rem);
+    border-radius: 80rem;
+    display: flex;
+    flex-direction: column;
+    gap: 85rem;
+    position: absolute;
+    top: 95rem;
+    right: 120rem;
+    transform: translateX(100%);
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 6rem;
+      background: conic-gradient(
+        from 180deg,
+        $color-white 0deg,
+        $color-white 90deg,
+        $color-white 90deg,
+        $color-white 139.5deg,
+        transparent 151.5deg,
+        transparent 166.5deg,
+        $color-white 178.5deg,
+        $color-white 180deg,
+        $color-white 180deg,
+        $color-white 270deg,
+        $color-white 270deg,
+        $color-white 319.5deg,
+        transparent 331.5deg,
+        transparent 346.5deg,
+        $color-white 358.5deg,
+        $color-white 360deg
+      );
+      -webkit-mask:
+        linear-gradient($color-white 0 0) content-box,
+        linear-gradient($color-white 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+  }
+
+  &__sidebar-item {
+  }
+
+  &__sidebar-header {
+    margin-bottom: 20rem;
+  }
+
+  &__sidebar-title {
+    margin-bottom: 20rem;
+    color: $color-white;
+    font-size: 32rem;
+    line-height: 38rem;
+    font-weight: 700;
+  }
+
+  &__sidebar-description {
+    font-size: 24rem;
+    line-height: 29rem;
+    font-weight: 500;
+    color: $color-white;
+  }
+
+  &__sidebar-select {
+    width: 100%;
+    max-width: 500rem;
+  }
+
+  &__quantity {
+  }
+
+  &__quantity-label {
+    margin-bottom: 10rem;
+    font-size: 32rem;
+    line-height: 38rem;
+    font-weight: 500;
+  }
+
+  &__quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 20rem;
+  }
+
+  &__quantity-field {
+    width: 100%;
+    max-width: 250rem;
+    min-width: 250rem;
+    height: 65rem;
+    border-radius: 30rem;
+    background: $color-accent;
+    position: relative;
+  }
+
+  &__quantity-input {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    inset: 0;
+    padding: 8rem 32rem;
+    color: $color-white;
+    font-size: 32rem;
+    line-height: 49rem;
+    font-weight: 500;
+    background: transparent;
+  }
+
+  &__quantity-unit {
+    font-size: 32rem;
+    line-height: 38rem;
+    color: $color-white;
+    font-weight: 500;
+  }
+
+  &__quantity-stepper {
+    position: absolute;
+    right: 32rem;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8rem;
+  }
+
+  &__quantity-stepper-button {
+    width: 30rem;
+    height: 16rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+
+    svg {
+      width: 30rem;
+      height: 16rem;
+    }
+  }
+
+  &__switch {
+    position: relative;
+    display: inline-flex;
+    width: 140rem;
+    min-width: 140rem;
+    height: 65rem;
+    border-radius: 50rem;
+    cursor: pointer;
+  }
+
+  &__switch-input {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+
+    &:checked + .random__switch-track {
+      border-color: $color-accent;
+
+      .random__switch-thumb {
+        transform: translateX(75rem);
+        background: $color-accent;
+      }
+    }
+
+    &:focus-visible + .random__switch-track {
+      box-shadow: 0 0 0 3rem rgba($color-focus-ring, 0.25);
+    }
+  }
+
+  &__switch-track {
+    width: 100%;
+    padding: 5rem 5rem;
+    display: flex;
+    border: 3rem solid $color-white;
+    border-radius: 50rem;
+    transition: border-color 0.3s;
+  }
+
+  &__switch-thumb {
+    display: block;
+    width: 50rem;
+    height: 50rem;
+    border-radius: 50%;
+    background: $color-white;
+    transition:
+      transform 0.3s,
+      background-color 0.3s;
+  }
+}

@@ -5,7 +5,7 @@ function initScreenFlow() {
   const resetPopupElement = document.querySelector('[data-popup="reset"]');
   const languagesPopupElement = document.querySelector('[data-popup="languages"]');
   const endSubmitButton = endElement?.querySelector(".end__submit");
-
+document.documentElement.classList.add("js-ready");
   if (!startElement || !testElement) {
     return;
   }

@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "node scripts/dev-server.js",
     "start": "node scripts/dev-server.js",
+    "fonts": "node scripts/convert-fonts.js",
     "build": "gulp build",
     "clean": "gulp clean",
     "format": "npm run format:templates && npm run format:assets",
@@ -20,6 +21,7 @@
     "not op_mini all"
   ],
   "devDependencies": {
+    "aos": "^2.3.4",
     "autoprefixer": "^10.4.21",
     "browser-sync": "^3.0.4",
     "browserslist-to-esbuild": "^2.1.1",
@@ -33,6 +35,8 @@
     "gulp-postcss": "^10.0.0",
     "gulp-sass": "^6.0.1",
     "prettier": "^3.6.2",
-    "sass": "^1.93.2"
+    "sass": "^1.93.2",
+    "ttf2woff": "^3.0.0",
+    "ttf2woff2": "^8.0.1"
   }
 }

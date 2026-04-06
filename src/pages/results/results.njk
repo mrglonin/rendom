@@ -1,0 +1,100 @@
+{% from "blocks/select/select.njk" import select %}
+
+<section class="results" data-aos="fade">
+  <picture class="results__bg background">
+    <img class="background__image" src="images/page-bg-2.png" alt="bg">
+  </picture>
+  <div class="container">
+    <div class="results__layout">
+      <a class="results__logo logo" href="#">
+        <img class="logo__image" src="images/logo.svg" alt="logo">
+      </a>
+      <div class="results__main">
+        <div class="results__head">
+          <div class="results__titling">
+            <h2 class="results__title">
+              Результаты
+            </h2>
+            <p class="results__subtext">
+              09.04.2026 в 19:22:04 UTC+3
+            </p>
+          </div>
+          <ul class="results__types">
+            <li class="results__type results__type--blocks" tabindex="0" role="button" aria-pressed="false">
+              Блоками
+            </li>
+            <li class="results__type results__type--list results__type--active" tabindex="0" role="button"
+              aria-pressed="true">
+              Списком
+            </li>
+          </ul>
+        </div>
+        <div class="results__body">
+          <ul class="results__list">
+            <li class="results__item">
+              <div class="results__digit">
+
+              </div>
+              <div class="results__text">
+                4748492839402812
+              </div>
+            </li>
+            <li class="results__item">
+              <div class="results__digit">
+
+              </div>
+              <div class="results__text">
+                4748492839405812
+              </div>
+            </li>
+            <li class="results__item">
+              <div class="results__digit">
+
+              </div>
+              <div class="results__text">
+                4748492839405812
+              </div>
+            </li>
+            <li class="results__item">
+              <div class="results__digit">
+
+              </div>
+              <div class="results__text">
+                4748492839402812
+              </div>
+            </li>
+            <li class="results__item">
+              <div class="results__digit">
+
+              </div>
+              <div class="results__text">
+                4748492839405812
+              </div>
+            </li>
+            <li class="results__item">
+              <div class="results__digit">
+
+              </div>
+              <div class="results__text">
+                4748492839405812
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <form class="results__form" action="#" method="post">
+          {{ select(
+          "listSource",
+          "current-list",
+          "Убрать из списка текущих победителей",
+          [
+          { "value": "current-list", "label": "Убрать из списка текущих победителей" },
+          { "value": "imported-list", "label": "другое" }
+          ],
+          "select--up results__select"
+          ) }}
+        </form>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,10 @@
+{% extends "layouts/base.njk" %}
+{% set page = {
+"title": "Random",
+"description": "Страница случайного выбора",
+"bodyClass": "page-random"
+} %}
+
+{% block content %}
+{% include "pages/random/random.njk" %}
+{% endblock %}

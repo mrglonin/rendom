@@ -1,8 +1,0 @@
-{% macro decor(props = {}) %}
-    <div class="decor{{ (' ' ~ props.elementClass) if props.elementClass else '' }}{{ (' ' ~ props.className) if props.className else '' }}">
-        <div class="decor__item"></div>
-        <div class="decor__item"></div>
-        <div class="decor__item"></div>
-        <div class="decor__item"></div>
-    </div>
-{% endmacro %}

@@ -13,14 +13,15 @@ const esbuild = require("esbuild");
 const browserslistToEsbuild = require("browserslist-to-esbuild").default;
 const fs = require("fs");
 const path = require("path");
+const convertFonts = require("./scripts/convert-fonts");
 
 const paths = {
   root: {
     src: "src",
     dist: "dist",
   },
-  pages: "src/pages/**/*.njk",
-  templates: ["src/templates/**/*.njk", "src/blocks/**/*.njk", "src/data/**/*.json"],
+  pages: "src/pages/*.njk",
+  templates: ["src/templates/**/*.njk", "src/blocks/**/*.njk", "src/pages/**/*.njk", "src/data/**/*.json"],
   styles: {
     entry: "src/scss/style.scss",
     watch: ["src/scss/**/*.scss", "src/blocks/**/*.scss"],
@@ -185,6 +186,10 @@ async function copyStatic() {
   await copyRecursive(staticSource, staticDest);
 }
 
+function fonts() {
+  return convertFonts();
+}
+
 function serve(done) {
   browserSync.init({
     server: {
@@ -201,7 +206,7 @@ function watcher(done) {
   watch(paths.templates, html);
   watch(paths.styles.watch, styles);
   watch(paths.scripts.watch, scripts);
-  watch(paths.static.src, series(copyStatic, reload));
+  watch(paths.static.src, series(fonts, copyStatic, reload));
   done();
 }
 
@@ -220,7 +225,7 @@ function setProduction(done) {
   done();
 }
 
-const dev = series(setDevelopment, clean, parallel(html, styles, scripts, copyStatic), serve);
+const dev = series(setDevelopment, clean, parallel(html, styles, scripts, series(fonts, copyStatic)), serve);
 const build = series(
   setProduction,
   clean,
@@ -228,7 +233,7 @@ const build = series(
     html,
     series(styles, stylesMin),
     series(scripts, scriptsMin),
-    copyStatic,
+    series(fonts, copyStatic),
   ),
 );
 
@@ -239,6 +244,13 @@ exports.stylesMin = stylesMin;
 exports.scripts = scripts;
 exports.scriptsMin = scriptsMin;
 exports.copyStatic = copyStatic;
-exports.watch = series(setDevelopment, clean, parallel(html, styles, scripts, copyStatic), serve, watcher);
+exports.fonts = fonts;
+exports.watch = series(
+  setDevelopment,
+  clean,
+  parallel(html, styles, scripts, series(fonts, copyStatic)),
+  serve,
+  watcher,
+);
 exports.build = build;
 exports.default = dev;

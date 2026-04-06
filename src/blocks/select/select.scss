@@ -1,0 +1,140 @@
+@use "../../scss/base/vars" as *;
+
+.select {
+  position: relative;
+  width: fit-content;
+
+  &--open {
+    .select__trigger {
+      border-radius: 30rem 30rem 0 0;
+      background: $color-white;
+      color: $color-accent;
+
+      svg {
+        transform: rotate(180deg);
+
+        path {
+          stroke: $color-accent;
+        }
+      }
+    }
+
+    .select__dropdown {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
+
+  &--up {
+    .select__dropdown {
+      top: auto;
+      bottom: 99%;
+    }
+
+    &.select--open {
+      .select__trigger {
+        border-radius: 0 0 30rem 30rem;
+      }
+    }
+
+    .select__dropdown {
+      li {
+        &:first-child {
+          border-radius: 30rem 30rem 0 0;
+        }
+
+        &:last-child {
+          border-radius: 0;
+        }
+      }
+    }
+  }
+
+  &:hover .select__trigger,
+  &:focus-within .select__trigger {
+    border-color: $color-border-muted;
+    box-shadow: 0 0 0 3rem rgba($color-focus-ring, 0.12);
+  }
+
+  &__input {
+  }
+
+  &__trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15rem;
+    font-size: 32rem;
+    line-height: 49rem;
+    padding: 8rem 32rem;
+    background: $color-accent;
+    border-radius: 55rem;
+    color: $color-white;
+    cursor: pointer;
+    transition:
+      border-radius 0.3s,
+      background 0.3s,
+      color 0.3s;
+
+    svg {
+      width: 31rem;
+      min-width: 31rem;
+      height: 31rem;
+      transition: transform 0.3s;
+
+      path {
+        transition: stroke 0.3s;
+      }
+    }
+  }
+
+  &__value {
+    flex: 1 1 auto;
+    text-align: left;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__dropdown {
+    position: absolute;
+    z-index: 10;
+    top: 99%;
+    left: 0;
+    right: 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+
+    li {
+      overflow: hidden;
+
+      &:last-child {
+        border-radius: 0 0 30rem 30rem;
+      }
+    }
+  }
+
+  &__option {
+    width: 100%;
+    padding: 5rem 30rem;
+    color: $color-accent;
+    font-size: 32rem;
+    line-height: 49rem;
+    background: $color-white;
+    text-align: left;
+    font-weight: 500;
+    cursor: pointer;
+    transition:
+      background 0.3s,
+      color 0.3s;
+
+    &:hover,
+    &.is-selected {
+      background: $color-accent;
+      color: $color-white;
+    }
+  }
+}

@@ -1,3 +1,386 @@
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __commonJS = (cb, mod) => function __require() {
+  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
+
+// node_modules/aos/dist/aos.js
+var require_aos = __commonJS({
+  "node_modules/aos/dist/aos.js"(exports, module) {
+    !(function(e, t) {
+      "object" == typeof exports && "object" == typeof module ? module.exports = t() : "function" == typeof define && define.amd ? define([], t) : "object" == typeof exports ? exports.AOS = t() : e.AOS = t();
+    })(exports, function() {
+      return (function(e) {
+        function t(o) {
+          if (n[o]) return n[o].exports;
+          var i = n[o] = { exports: {}, id: o, loaded: false };
+          return e[o].call(i.exports, i, i.exports, t), i.loaded = true, i.exports;
+        }
+        var n = {};
+        return t.m = e, t.c = n, t.p = "dist/", t(0);
+      })([function(e, t, n) {
+        "use strict";
+        function o(e2) {
+          return e2 && e2.__esModule ? e2 : { default: e2 };
+        }
+        var i = Object.assign || function(e2) {
+          for (var t2 = 1; t2 < arguments.length; t2++) {
+            var n2 = arguments[t2];
+            for (var o2 in n2) Object.prototype.hasOwnProperty.call(n2, o2) && (e2[o2] = n2[o2]);
+          }
+          return e2;
+        }, r = n(1), a = (o(r), n(6)), u = o(a), c = n(7), s = o(c), f = n(8), d = o(f), l = n(9), p = o(l), m = n(10), b = o(m), v = n(11), y = o(v), g = n(14), h = o(g), w = [], k = false, x = { offset: 120, delay: 0, easing: "ease", duration: 400, disable: false, once: false, startEvent: "DOMContentLoaded", throttleDelay: 99, debounceDelay: 50, disableMutationObserver: false }, j = function() {
+          var e2 = arguments.length > 0 && void 0 !== arguments[0] && arguments[0];
+          if (e2 && (k = true), k) return w = (0, y.default)(w, x), (0, b.default)(w, x.once), w;
+        }, O = function() {
+          w = (0, h.default)(), j();
+        }, M = function() {
+          w.forEach(function(e2, t2) {
+            e2.node.removeAttribute("data-aos"), e2.node.removeAttribute("data-aos-easing"), e2.node.removeAttribute("data-aos-duration"), e2.node.removeAttribute("data-aos-delay");
+          });
+        }, S = function(e2) {
+          return e2 === true || "mobile" === e2 && p.default.mobile() || "phone" === e2 && p.default.phone() || "tablet" === e2 && p.default.tablet() || "function" == typeof e2 && e2() === true;
+        }, _ = function(e2) {
+          x = i(x, e2), w = (0, h.default)();
+          var t2 = document.all && !window.atob;
+          return S(x.disable) || t2 ? M() : (x.disableMutationObserver || d.default.isSupported() || (console.info('\n      aos: MutationObserver is not supported on this browser,\n      code mutations observing has been disabled.\n      You may have to call "refreshHard()" by yourself.\n    '), x.disableMutationObserver = true), document.querySelector("body").setAttribute("data-aos-easing", x.easing), document.querySelector("body").setAttribute("data-aos-duration", x.duration), document.querySelector("body").setAttribute("data-aos-delay", x.delay), "DOMContentLoaded" === x.startEvent && ["complete", "interactive"].indexOf(document.readyState) > -1 ? j(true) : "load" === x.startEvent ? window.addEventListener(x.startEvent, function() {
+            j(true);
+          }) : document.addEventListener(x.startEvent, function() {
+            j(true);
+          }), window.addEventListener("resize", (0, s.default)(j, x.debounceDelay, true)), window.addEventListener("orientationchange", (0, s.default)(j, x.debounceDelay, true)), window.addEventListener("scroll", (0, u.default)(function() {
+            (0, b.default)(w, x.once);
+          }, x.throttleDelay)), x.disableMutationObserver || d.default.ready("[data-aos]", O), w);
+        };
+        e.exports = { init: _, refresh: j, refreshHard: O };
+      }, function(e, t) {
+      }, , , , , function(e, t) {
+        (function(t2) {
+          "use strict";
+          function n(e2, t3, n2) {
+            function o2(t4) {
+              var n3 = b2, o3 = v2;
+              return b2 = v2 = void 0, k2 = t4, g2 = e2.apply(o3, n3);
+            }
+            function r2(e3) {
+              return k2 = e3, h2 = setTimeout(f2, t3), M ? o2(e3) : g2;
+            }
+            function a2(e3) {
+              var n3 = e3 - w2, o3 = e3 - k2, i2 = t3 - n3;
+              return S ? j(i2, y2 - o3) : i2;
+            }
+            function c2(e3) {
+              var n3 = e3 - w2, o3 = e3 - k2;
+              return void 0 === w2 || n3 >= t3 || n3 < 0 || S && o3 >= y2;
+            }
+            function f2() {
+              var e3 = O();
+              return c2(e3) ? d2(e3) : void (h2 = setTimeout(f2, a2(e3)));
+            }
+            function d2(e3) {
+              return h2 = void 0, _ && b2 ? o2(e3) : (b2 = v2 = void 0, g2);
+            }
+            function l2() {
+              void 0 !== h2 && clearTimeout(h2), k2 = 0, b2 = w2 = v2 = h2 = void 0;
+            }
+            function p2() {
+              return void 0 === h2 ? g2 : d2(O());
+            }
+            function m2() {
+              var e3 = O(), n3 = c2(e3);
+              if (b2 = arguments, v2 = this, w2 = e3, n3) {
+                if (void 0 === h2) return r2(w2);
+                if (S) return h2 = setTimeout(f2, t3), o2(w2);
+              }
+              return void 0 === h2 && (h2 = setTimeout(f2, t3)), g2;
+            }
+            var b2, v2, y2, g2, h2, w2, k2 = 0, M = false, S = false, _ = true;
+            if ("function" != typeof e2) throw new TypeError(s);
+            return t3 = u(t3) || 0, i(n2) && (M = !!n2.leading, S = "maxWait" in n2, y2 = S ? x(u(n2.maxWait) || 0, t3) : y2, _ = "trailing" in n2 ? !!n2.trailing : _), m2.cancel = l2, m2.flush = p2, m2;
+          }
+          function o(e2, t3, o2) {
+            var r2 = true, a2 = true;
+            if ("function" != typeof e2) throw new TypeError(s);
+            return i(o2) && (r2 = "leading" in o2 ? !!o2.leading : r2, a2 = "trailing" in o2 ? !!o2.trailing : a2), n(e2, t3, { leading: r2, maxWait: t3, trailing: a2 });
+          }
+          function i(e2) {
+            var t3 = "undefined" == typeof e2 ? "undefined" : c(e2);
+            return !!e2 && ("object" == t3 || "function" == t3);
+          }
+          function r(e2) {
+            return !!e2 && "object" == ("undefined" == typeof e2 ? "undefined" : c(e2));
+          }
+          function a(e2) {
+            return "symbol" == ("undefined" == typeof e2 ? "undefined" : c(e2)) || r(e2) && k.call(e2) == d;
+          }
+          function u(e2) {
+            if ("number" == typeof e2) return e2;
+            if (a(e2)) return f;
+            if (i(e2)) {
+              var t3 = "function" == typeof e2.valueOf ? e2.valueOf() : e2;
+              e2 = i(t3) ? t3 + "" : t3;
+            }
+            if ("string" != typeof e2) return 0 === e2 ? e2 : +e2;
+            e2 = e2.replace(l, "");
+            var n2 = m.test(e2);
+            return n2 || b.test(e2) ? v(e2.slice(2), n2 ? 2 : 8) : p.test(e2) ? f : +e2;
+          }
+          var c = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function(e2) {
+            return typeof e2;
+          } : function(e2) {
+            return e2 && "function" == typeof Symbol && e2.constructor === Symbol && e2 !== Symbol.prototype ? "symbol" : typeof e2;
+          }, s = "Expected a function", f = NaN, d = "[object Symbol]", l = /^\s+|\s+$/g, p = /^[-+]0x[0-9a-f]+$/i, m = /^0b[01]+$/i, b = /^0o[0-7]+$/i, v = parseInt, y = "object" == ("undefined" == typeof t2 ? "undefined" : c(t2)) && t2 && t2.Object === Object && t2, g = "object" == ("undefined" == typeof self ? "undefined" : c(self)) && self && self.Object === Object && self, h = y || g || Function("return this")(), w = Object.prototype, k = w.toString, x = Math.max, j = Math.min, O = function() {
+            return h.Date.now();
+          };
+          e.exports = o;
+        }).call(t, /* @__PURE__ */ (function() {
+          return this;
+        })());
+      }, function(e, t) {
+        (function(t2) {
+          "use strict";
+          function n(e2, t3, n2) {
+            function i2(t4) {
+              var n3 = b2, o2 = v2;
+              return b2 = v2 = void 0, O = t4, g2 = e2.apply(o2, n3);
+            }
+            function r2(e3) {
+              return O = e3, h2 = setTimeout(f2, t3), M ? i2(e3) : g2;
+            }
+            function u2(e3) {
+              var n3 = e3 - w2, o2 = e3 - O, i3 = t3 - n3;
+              return S ? x(i3, y2 - o2) : i3;
+            }
+            function s2(e3) {
+              var n3 = e3 - w2, o2 = e3 - O;
+              return void 0 === w2 || n3 >= t3 || n3 < 0 || S && o2 >= y2;
+            }
+            function f2() {
+              var e3 = j();
+              return s2(e3) ? d2(e3) : void (h2 = setTimeout(f2, u2(e3)));
+            }
+            function d2(e3) {
+              return h2 = void 0, _ && b2 ? i2(e3) : (b2 = v2 = void 0, g2);
+            }
+            function l2() {
+              void 0 !== h2 && clearTimeout(h2), O = 0, b2 = w2 = v2 = h2 = void 0;
+            }
+            function p2() {
+              return void 0 === h2 ? g2 : d2(j());
+            }
+            function m2() {
+              var e3 = j(), n3 = s2(e3);
+              if (b2 = arguments, v2 = this, w2 = e3, n3) {
+                if (void 0 === h2) return r2(w2);
+                if (S) return h2 = setTimeout(f2, t3), i2(w2);
+              }
+              return void 0 === h2 && (h2 = setTimeout(f2, t3)), g2;
+            }
+            var b2, v2, y2, g2, h2, w2, O = 0, M = false, S = false, _ = true;
+            if ("function" != typeof e2) throw new TypeError(c);
+            return t3 = a(t3) || 0, o(n2) && (M = !!n2.leading, S = "maxWait" in n2, y2 = S ? k(a(n2.maxWait) || 0, t3) : y2, _ = "trailing" in n2 ? !!n2.trailing : _), m2.cancel = l2, m2.flush = p2, m2;
+          }
+          function o(e2) {
+            var t3 = "undefined" == typeof e2 ? "undefined" : u(e2);
+            return !!e2 && ("object" == t3 || "function" == t3);
+          }
+          function i(e2) {
+            return !!e2 && "object" == ("undefined" == typeof e2 ? "undefined" : u(e2));
+          }
+          function r(e2) {
+            return "symbol" == ("undefined" == typeof e2 ? "undefined" : u(e2)) || i(e2) && w.call(e2) == f;
+          }
+          function a(e2) {
+            if ("number" == typeof e2) return e2;
+            if (r(e2)) return s;
+            if (o(e2)) {
+              var t3 = "function" == typeof e2.valueOf ? e2.valueOf() : e2;
+              e2 = o(t3) ? t3 + "" : t3;
+            }
+            if ("string" != typeof e2) return 0 === e2 ? e2 : +e2;
+            e2 = e2.replace(d, "");
+            var n2 = p.test(e2);
+            return n2 || m.test(e2) ? b(e2.slice(2), n2 ? 2 : 8) : l.test(e2) ? s : +e2;
+          }
+          var u = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function(e2) {
+            return typeof e2;
+          } : function(e2) {
+            return e2 && "function" == typeof Symbol && e2.constructor === Symbol && e2 !== Symbol.prototype ? "symbol" : typeof e2;
+          }, c = "Expected a function", s = NaN, f = "[object Symbol]", d = /^\s+|\s+$/g, l = /^[-+]0x[0-9a-f]+$/i, p = /^0b[01]+$/i, m = /^0o[0-7]+$/i, b = parseInt, v = "object" == ("undefined" == typeof t2 ? "undefined" : u(t2)) && t2 && t2.Object === Object && t2, y = "object" == ("undefined" == typeof self ? "undefined" : u(self)) && self && self.Object === Object && self, g = v || y || Function("return this")(), h = Object.prototype, w = h.toString, k = Math.max, x = Math.min, j = function() {
+            return g.Date.now();
+          };
+          e.exports = n;
+        }).call(t, /* @__PURE__ */ (function() {
+          return this;
+        })());
+      }, function(e, t) {
+        "use strict";
+        function n(e2) {
+          var t2 = void 0, o2 = void 0, i2 = void 0;
+          for (t2 = 0; t2 < e2.length; t2 += 1) {
+            if (o2 = e2[t2], o2.dataset && o2.dataset.aos) return true;
+            if (i2 = o2.children && n(o2.children)) return true;
+          }
+          return false;
+        }
+        function o() {
+          return window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
+        }
+        function i() {
+          return !!o();
+        }
+        function r(e2, t2) {
+          var n2 = window.document, i2 = o(), r2 = new i2(a);
+          u = t2, r2.observe(n2.documentElement, { childList: true, subtree: true, removedNodes: true });
+        }
+        function a(e2) {
+          e2 && e2.forEach(function(e3) {
+            var t2 = Array.prototype.slice.call(e3.addedNodes), o2 = Array.prototype.slice.call(e3.removedNodes), i2 = t2.concat(o2);
+            if (n(i2)) return u();
+          });
+        }
+        Object.defineProperty(t, "__esModule", { value: true });
+        var u = function() {
+        };
+        t.default = { isSupported: i, ready: r };
+      }, function(e, t) {
+        "use strict";
+        function n(e2, t2) {
+          if (!(e2 instanceof t2)) throw new TypeError("Cannot call a class as a function");
+        }
+        function o() {
+          return navigator.userAgent || navigator.vendor || window.opera || "";
+        }
+        Object.defineProperty(t, "__esModule", { value: true });
+        var i = /* @__PURE__ */ (function() {
+          function e2(e3, t2) {
+            for (var n2 = 0; n2 < t2.length; n2++) {
+              var o2 = t2[n2];
+              o2.enumerable = o2.enumerable || false, o2.configurable = true, "value" in o2 && (o2.writable = true), Object.defineProperty(e3, o2.key, o2);
+            }
+          }
+          return function(t2, n2, o2) {
+            return n2 && e2(t2.prototype, n2), o2 && e2(t2, o2), t2;
+          };
+        })(), r = /(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino/i, a = /1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i, u = /(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino|android|ipad|playbook|silk/i, c = /1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i, s = (function() {
+          function e2() {
+            n(this, e2);
+          }
+          return i(e2, [{ key: "phone", value: function() {
+            var e3 = o();
+            return !(!r.test(e3) && !a.test(e3.substr(0, 4)));
+          } }, { key: "mobile", value: function() {
+            var e3 = o();
+            return !(!u.test(e3) && !c.test(e3.substr(0, 4)));
+          } }, { key: "tablet", value: function() {
+            return this.mobile() && !this.phone();
+          } }]), e2;
+        })();
+        t.default = new s();
+      }, function(e, t) {
+        "use strict";
+        Object.defineProperty(t, "__esModule", { value: true });
+        var n = function(e2, t2, n2) {
+          var o2 = e2.node.getAttribute("data-aos-once");
+          t2 > e2.position ? e2.node.classList.add("aos-animate") : "undefined" != typeof o2 && ("false" === o2 || !n2 && "true" !== o2) && e2.node.classList.remove("aos-animate");
+        }, o = function(e2, t2) {
+          var o2 = window.pageYOffset, i = window.innerHeight;
+          e2.forEach(function(e3, r) {
+            n(e3, i + o2, t2);
+          });
+        };
+        t.default = o;
+      }, function(e, t, n) {
+        "use strict";
+        function o(e2) {
+          return e2 && e2.__esModule ? e2 : { default: e2 };
+        }
+        Object.defineProperty(t, "__esModule", { value: true });
+        var i = n(12), r = o(i), a = function(e2, t2) {
+          return e2.forEach(function(e3, n2) {
+            e3.node.classList.add("aos-init"), e3.position = (0, r.default)(e3.node, t2.offset);
+          }), e2;
+        };
+        t.default = a;
+      }, function(e, t, n) {
+        "use strict";
+        function o(e2) {
+          return e2 && e2.__esModule ? e2 : { default: e2 };
+        }
+        Object.defineProperty(t, "__esModule", { value: true });
+        var i = n(13), r = o(i), a = function(e2, t2) {
+          var n2 = 0, o2 = 0, i2 = window.innerHeight, a2 = { offset: e2.getAttribute("data-aos-offset"), anchor: e2.getAttribute("data-aos-anchor"), anchorPlacement: e2.getAttribute("data-aos-anchor-placement") };
+          switch (a2.offset && !isNaN(a2.offset) && (o2 = parseInt(a2.offset)), a2.anchor && document.querySelectorAll(a2.anchor) && (e2 = document.querySelectorAll(a2.anchor)[0]), n2 = (0, r.default)(e2).top, a2.anchorPlacement) {
+            case "top-bottom":
+              break;
+            case "center-bottom":
+              n2 += e2.offsetHeight / 2;
+              break;
+            case "bottom-bottom":
+              n2 += e2.offsetHeight;
+              break;
+            case "top-center":
+              n2 += i2 / 2;
+              break;
+            case "bottom-center":
+              n2 += i2 / 2 + e2.offsetHeight;
+              break;
+            case "center-center":
+              n2 += i2 / 2 + e2.offsetHeight / 2;
+              break;
+            case "top-top":
+              n2 += i2;
+              break;
+            case "bottom-top":
+              n2 += e2.offsetHeight + i2;
+              break;
+            case "center-top":
+              n2 += e2.offsetHeight / 2 + i2;
+          }
+          return a2.anchorPlacement || a2.offset || isNaN(t2) || (o2 = t2), n2 + o2;
+        };
+        t.default = a;
+      }, function(e, t) {
+        "use strict";
+        Object.defineProperty(t, "__esModule", { value: true });
+        var n = function(e2) {
+          for (var t2 = 0, n2 = 0; e2 && !isNaN(e2.offsetLeft) && !isNaN(e2.offsetTop); ) t2 += e2.offsetLeft - ("BODY" != e2.tagName ? e2.scrollLeft : 0), n2 += e2.offsetTop - ("BODY" != e2.tagName ? e2.scrollTop : 0), e2 = e2.offsetParent;
+          return { top: n2, left: t2 };
+        };
+        t.default = n;
+      }, function(e, t) {
+        "use strict";
+        Object.defineProperty(t, "__esModule", { value: true });
+        var n = function(e2) {
+          return e2 = e2 || document.querySelectorAll("[data-aos]"), Array.prototype.map.call(e2, function(e3) {
+            return { node: e3 };
+          });
+        };
+        t.default = n;
+      }]);
+    });
+  }
+});
+
 // src/js/app.js
 function initScreenFlow() {
   const startElement = document.querySelector(".start");
@@ -6,6 +389,7 @@ function initScreenFlow() {
   const resetPopupElement = document.querySelector('[data-popup="reset"]');
   const languagesPopupElement = document.querySelector('[data-popup="languages"]');
   const endSubmitButton = endElement?.querySelector(".end__submit");
+  document.documentElement.classList.add("js-ready");
   if (!startElement || !testElement) {
     return;
   }
@@ -124,707 +508,248 @@ function initAnimatedTestTitle() {
 initAnimatedTestTitle();
 initScreenFlow();
 
-// src/blocks/quiz/quiz.js
-function initQuiz() {
-  const quizElement = document.querySelector(".quiz");
-  const assessmentElement = document.querySelector(".assessment");
-  const testTitleElement = document.querySelector(".test__title");
-  if (!quizElement || !assessmentElement) {
-    return;
-  }
-  const questionCards = Array.from(
-    quizElement.querySelectorAll(".question-cards__item")
-  );
-  const answerGroups = Array.from(
-    quizElement.querySelectorAll(".answer-groups__item")
-  );
-  const form = quizElement.querySelector(".answer-groups__form");
-  const backButton = quizElement.querySelector(".answer-groups__back");
-  const submitButton = quizElement.querySelector(".answer-groups__submit");
-  const stepItems = Array.from(document.querySelectorAll(".steps__item"));
-  if (!form || !backButton || !submitButton || !questionCards.length || !answerGroups.length) {
-    return;
-  }
-  let currentStep = questionCards.findIndex(
-    (card) => card.classList.contains("question-card--active")
-  );
-  if (currentStep === -1) {
-    currentStep = 0;
-    questionCards[0].classList.add("question-card--active");
-  }
-  if (!answerGroups[currentStep].classList.contains("answer-groups__item--active")) {
-    answerGroups.forEach((group, index) => {
-      group.classList.toggle("answer-groups__item--active", index === currentStep);
-    });
-  }
-  const syncSubmitState = () => {
-    const currentGroup = answerGroups[currentStep];
-    if (!currentGroup) {
-      submitButton.disabled = true;
-      return;
-    }
-    const checkedInput = currentGroup.querySelector(".answer-group__input:checked");
-    submitButton.disabled = !checkedInput;
-  };
-  const syncBackState = () => {
-    backButton.disabled = currentStep === 0;
-  };
-  const setGlobalStep = (stepIndex) => {
-    if (!stepItems.length) {
-      return;
-    }
-    stepItems.forEach((item, index) => {
-      item.classList.toggle("steps__item--active", index === stepIndex);
-    });
-  };
-  const setTestTitle = (title) => {
-    if (!testTitleElement) {
-      return;
-    }
-    window.__setAnimatedTestTitle?.(title);
-  };
-  const getGroupSelectionData = (groupElement) => {
-    if (!groupElement) {
-      return null;
-    }
-    const checkedInput = groupElement.querySelector(".answer-group__input:checked");
-    if (!checkedInput) {
-      return null;
-    }
-    const answerItem = checkedInput.closest(".answer-group__item");
-    const answerLabel = answerItem?.querySelector(".answer-group__label");
-    const groupIndex = answerGroups.indexOf(groupElement) + 1;
-    const answerIndex = answerItem && answerItem.parentElement ? Array.from(answerItem.parentElement.children).indexOf(answerItem) + 1 : null;
-    return {
-      step: groupIndex,
-      value: checkedInput.value,
-      inputId: checkedInput.id,
-      answerIndex,
-      text: answerLabel?.textContent?.trim() || ""
-    };
-  };
-  const getAnswersState = () => answerGroups.map((groupElement, index) => {
-    const selection = getGroupSelectionData(groupElement);
-    return {
-      step: index + 1,
-      answered: Boolean(selection),
-      value: selection?.value ?? null,
-      inputId: selection?.inputId ?? null,
-      answerIndex: selection?.answerIndex ?? null,
-      text: selection?.text ?? null
-    };
-  });
-  const clearActiveAnswers = (groupElement) => {
-    const answerItems = groupElement.querySelectorAll(".answer-group__item");
-    answerItems.forEach((item) => {
-      item.classList.remove("answer-group__item--active");
-    });
-  };
-  const clearGroupSelection = (groupElement) => {
-    if (!groupElement) {
-      return;
-    }
-    const checkedInput = groupElement.querySelector(".answer-group__input:checked");
-    if (checkedInput) {
-      checkedInput.checked = false;
-    }
-    clearActiveAnswers(groupElement);
-  };
-  const setActiveAnswer = (groupElement, selectedInput) => {
-    const answerItems = groupElement.querySelectorAll(".answer-group__item");
-    answerItems.forEach((item) => {
-      const input = item.querySelector(".answer-group__input");
-      item.classList.toggle("answer-group__item--active", input === selectedInput);
-    });
-  };
-  const goToStep = (nextStep) => {
-    const currentCard = questionCards[currentStep];
-    const currentGroup = answerGroups[currentStep];
-    const nextCard = questionCards[nextStep];
-    const nextGroup = answerGroups[nextStep];
-    if (!nextCard || !nextGroup) {
-      return;
-    }
-    currentCard.classList.remove("question-card--active");
-    currentGroup.classList.remove("answer-groups__item--active");
-    clearActiveAnswers(currentGroup);
-    nextCard.classList.add("question-card--active");
-    nextGroup.classList.add("answer-groups__item--active");
-    currentStep = nextStep;
-    syncBackState();
-    syncSubmitState();
-  };
-  form.addEventListener("change", (event) => {
-    const target = event.target;
-    if (!(target instanceof HTMLInputElement)) {
-      return;
-    }
-    if (!target.classList.contains("answer-group__input")) {
-      return;
-    }
-    const currentGroup = answerGroups[currentStep];
-    if (!currentGroup || !currentGroup.contains(target)) {
-      return;
-    }
-    setActiveAnswer(currentGroup, target);
-    syncSubmitState();
-  });
-  form.addEventListener("submit", (event) => {
-    event.preventDefault();
-    const isLastStep = currentStep === questionCards.length - 1;
-    if (submitButton.disabled) {
-      return;
-    }
-    const selectionData = getGroupSelectionData(answerGroups[currentStep]);
-    console.log("forward", selectionData);
-    console.log("answers", getAnswersState());
-    if (isLastStep) {
-      quizElement.classList.add("quiz--hidden");
-      assessmentElement.classList.remove("assessment--hidden");
-      assessmentElement.classList.add("assessment--active");
-      setTestTitle("\u0422\u0435\u0441\u0442");
-      setGlobalStep(1);
-      console.log("done");
-      return;
-    }
-    goToStep(currentStep + 1);
-  });
-  backButton.addEventListener("click", () => {
-    if (currentStep === 0) {
-      return;
-    }
-    const previousStep = currentStep - 1;
-    const previousGroup = answerGroups[previousStep];
-    const previousSelectionData = getGroupSelectionData(previousGroup);
-    console.log("back", previousSelectionData);
-    questionCards[currentStep].classList.remove("question-card--active");
-    answerGroups[currentStep].classList.remove("answer-groups__item--active");
-    clearActiveAnswers(answerGroups[currentStep]);
-    clearGroupSelection(previousGroup);
-    questionCards[previousStep].classList.add("question-card--active");
-    previousGroup.classList.add("answer-groups__item--active");
-    currentStep = previousStep;
-    syncBackState();
-    syncSubmitState();
-    console.log("answers", getAnswersState());
-  });
-  syncBackState();
-  syncSubmitState();
-  setTestTitle("\u0422\u0435\u0441\u0442");
-  setGlobalStep(0);
-}
-initQuiz();
+// src/js/main.js
+var import_aos = __toESM(require_aos());
 
-// src/blocks/assessment/assessment.js
-function initAssessment() {
-  const assessmentElement = document.querySelector(".assessment");
-  const statusElement = document.querySelector(".status");
-  const testTitleElement = document.querySelector(".test__title");
-  if (!assessmentElement) {
-    return;
-  }
-  const formElement = assessmentElement.querySelector(".assessment-choice__form");
-  const submitButton = assessmentElement.querySelector(".assessment__submit");
-  const assessmentInputs = Array.from(
-    assessmentElement.querySelectorAll(".assessment-choice__option-input")
-  );
-  const assessmentOptions = Array.from(
-    assessmentElement.querySelectorAll(".assessment-choice__option")
-  );
-  const assessmentLegendItems = Array.from(
-    assessmentElement.querySelectorAll(".assessment-choice__legend-item")
-  );
-  const assessmentTouch = assessmentElement.querySelector(".assessment-choice__touch");
-  const assessmentAxisLabels = Array.from(
-    assessmentElement.querySelectorAll(
-      ".assessment-choice__chart .assessment-choice__axis-label"
-    )
-  );
-  const assessmentTimelineAxisLabels = Array.from(
-    assessmentElement.querySelectorAll(
-      ".assessment-choice__timeline--bottom .assessment-choice__axis-label"
-    )
-  );
-  const assessmentTimelinePoints = Array.from(
-    assessmentElement.querySelectorAll(".assessment-choice__timeline-point")
-  );
-  const assessmentResults = Array.from(
-    assessmentElement.querySelectorAll(".assessment-results__card")
-  );
-  const representativeItems = Array.from(
-    assessmentElement.querySelectorAll(".representatives__item")
-  );
-  const stepItems = Array.from(document.querySelectorAll(".steps__item"));
-  if (!formElement || !submitButton || !assessmentInputs.length) {
-    return;
-  }
-  const appState = window.__aiAppState || (window.__aiAppState = {});
-  let selectedAssessmentState = null;
-  const setGlobalStep = (stepIndex) => {
-    if (!stepItems.length) {
-      return;
-    }
-    stepItems.forEach((item, index) => {
-      item.classList.toggle("steps__item--active", index === stepIndex);
-    });
-  };
-  const setTestTitle = (title) => {
-    if (!testTitleElement) {
-      return;
-    }
-    window.__setAnimatedTestTitle?.(title);
-  };
-  const activationMap = {
-    0: {
-      legendIndex: 0,
-      chartAxisIndex: 1,
-      timelineAxisIndex: 1,
-      timelinePointIndex: 1,
-      resultIndex: 0
-    },
-    1: {
-      legendIndex: 1,
-      chartAxisIndex: 2,
-      timelineAxisIndex: 1,
-      timelinePointIndex: 1,
-      resultIndex: 1
-    },
-    2: {
-      legendIndex: 2,
-      chartAxisIndex: 3,
-      timelineAxisIndex: 1,
-      timelinePointIndex: 1,
-      resultIndex: 2
-    },
-    3: {
-      legendIndex: 0,
-      chartAxisIndex: 0,
-      timelineAxisIndex: 2,
-      timelinePointIndex: 2,
-      resultIndex: 3
-    }
-  };
-  const getSelectedAssessmentState = () => {
-    const checkedInput = assessmentElement.querySelector(".assessment-choice__option-input:checked");
-    if (!checkedInput) {
-      return null;
-    }
-    const optionElement = checkedInput.closest(".assessment-choice__option");
-    const optionIndex = optionElement ? assessmentOptions.indexOf(optionElement) : -1;
-    return {
-      name: checkedInput.name,
-      value: checkedInput.value,
-      inputId: checkedInput.id,
-      optionIndex
-    };
-  };
-  const clearAssessmentState = () => {
-    assessmentOptions.forEach((option) => {
-      option.classList.remove("assessment-choice__option--active");
-    });
-    assessmentLegendItems.forEach((item) => {
-      item.classList.remove("assessment-choice__legend-item--active");
-    });
-    assessmentAxisLabels.forEach((label) => {
-      label.classList.remove("assessment-choice__axis-label--active");
-    });
-    assessmentTimelineAxisLabels.forEach((label) => {
-      label.classList.remove("assessment-choice__axis-label--active");
-    });
-    assessmentTimelinePoints.forEach((point) => {
-      point.classList.remove("assessment-choice__timeline-point--active");
-    });
-    assessmentResults.forEach((result) => {
-      result.classList.remove("assessment-results__card--active");
-    });
-  };
-  const clearRepresentativeHints = () => {
-    representativeItems.forEach((item) => {
-      const hintElement = item.querySelector(".representative-hint");
-      const cardElement = item.querySelector(".representative-card");
-      if (hintElement) {
-        hintElement.classList.remove("representative-hint--active", "hint--active");
-      }
-      if (cardElement) {
-        cardElement.classList.remove("representative-card--active");
-      }
-    });
-  };
-  const activateAssessmentByIndex = (optionIndex, { hideTouch = false } = {}) => {
-    const config = activationMap[optionIndex];
-    if (!config) {
-      return;
-    }
-    clearAssessmentState();
-    assessmentOptions[optionIndex]?.classList.add("assessment-choice__option--active");
-    assessmentLegendItems[config.legendIndex]?.classList.add("assessment-choice__legend-item--active");
-    assessmentAxisLabels[config.chartAxisIndex]?.classList.add("assessment-choice__axis-label--active");
-    assessmentTimelineAxisLabels[config.timelineAxisIndex]?.classList.add(
-      "assessment-choice__axis-label--active"
-    );
-    assessmentTimelinePoints[config.timelinePointIndex]?.classList.add(
-      "assessment-choice__timeline-point--active"
-    );
-    assessmentResults[config.resultIndex]?.classList.add("assessment-results__card--active");
-    if (hideTouch && assessmentTouch) {
-      assessmentTouch.classList.add("assessment-choice__touch--hidden");
-    }
-    selectedAssessmentState = getSelectedAssessmentState();
-    appState.assessmentIndex = optionIndex;
-    appState.assessmentValue = selectedAssessmentState?.value ?? null;
-  };
-  const initialActiveOption = assessmentOptions.find(
-    (option) => option.classList.contains("assessment-choice__option--active")
-  );
-  if (initialActiveOption) {
-    const initialInput = initialActiveOption.querySelector(".assessment-choice__option-input");
-    if (initialInput && !assessmentElement.querySelector(".assessment-choice__option-input:checked")) {
-      initialInput.checked = true;
-      activateAssessmentByIndex(assessmentOptions.indexOf(initialActiveOption));
+// src/blocks/select/select.js
+var initializedSelects = /* @__PURE__ */ new WeakSet();
+var openSelects = /* @__PURE__ */ new Set();
+var areDocumentHandlersBound = false;
+function closeSelect(selectElement, restoreFocus = false) {
+  const triggerElement = selectElement.querySelector(".select__trigger");
+  selectElement.classList.remove("select--open");
+  openSelects.delete(selectElement);
+  if (triggerElement) {
+    triggerElement.setAttribute("aria-expanded", "false");
+    if (restoreFocus) {
+      triggerElement.focus();
     }
   }
-  assessmentInputs.forEach((inputElement, optionIndex) => {
-    inputElement.addEventListener("change", () => {
-      activateAssessmentByIndex(optionIndex, { hideTouch: true });
-    });
+}
+function closeAllSelects() {
+  Array.from(openSelects).forEach((selectElement) => {
+    closeSelect(selectElement);
   });
-  representativeItems.forEach((itemElement) => {
-    itemElement.addEventListener("click", (event) => {
-      event.stopPropagation();
-      const hintElement = itemElement.querySelector(".representative-hint");
-      if (!hintElement) {
+}
+function bindDocumentHandlers() {
+  if (areDocumentHandlersBound) {
+    return;
+  }
+  document.addEventListener("click", (event) => {
+    Array.from(openSelects).forEach((selectElement) => {
+      if (selectElement.contains(event.target)) {
         return;
       }
-      const isActive = hintElement.classList.contains("representative-hint--active") || hintElement.classList.contains("hint--active");
-      clearRepresentativeHints();
-      if (!isActive) {
-        hintElement.classList.add("representative-hint--active", "hint--active");
-        itemElement.querySelector(".representative-card")?.classList.add("representative-card--active");
-      }
+      closeSelect(selectElement);
     });
   });
-  document.addEventListener("click", (event) => {
-    const target = event.target;
-    if (!(target instanceof Element)) {
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") {
       return;
     }
-    if (target.closest(".representatives__item")) {
-      return;
-    }
-    clearRepresentativeHints();
+    closeAllSelects();
   });
-  submitButton.addEventListener("click", () => {
-    const formData = Object.fromEntries(new FormData(formElement).entries());
-    console.log("assessment form", formData);
-    console.log("assessment selected", selectedAssessmentState);
-    appState.assessmentIndex = selectedAssessmentState?.optionIndex ?? 0;
-    appState.assessmentValue = selectedAssessmentState?.value ?? null;
-    if (!statusElement) {
-      return;
-    }
-    assessmentElement.classList.add("assessment--hidden");
-    assessmentElement.classList.remove("assessment--active");
-    statusElement.classList.remove("status--hidden");
-    statusElement.classList.add("status--active");
-    setTestTitle("\u041F\u0440\u0430\u0432\u043E\u0432\u043E\u0439 \u0441\u0442\u0430\u0442\u0443\u0441 \u0418\u0418");
-    setGlobalStep(2);
-  });
+  areDocumentHandlersBound = true;
 }
-initAssessment();
-
-// src/blocks/status/status.js
-function initStatus() {
-  const statusElement = document.querySelector(".status");
-  const assessmentElement = document.querySelector(".assessment");
-  const resultsElement = document.querySelector(".results");
-  const testTitleElement = document.querySelector(".test__title");
-  if (!statusElement) {
+function initSelect(selectElement) {
+  if (initializedSelects.has(selectElement)) {
     return;
   }
-  const statusItems = Array.from(statusElement.querySelectorAll(".status__item"));
-  const formElement = statusElement.querySelector(".status__selection");
-  const sliderItems = Array.from(statusElement.querySelectorAll(".slider__item"));
-  const sliderInputs = Array.from(statusElement.querySelectorAll(".slider__input"));
-  const sliderTrack = statusElement.querySelector(".slider__track");
-  const sliderThumb = statusElement.querySelector(".slider__thumb");
-  const statusTouch = statusElement.querySelector(".status__touch");
-  const backButton = statusElement.querySelector(".status__back");
-  const submitButton = statusElement.querySelector(".status__submit");
-  const stepItems = Array.from(document.querySelectorAll(".steps__item"));
-  if (!statusItems.length || !sliderItems.length || !sliderInputs.length || !formElement || !backButton || !submitButton) {
+  const triggerElement = selectElement.querySelector(".select__trigger");
+  const valueElement = selectElement.querySelector(".select__value");
+  const hiddenInputElement = selectElement.querySelector(".select__input");
+  const optionElements = selectElement.querySelectorAll(".select__option");
+  if (!triggerElement || !valueElement || !hiddenInputElement || optionElements.length === 0) {
     return;
   }
-  const appState = window.__aiAppState || (window.__aiAppState = {});
-  let selectedIndex = null;
-  let isDragging = false;
-  const setGlobalStep = (stepIndex) => {
-    if (!stepItems.length) {
-      return;
-    }
-    stepItems.forEach((item, index) => {
-      item.classList.toggle("steps__item--active", index === stepIndex);
-    });
-  };
-  const setTestTitle = (title) => {
-    if (!testTitleElement) {
-      return;
-    }
-    window.__setAnimatedTestTitle?.(title);
-  };
-  const hideTouch = () => {
-    if (statusTouch) {
-      statusTouch.classList.add("status__touch--hidden");
-    }
-  };
-  const syncThumbPosition = (index) => {
-    if (!sliderTrack || !sliderThumb || !sliderItems[index]) {
-      return;
-    }
-    const trackRect = sliderTrack.getBoundingClientRect();
-    const itemRect = sliderItems[index].getBoundingClientRect();
-    const thumbWidth = sliderThumb.offsetWidth;
-    const itemCenter = itemRect.left - trackRect.left + itemRect.width / 2;
-    const thumbOffset = itemCenter - thumbWidth / 2;
-    sliderThumb.style.transform = `translate(${thumbOffset}px, -50%)`;
-  };
-  const getNearestIndexFromClientX = (clientX) => {
-    if (!sliderTrack || !sliderItems.length) {
-      return 0;
-    }
-    const trackRect = sliderTrack.getBoundingClientRect();
-    const clampedX = Math.min(Math.max(clientX, trackRect.left), trackRect.right);
-    let nearestIndex = 0;
-    let nearestDistance = Number.POSITIVE_INFINITY;
-    sliderItems.forEach((item, index) => {
-      const itemRect = item.getBoundingClientRect();
-      const itemCenter = itemRect.left + itemRect.width / 2;
-      const distance = Math.abs(clampedX - itemCenter);
-      if (distance < nearestDistance) {
-        nearestDistance = distance;
-        nearestIndex = index;
+  const open = () => {
+    Array.from(openSelects).forEach((openedElement) => {
+      if (openedElement !== selectElement) {
+        closeSelect(openedElement);
       }
     });
-    return nearestIndex;
+    selectElement.classList.add("select--open");
+    openSelects.add(selectElement);
+    triggerElement.setAttribute("aria-expanded", "true");
   };
-  const setStatusByIndex = (index) => {
-    statusItems.forEach((item, itemIndex) => {
-      item.classList.toggle("status__item--active", itemIndex === index);
-    });
-    sliderItems.forEach((item, itemIndex) => {
-      item.classList.toggle("slider__item--active", itemIndex === index);
-    });
-    sliderInputs.forEach((input, inputIndex) => {
-      input.checked = inputIndex === index;
-    });
-    syncThumbPosition(index);
+  const moveFocus = (step) => {
+    const optionsList = Array.from(optionElements);
+    const activeIndex = optionsList.findIndex((item) => item === document.activeElement);
+    const selectedIndex = optionsList.findIndex((item) => item.classList.contains("is-selected"));
+    const currentIndex = activeIndex >= 0 ? activeIndex : Math.max(selectedIndex, 0);
+    const nextIndex = (currentIndex + step + optionsList.length) % optionsList.length;
+    optionsList[nextIndex].focus();
   };
-  const initialActiveIndex = sliderInputs.findIndex((input) => input.checked);
-  if (initialActiveIndex >= 0) {
-    selectedIndex = initialActiveIndex;
-    setStatusByIndex(initialActiveIndex);
+  const applySelection = (optionElement, closeAfterSelect = true, emitChange = true) => {
+    optionElements.forEach((item) => {
+      item.classList.remove("is-selected");
+      item.setAttribute("aria-selected", "false");
+    });
+    optionElement.classList.add("is-selected");
+    optionElement.setAttribute("aria-selected", "true");
+    valueElement.textContent = optionElement.textContent.trim();
+    selectElement.dataset.value = optionElement.getAttribute("data-value") || "";
+    hiddenInputElement.value = selectElement.dataset.value;
+    if (emitChange) {
+      hiddenInputElement.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+    if (closeAfterSelect) {
+      closeSelect(selectElement, true);
+    }
+  };
+  triggerElement.addEventListener("click", () => {
+    if (selectElement.classList.contains("select--open")) {
+      closeSelect(selectElement);
+      return;
+    }
+    open();
+  });
+  triggerElement.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      open();
+      const selectedOption2 = selectElement.querySelector(".select__option.is-selected");
+      if (selectedOption2) {
+        selectedOption2.focus();
+      }
+    }
+  });
+  optionElements.forEach((optionElement) => {
+    optionElement.addEventListener("click", () => {
+      applySelection(optionElement);
+    });
+    optionElement.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        moveFocus(1);
+      }
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        moveFocus(-1);
+      }
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        applySelection(optionElement);
+      }
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeSelect(selectElement, true);
+      }
+    });
+  });
+  const selectedOption = selectElement.querySelector(".select__option.is-selected");
+  if (selectedOption) {
+    applySelection(selectedOption, false, false);
   } else {
-    selectedIndex = 0;
-    setStatusByIndex(0);
+    applySelection(optionElements[0], false, false);
   }
-  backButton.disabled = false;
-  submitButton.disabled = false;
-  sliderItems.forEach((itemElement, itemIndex) => {
-    itemElement.addEventListener("click", () => {
-      hideTouch();
-      selectedIndex = itemIndex;
-      setStatusByIndex(itemIndex);
-      submitButton.disabled = false;
-      backButton.disabled = false;
-    });
+  initializedSelects.add(selectElement);
+}
+function initSelects(root = document) {
+  bindDocumentHandlers();
+  root.querySelectorAll(".js-select").forEach((selectElement) => {
+    initSelect(selectElement);
   });
-  const handleDragMove = (clientX) => {
-    const nextIndex = getNearestIndexFromClientX(clientX);
-    if (nextIndex !== selectedIndex) {
-      selectedIndex = nextIndex;
-      setStatusByIndex(nextIndex);
-    } else {
-      syncThumbPosition(nextIndex);
-    }
-    submitButton.disabled = false;
-    backButton.disabled = false;
+}
+
+// src/pages/random/random.js
+function getRecordWord(value) {
+  const normalized = Math.abs(value) % 100;
+  const tail = normalized % 10;
+  if (normalized > 10 && normalized < 20) {
+    return "\u0437\u0430\u043F\u0438\u0441\u0435\u0439";
+  }
+  if (tail > 1 && tail < 5) {
+    return "\u0437\u0430\u043F\u0438\u0441\u0438";
+  }
+  if (tail === 1) {
+    return "\u0437\u0430\u043F\u0438\u0441\u044C";
+  }
+  return "\u0437\u0430\u043F\u0438\u0441\u0435\u0439";
+}
+function initCounter(counterElement) {
+  const inputElement = counterElement.querySelector(".random__quantity-input");
+  const unitElement = counterElement.closest(".random__quantity-controls")?.querySelector(".random__quantity-unit");
+  if (!inputElement || !unitElement) {
+    return;
+  }
+  const minValue = Number.parseInt(inputElement.getAttribute("min") || "1", 10);
+  const normalizeValue = () => {
+    const parsed = Number.parseInt(inputElement.value, 10);
+    const safeValue = Number.isNaN(parsed) ? minValue : Math.max(minValue, parsed);
+    inputElement.value = String(safeValue);
+    unitElement.textContent = getRecordWord(safeValue);
   };
-  const stopDragging = () => {
-    if (!isDragging) {
+  counterElement.querySelectorAll(".random__quantity-stepper-button").forEach((buttonElement) => {
+    buttonElement.addEventListener("click", () => {
+      const direction = buttonElement.classList.contains("random__quantity-stepper-button--increase") ? "increase" : "decrease";
+      const currentValue = Number.parseInt(inputElement.value, 10) || minValue;
+      const nextValue = direction === "increase" ? currentValue + 1 : currentValue - 1;
+      inputElement.value = String(Math.max(minValue, nextValue));
+      normalizeValue();
+      inputElement.focus();
+    });
+  });
+  inputElement.addEventListener("input", normalizeValue);
+  inputElement.addEventListener("blur", normalizeValue);
+  normalizeValue();
+}
+function initRandomControls() {
+  const randomSectionElement = document.querySelector(".random");
+  if (!randomSectionElement) {
+    return;
+  }
+  randomSectionElement.querySelectorAll(".random__quantity-field--counter").forEach((counterElement) => {
+    initCounter(counterElement);
+  });
+}
+
+// src/pages/results/results.js
+function initResultsPage() {
+  const resultsSectionElement = document.querySelector(".results");
+  if (!resultsSectionElement) {
+    return;
+  }
+  const typeElements = Array.from(resultsSectionElement.querySelectorAll(".results__type"));
+  if (typeElements.length === 0) {
+    return;
+  }
+  const applyType = (targetElement) => {
+    typeElements.forEach((typeElement) => {
+      const isActive = typeElement === targetElement;
+      typeElement.classList.toggle("results__type--active", isActive);
+      typeElement.setAttribute("aria-pressed", String(isActive));
+    });
+    resultsSectionElement.classList.remove("results--view-blocks", "results--view-list");
+    if (targetElement.classList.contains("results__type--blocks")) {
+      resultsSectionElement.classList.add("results--view-blocks");
       return;
     }
-    isDragging = false;
-    statusElement.classList.remove("status--dragging");
+    if (targetElement.classList.contains("results__type--list")) {
+      resultsSectionElement.classList.add("results--view-list");
+    }
   };
-  if (sliderTrack) {
-    sliderTrack.addEventListener("pointerdown", (event) => {
-      hideTouch();
-      isDragging = true;
-      statusElement.classList.add("status--dragging");
-      handleDragMove(event.clientX);
+  typeElements.forEach((typeElement) => {
+    typeElement.addEventListener("click", () => {
+      applyType(typeElement);
     });
-  }
-  if (sliderThumb) {
-    sliderThumb.addEventListener("pointerdown", (event) => {
-      event.stopPropagation();
-      hideTouch();
-      isDragging = true;
-      statusElement.classList.add("status--dragging");
-      handleDragMove(event.clientX);
-    });
-  }
-  window.addEventListener("pointermove", (event) => {
-    if (!isDragging) {
-      return;
-    }
-    handleDragMove(event.clientX);
-  });
-  window.addEventListener("pointerup", stopDragging);
-  window.addEventListener("pointercancel", stopDragging);
-  window.addEventListener("resize", () => {
-    if (selectedIndex === null) {
-      return;
-    }
-    syncThumbPosition(selectedIndex);
-  });
-  backButton.addEventListener("click", () => {
-    if (!assessmentElement) {
-      return;
-    }
-    statusElement.classList.add("status--hidden");
-    statusElement.classList.remove("status--active");
-    assessmentElement.classList.remove("assessment--hidden");
-    assessmentElement.classList.add("assessment--active");
-    setTestTitle("\u0422\u0435\u0441\u0442");
-    setGlobalStep(1);
-  });
-  submitButton.addEventListener("click", () => {
-    const formData = Object.fromEntries(new FormData(formElement).entries());
-    const selectedValue = selectedIndex !== null ? sliderInputs[selectedIndex]?.value ?? null : null;
-    const selectedText = selectedIndex !== null ? sliderItems[selectedIndex]?.querySelector(".slider__text")?.textContent?.trim() || "" : null;
-    console.log("status form", formData);
-    console.log("status selected", {
-      index: selectedIndex,
-      value: selectedValue,
-      text: selectedText
-    });
-    appState.statusIndex = selectedIndex ?? 0;
-    appState.statusValue = selectedValue;
-    appState.statusText = selectedText;
-    if (!resultsElement) {
-      return;
-    }
-    document.dispatchEvent(new CustomEvent("results:open", {
-      detail: {
-        assessmentIndex: appState.assessmentIndex ?? 0,
-        statusIndex: selectedIndex ?? 0
+    typeElement.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        applyType(typeElement);
       }
-    }));
+    });
   });
+  const defaultTypeElement = resultsSectionElement.querySelector(".results__type--active") || typeElements[0];
+  applyType(defaultTypeElement);
 }
-initStatus();
 
-// src/blocks/results/results.js
-function initResults() {
-  const resultsElement = document.querySelector(".results");
-  const statusElement = document.querySelector(".status");
-  const testElement = document.querySelector(".test");
-  const endElement = document.querySelector(".end");
-  const testTitleElement = document.querySelector(".test__title");
-  const backButton = resultsElement?.querySelector(".results__back");
-  const submitButton = resultsElement?.querySelector(".results__submit");
-  const resultCards = Array.from(resultsElement?.querySelectorAll(".results__card") || []);
-  const stepItems = Array.from(document.querySelectorAll(".steps__item"));
-  if (!resultsElement || !backButton || !submitButton || !resultCards.length) {
-    return;
-  }
-  const appState = window.__aiAppState || (window.__aiAppState = {});
-  const setGlobalStep = (stepIndex) => {
-    stepItems.forEach((item, index) => {
-      item.classList.toggle("steps__item--active", index === stepIndex);
-    });
-  };
-  const setTestTitle = (title) => {
-    if (testTitleElement) {
-      window.__setAnimatedTestTitle?.(title);
-    }
-  };
-  const setActiveCard = (cardIndex) => {
-    resultCards.forEach((card) => {
-      card.classList.toggle(
-        "results__card--active",
-        Number(card.dataset.cardIndex) === cardIndex
-      );
-    });
-  };
-  const openResults = ({ assessmentIndex = 0, statusIndex = 0 } = {}) => {
-    const cardIndex = assessmentIndex * 5 + statusIndex + 1;
-    appState.resultsCardIndex = cardIndex;
-    setActiveCard(cardIndex);
-    if (statusElement) {
-      statusElement.classList.add("status--hidden");
-      statusElement.classList.remove("status--active");
-    }
-    resultsElement.classList.remove("results--hidden");
-    resultsElement.classList.add("results--active");
-    setTestTitle("\u0412\u044B \u0438 \u0418\u0418");
-    setGlobalStep(3);
-  };
-  document.addEventListener("results:open", (event) => {
-    openResults(event.detail || {});
-  });
-  backButton.addEventListener("click", () => {
-    if (statusElement) {
-      statusElement.classList.remove("status--hidden");
-      statusElement.classList.add("status--active");
-    }
-    resultsElement.classList.add("results--hidden");
-    resultsElement.classList.remove("results--active");
-    setTestTitle("\u041F\u0440\u0430\u0432\u043E\u0432\u043E\u0439 \u0441\u0442\u0430\u0442\u0443\u0441 \u0418\u0418");
-    setGlobalStep(2);
-  });
-  submitButton.addEventListener("click", () => {
-    if (testElement) {
-      testElement.classList.add("test--hidden");
-      testElement.classList.remove("test--active");
-    }
-    if (endElement) {
-      endElement.classList.remove("end--hidden");
-      endElement.classList.add("end--active");
-    }
-  });
-}
-initResults();
-
-// src/blocks/end/end.js
-function initEnd() {
-  const endElement = document.querySelector(".end");
-  const testElement = document.querySelector(".test");
-  const resultsElement = document.querySelector(".results");
-  const testTitleElement = document.querySelector(".test__title");
-  const backButton = endElement?.querySelector(".end__back");
-  if (!endElement || !testElement || !resultsElement || !backButton) {
-    return;
-  }
-  const stepItems = Array.from(document.querySelectorAll(".steps__item"));
-  const setGlobalStep = (stepIndex) => {
-    stepItems.forEach((item, index) => {
-      item.classList.toggle("steps__item--active", index === stepIndex);
-    });
-  };
-  const setTestTitle = (title) => {
-    if (testTitleElement) {
-      window.__setAnimatedTestTitle?.(title);
-    }
-  };
-  backButton.addEventListener("click", () => {
-    endElement.classList.add("end--hidden");
-    endElement.classList.remove("end--active");
-    testElement.classList.remove("test--hidden");
-    testElement.classList.add("test--active");
-    resultsElement.classList.remove("results--hidden");
-    resultsElement.classList.add("results--active");
-    setTestTitle("\u0412\u044B \u0438 \u0418\u0418");
-    setGlobalStep(3);
-  });
-}
-initEnd();
+// src/js/main.js
+import_aos.default.init({
+  duration: 700,
+  easing: "ease-out-cubic",
+  once: false
+});
+initSelects();
+initRandomControls();
+initResultsPage();

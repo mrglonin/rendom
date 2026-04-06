@@ -1,0 +1,22 @@
+{% macro select(name, value, label, options, classes = "") %}
+  <div class="select js-select{% if classes %} {{ classes }}{% endif %}">
+    <input class="select__input" type="hidden" name="{{ name }}" value="{{ value }}">
+    <button class="select__trigger" type="button" aria-expanded="false" aria-haspopup="listbox">
+      <span class="select__value">{{ label }}</span>
+      <svg width="31" height="31" viewBox="0 0 31 31" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M2.5 9.5L15.5 21.5L28.5 9.5" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"
+          stroke-linejoin="round" />
+      </svg>
+    </button>
+    <ul class="select__dropdown" role="listbox">
+      {% for option in options %}
+        <li>
+          <button class="select__option{% if option.value == value %} is-selected{% endif %}" type="button"
+            data-value="{{ option.value }}" role="option" aria-selected="{% if option.value == value %}true{% else %}false{% endif %}">
+            {{ option.label }}
+          </button>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endmacro %}

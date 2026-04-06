@@ -1,14 +1,33 @@
-@use "base/vars";
+@use "base/fonts";
 @use "base/reset";
 @use "base/base";
+@use "base/vars";
+@use "../blocks/select/select";
+@use "../pages/random/random";
+@use "../pages/results/results";
 
-@use "../blocks/components/decor";
-@use "../blocks/components/bottom-actions";
-@use "../blocks/components/head";
-@use "../blocks/components/langs";
-@use "../blocks/components/navigation";
-@use "../blocks/components/popup";
-@use "../blocks/components/touch";
-@use "../blocks/start/start";
-@use "../blocks/test/test";
-@use "../blocks/end/end";
+.logo {
+  display: block;
+  width: 295rem;
+  min-width: 295rem;
+  height: 90rem;
+  &__image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+}
+
+.background {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  inset: 0;
+  opacity: 50%;
+  z-index: -1;
+  &__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
