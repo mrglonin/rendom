@@ -649,6 +649,15 @@ var api = {
       },
       body: JSON.stringify({})
     });
+  },
+  undoLastDraw(sessionId) {
+    return request(buildAppUrl(`api/sessions/${sessionId}/undo-last-draw`), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({})
+    });
   }
 };
 
@@ -851,11 +860,37 @@ function renderPlaceholder(listWrapperElement, listElement, hintElement, submitB
   hintElement.textContent = config.hint;
   submitButtonElement.disabled = config.submitDisabled;
 }
+function buildCsvCell(value) {
+  return `"${String(value ?? "").replaceAll('"', '""')}"`;
+}
+function downloadFile(fileName, content, mimeType) {
+  const blob = new Blob([content], { type: mimeType });
+  const objectUrl = window.URL.createObjectURL(blob);
+  const linkElement = document.createElement("a");
+  linkElement.href = objectUrl;
+  linkElement.download = fileName;
+  document.body.append(linkElement);
+  linkElement.click();
+  linkElement.remove();
+  window.URL.revokeObjectURL(objectUrl);
+}
+function buildExportRows(session) {
+  const winnerHistory = Array.isArray(session?.winnerHistory) ? session.winnerHistory : [];
+  return winnerHistory.map((entry, index) => [
+    index + 1,
+    entry.createdAt || "",
+    entry.displayValue || "",
+    entry.dedupeValue || "",
+    Array.isArray(entry.meta) ? entry.meta.join(" | ") : ""
+  ]);
+}
 function buildSessionHint(session) {
   const totalCount = session?.counts?.totalRecords ?? 0;
   const activeCount = session?.counts?.activeRecords ?? 0;
   const excludedCount = session?.counts?.excludedRecords ?? 0;
+  const globalWinnerCount = session?.counts?.globalWinnerKeys ?? 0;
   const displayColumn = String(session?.defaults?.displayColumn || "").trim();
+  const dedupeColumn = String(session?.defaults?.dedupeColumn || "").trim();
   const parts = [];
   if (session?.source?.originalName) {
     parts.push(`\u0424\u0430\u0439\u043B: ${session.source.originalName}.`);
@@ -864,7 +899,10 @@ function buildSessionHint(session) {
     parts.push(`\u0417\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u043E ${totalCount} ${getRecordWord(totalCount)}.`);
   }
   if (displayColumn) {
-    parts.push(`\u041F\u043E\u043B\u0435 \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448\u0430: ${displayColumn}.`);
+    parts.push(`\u041F\u043E\u043B\u0435 \u043F\u043E\u043A\u0430\u0437\u0430: ${displayColumn}.`);
+  }
+  if (dedupeColumn) {
+    parts.push(`\u0410\u043D\u0442\u0438\u0434\u0443\u0431\u043B\u044C: ${dedupeColumn}.`);
   }
   if (activeCount > 0) {
     parts.push(`\u0421\u0435\u0439\u0447\u0430\u0441 \u0432 \u043F\u0443\u043B\u0435 ${activeCount} ${getRecordWord(activeCount)}.`);
@@ -872,7 +910,12 @@ function buildSessionHint(session) {
     parts.push("\u0412 \u0442\u0435\u043A\u0443\u0449\u0435\u043C \u0444\u0430\u0439\u043B\u0435 \u0431\u043E\u043B\u044C\u0448\u0435 \u043D\u0435 \u043E\u0441\u0442\u0430\u043B\u043E\u0441\u044C \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432 \u0434\u043B\u044F \u043D\u043E\u0432\u043E\u0433\u043E \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448\u0430.");
   }
   if (excludedCount > 0) {
-    parts.push(`\u0423\u0436\u0435 \u0438\u0441\u043A\u043B\u044E\u0447\u0435\u043D\u043E ${excludedCount} ${getRecordWord(excludedCount)}.`);
+    parts.push(`\u0418\u0437 \u044D\u0442\u043E\u0433\u043E \u0444\u0430\u0439\u043B\u0430 \u0443\u0436\u0435 \u0438\u0441\u043A\u043B\u044E\u0447\u0435\u043D\u043E ${excludedCount} ${getRecordWord(excludedCount)}.`);
+  }
+  if (globalWinnerCount > 0) {
+    parts.push(
+      `\u0412 \u043E\u0431\u0449\u0435\u043C blacklist \u0441\u0435\u0439\u0447\u0430\u0441 ${globalWinnerCount} ${getWinnerWord(globalWinnerCount)}.`
+    );
   }
   return parts.join(" ");
 }
@@ -917,6 +960,8 @@ function initRandomControls() {
     isImporting: false,
     isFieldModalOpen: false,
     isSavingDisplayColumn: false,
+    isUndoPending: false,
+    isResetPending: false,
     pendingDisplayColumn: ""
   };
   const formElement = randomSectionElement.querySelector(".random__form");
@@ -930,17 +975,23 @@ function initRandomControls() {
   const recordsSelectMountElement = randomSectionElement.querySelector("[data-records-select]");
   const winnersCountInputElement = randomSectionElement.querySelector(".random__quantity-input");
   const importTriggerButtonElement = randomSectionElement.querySelector("[data-import-trigger]");
-  const displayColumnButtonElement = randomSectionElement.querySelector("[data-display-column-button]");
+  const exportButtonElement = randomSectionElement.querySelector("[data-export-button]");
+  const displayColumnButtonElement = randomSectionElement.querySelector(
+    "[data-display-column-button]"
+  );
   const displayColumnDescriptionElement = randomSectionElement.querySelector(
     "[data-display-column-description]"
   );
+  const undoDrawButtonElement = randomSectionElement.querySelector("[data-undo-draw-button]");
   const resetExclusionsButtonElement = randomSectionElement.querySelector(
     "[data-reset-exclusions-button]"
   );
   const resetExclusionsDescriptionElement = randomSectionElement.querySelector(
     "[data-reset-exclusions-description]"
   );
-  const displayColumnModalElement = randomSectionElement.querySelector("[data-display-column-modal]");
+  const displayColumnModalElement = randomSectionElement.querySelector(
+    "[data-display-column-modal]"
+  );
   const displayColumnSelectMountElement = randomSectionElement.querySelector(
     "[data-display-column-select]"
   );
@@ -949,6 +1000,9 @@ function initRandomControls() {
   );
   const displayColumnModalFileElement = randomSectionElement.querySelector(
     "[data-display-column-modal-file]"
+  );
+  const displayColumnModalNoteElement = randomSectionElement.querySelector(
+    "[data-display-column-modal-note]"
   );
   const displayColumnSaveButtonElement = randomSectionElement.querySelector(
     "[data-display-column-save]"
@@ -962,9 +1016,12 @@ function initRandomControls() {
   function getDisplayColumnLabel() {
     return String(state.session?.defaults?.displayColumn || "").trim();
   }
+  function getDeduplicationColumnLabel() {
+    return String(state.session?.defaults?.dedupeColumn || "").trim();
+  }
   function syncDrawAvailability() {
     const hasActiveRecords = (state.session?.counts?.activeRecords ?? 0) > 0;
-    submitButtonElement.disabled = !hasActiveRecords || state.isImporting || state.isSavingDisplayColumn || state.isFieldModalOpen;
+    submitButtonElement.disabled = !hasActiveRecords || state.isImporting || state.isSavingDisplayColumn || state.isFieldModalOpen || state.isUndoPending || state.isResetPending;
   }
   function setFieldModalOpen(isOpen) {
     if (!displayColumnModalElement) {
@@ -986,9 +1043,17 @@ function initRandomControls() {
       return;
     }
     const displayColumn = getDisplayColumnLabel();
+    const dedupeColumn = getDeduplicationColumnLabel();
     displayColumnButtonElement.disabled = false;
     displayColumnButtonElement.textContent = displayColumn ? "\u0418\u0437\u043C\u0435\u043D\u0438\u0442\u044C \u043F\u043E\u043B\u0435" : "\u0412\u044B\u0431\u0440\u0430\u0442\u044C \u043F\u043E\u043B\u0435";
-    displayColumnDescriptionElement.textContent = displayColumn ? `\u0421\u0435\u0439\u0447\u0430\u0441 \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448 \u0438\u0434\u0451\u0442 \u043F\u043E \u043F\u043E\u043B\u044E \xAB${displayColumn}\xBB.` : "\u041F\u043E\u043B\u0435 \u0435\u0449\u0451 \u043D\u0435 \u0432\u044B\u0431\u0440\u0430\u043D\u043E. \u0423\u043A\u0430\u0436\u0438\u0442\u0435 \u043A\u043E\u043B\u043E\u043D\u043A\u0443 \u0438\u0437 Excel.";
+    displayColumnDescriptionElement.textContent = displayColumn ? `\u0421\u0435\u0439\u0447\u0430\u0441 \u043F\u043E\u043A\u0430\u0437\u044B\u0432\u0430\u0435\u043C \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0435\u0439 \u043F\u043E \u043F\u043E\u043B\u044E \xAB${displayColumn}\xBB, \u0430 \u0430\u043D\u0442\u0438\u0434\u0443\u0431\u043B\u044C \u0438\u0434\u0451\u0442 \u043F\u043E \xAB${dedupeColumn}\xBB.` : "\u041F\u043E\u043B\u0435 \u0435\u0449\u0451 \u043D\u0435 \u0432\u044B\u0431\u0440\u0430\u043D\u043E. \u0423\u043A\u0430\u0436\u0438\u0442\u0435 \u043A\u043E\u043B\u043E\u043D\u043A\u0443 \u0438\u0437 Excel.";
+  }
+  function syncToolbarActions() {
+    if (!exportButtonElement) {
+      return;
+    }
+    const winnerHistoryCount = state.session?.counts?.winnerHistory ?? state.session?.winnerHistory?.length ?? 0;
+    exportButtonElement.disabled = winnerHistoryCount === 0 || state.isImporting;
   }
   function openDisplayColumnModal() {
     if (!state.session || !displayColumnModalElement || !displayColumnSelectMountElement) {
@@ -1009,10 +1074,14 @@ function initRandomControls() {
       state.pendingDisplayColumn = event.target.value;
     });
     if (displayColumnModalDescriptionElement) {
-      displayColumnModalDescriptionElement.textContent = "\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u043A\u043E\u043B\u043E\u043D\u043A\u0443 \u0438\u0437 Excel, \u043F\u043E \u043A\u043E\u0442\u043E\u0440\u043E\u0439 \u0431\u0443\u0434\u0443\u0442 \u043E\u0442\u043E\u0431\u0440\u0430\u0436\u0430\u0442\u044C\u0441\u044F \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0438.";
+      displayColumnModalDescriptionElement.textContent = "\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u043A\u043E\u043B\u043E\u043D\u043A\u0443 \u0438\u0437 Excel, \u043A\u043E\u0442\u043E\u0440\u0430\u044F \u0431\u0443\u0434\u0435\u0442 \u043E\u0442\u043E\u0431\u0440\u0430\u0436\u0430\u0442\u044C\u0441\u044F \u0443 \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0435\u0439 \u043D\u0430 \u044D\u043A\u0440\u0430\u043D\u0435 \u0438 \u0432 \u0438\u0441\u0442\u043E\u0440\u0438\u0438.";
     }
     if (displayColumnModalFileElement) {
       displayColumnModalFileElement.textContent = state.session.source?.originalName ? `\u0424\u0430\u0439\u043B: ${state.session.source.originalName}` : "";
+    }
+    if (displayColumnModalNoteElement) {
+      const dedupeColumn = getDeduplicationColumnLabel();
+      displayColumnModalNoteElement.textContent = dedupeColumn ? `\u041F\u043E\u0432\u0442\u043E\u0440\u044B \u043C\u0435\u0436\u0434\u0443 \u0444\u0430\u0439\u043B\u0430\u043C\u0438 \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438 \u0431\u043B\u043E\u043A\u0438\u0440\u0443\u044E\u0442\u0441\u044F \u043F\u043E \u043F\u043E\u043B\u044E \xAB${dedupeColumn}\xBB. \u041A\u043D\u043E\u043F\u043A\u0430 \xAB\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435\xBB \u043E\u0447\u0438\u0449\u0430\u0435\u0442 \u0438 \u0438\u0441\u0442\u043E\u0440\u0438\u044E \u0442\u0435\u043A\u0443\u0449\u0435\u0433\u043E \u0444\u0430\u0439\u043B\u0430, \u0438 \u043E\u0431\u0449\u0438\u0439 blacklist.` : "\u041F\u043E\u0432\u0442\u043E\u0440\u044B \u043C\u0435\u0436\u0434\u0443 \u0444\u0430\u0439\u043B\u0430\u043C\u0438 \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438 \u0431\u043B\u043E\u043A\u0438\u0440\u0443\u044E\u0442\u0441\u044F \u043F\u043E \u0441\u0442\u0430\u0431\u0438\u043B\u044C\u043D\u043E\u043C\u0443 \u043A\u043B\u044E\u0447\u0443. \u041A\u043D\u043E\u043F\u043A\u0430 \xAB\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435\xBB \u043E\u0447\u0438\u0449\u0430\u0435\u0442 \u0438 \u0438\u0441\u0442\u043E\u0440\u0438\u044E \u0442\u0435\u043A\u0443\u0449\u0435\u0433\u043E \u0444\u0430\u0439\u043B\u0430, \u0438 \u043E\u0431\u0449\u0438\u0439 blacklist.";
     }
     displayColumnSaveButtonElement.disabled = false;
     displayColumnCancelButtonElement.disabled = false;
@@ -1040,31 +1109,44 @@ function initRandomControls() {
   }
   function syncSidebarActions() {
     syncDisplayColumnControls();
-    if (!resetExclusionsButtonElement || !resetExclusionsDescriptionElement) {
+    if (!undoDrawButtonElement || !resetExclusionsButtonElement || !resetExclusionsDescriptionElement) {
       return;
     }
     const excludedCount = state.session?.counts?.excludedRecords ?? 0;
     const winnerHistoryCount = state.session?.counts?.winnerHistory ?? state.session?.winnerHistory?.length ?? 0;
-    resetExclusionsButtonElement.textContent = excludedCount > 0 || winnerHistoryCount > 0 ? `\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435 (${Math.max(excludedCount, winnerHistoryCount)})` : "\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435";
+    const globalWinnerCount = state.session?.counts?.globalWinnerKeys ?? 0;
+    const lastDraw = state.session?.lastDraw || state.lastDraw || null;
+    const canUndo = Boolean(lastDraw);
     if (!state.session) {
+      undoDrawButtonElement.disabled = true;
       resetExclusionsButtonElement.disabled = true;
-      resetExclusionsDescriptionElement.textContent = "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u0435 \u0444\u0430\u0439\u043B. \u041F\u043E\u0441\u043B\u0435 \u044D\u0442\u043E\u0433\u043E \u0437\u0434\u0435\u0441\u044C \u043C\u043E\u0436\u043D\u043E \u043E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0438\u0441\u0442\u043E\u0440\u0438\u044E \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0435\u0439 \u0438 \u0438\u0441\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F.";
+      resetExclusionsButtonElement.textContent = "\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435";
+      resetExclusionsDescriptionElement.textContent = "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u0435 \u0444\u0430\u0439\u043B. \u041F\u043E\u0441\u043B\u0435 \u044D\u0442\u043E\u0433\u043E \u0437\u0434\u0435\u0441\u044C \u043C\u043E\u0436\u043D\u043E \u043E\u0442\u043C\u0435\u043D\u0438\u0442\u044C \u043F\u043E\u0441\u043B\u0435\u0434\u043D\u0438\u0439 \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448 \u0438\u043B\u0438 \u043F\u043E\u043B\u043D\u043E\u0441\u0442\u044C\u044E \u043E\u0447\u0438\u0441\u0442\u0438\u0442\u044C blacklist.";
       return;
     }
-    if (excludedCount === 0 && winnerHistoryCount === 0) {
-      resetExclusionsButtonElement.disabled = true;
-      resetExclusionsDescriptionElement.textContent = "\u0414\u043B\u044F \u0442\u0435\u043A\u0443\u0449\u0435\u0433\u043E \u0444\u0430\u0439\u043B\u0430 \u043F\u043E\u043A\u0430 \u043D\u0435\u0447\u0435\u0433\u043E \u043E\u0447\u0438\u0449\u0430\u0442\u044C.";
+    undoDrawButtonElement.disabled = !canUndo || state.isUndoPending || state.isResetPending;
+    resetExclusionsButtonElement.disabled = winnerHistoryCount === 0 && globalWinnerCount === 0 || state.isUndoPending || state.isResetPending;
+    resetExclusionsButtonElement.textContent = winnerHistoryCount > 0 || globalWinnerCount > 0 ? `\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435 (${Math.max(winnerHistoryCount, globalWinnerCount)})` : "\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435";
+    if (!canUndo && winnerHistoryCount === 0 && globalWinnerCount === 0) {
+      resetExclusionsDescriptionElement.textContent = "\u0414\u043B\u044F \u0442\u0435\u043A\u0443\u0449\u0435\u0433\u043E \u0444\u0430\u0439\u043B\u0430 \u043F\u043E\u043A\u0430 \u043D\u0435\u0447\u0435\u0433\u043E \u043E\u0442\u043C\u0435\u043D\u044F\u0442\u044C \u0438\u043B\u0438 \u043E\u0447\u0438\u0449\u0430\u0442\u044C.";
       return;
     }
     const details = [];
-    if (winnerHistoryCount > 0) {
-      details.push(`\u043E\u0447\u0438\u0441\u0442\u0438\u0442 \u0438\u0441\u0442\u043E\u0440\u0438\u044E \u0438\u0437 ${winnerHistoryCount} ${getWinnerWord(winnerHistoryCount)}`);
+    if (canUndo && lastDraw) {
+      const drawWinnerCount = Array.isArray(lastDraw.winners) ? lastDraw.winners.length : lastDraw.winnersCount || 0;
+      details.push(
+        `\xAB\u041E\u0442\u043C\u0435\u043D\u0438\u0442\u044C\xBB \u0441\u043D\u0438\u043C\u0435\u0442 \u043F\u043E\u0441\u043B\u0435\u0434\u043D\u0438\u0439 \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448 \u043D\u0430 ${drawWinnerCount} ${getWinnerWord(drawWinnerCount)}`
+      );
+    }
+    if (winnerHistoryCount > 0 || globalWinnerCount > 0) {
+      details.push(
+        `\xAB\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435\xBB \u043E\u0431\u043D\u0443\u043B\u0438\u0442 \u0438\u0441\u0442\u043E\u0440\u0438\u044E \u0444\u0430\u0439\u043B\u0430 \u0438 \u043E\u0431\u0449\u0438\u0439 blacklist \u0438\u0437 ${globalWinnerCount} ${getWinnerWord(globalWinnerCount)}`
+      );
     }
     if (excludedCount > 0) {
-      details.push(`\u0432\u0435\u0440\u043D\u0451\u0442 \u0432 \u043F\u0443\u043B ${excludedCount} ${getRecordWord(excludedCount)}`);
+      details.push(`\u0432 \u0442\u0435\u043A\u0443\u0449\u0438\u0439 \u043F\u0443\u043B \u0432\u0435\u0440\u043D\u0451\u0442\u0441\u044F ${excludedCount} ${getRecordWord(excludedCount)}`);
     }
-    resetExclusionsButtonElement.disabled = false;
-    resetExclusionsDescriptionElement.textContent = `\u041A\u043D\u043E\u043F\u043A\u0430 ${details.join(" \u0438 ")}.`;
+    resetExclusionsDescriptionElement.textContent = `${details.join(". ")}.`;
   }
   function renderCurrentState() {
     const winnerHistoryCount = state.session?.counts?.winnerHistory ?? state.session?.winnerHistory?.length ?? 0;
@@ -1075,6 +1157,7 @@ function initRandomControls() {
         hint: "\u041D\u0430\u0436\u043C\u0438\u0442\u0435 \u043D\u0430 \u0438\u043A\u043E\u043D\u043A\u0443 \u0441\u043F\u0440\u0430\u0432\u0430, \u0447\u0442\u043E\u0431\u044B \u0432\u044B\u0431\u0440\u0430\u0442\u044C \u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C Excel-\u0444\u0430\u0439\u043B.",
         submitDisabled: true
       });
+      syncToolbarActions();
       syncSidebarActions();
       syncDrawAvailability();
       return;
@@ -1086,16 +1169,17 @@ function initRandomControls() {
       submitButtonElement,
       state.session
     );
+    syncToolbarActions();
     syncSidebarActions();
     syncDrawAvailability();
   }
   function setImportingState(isImporting) {
     state.isImporting = isImporting;
-    if (!importTriggerButtonElement) {
-      return;
+    if (importTriggerButtonElement) {
+      importTriggerButtonElement.disabled = isImporting;
+      importTriggerButtonElement.setAttribute("aria-busy", String(isImporting));
     }
-    importTriggerButtonElement.disabled = isImporting;
-    importTriggerButtonElement.setAttribute("aria-busy", String(isImporting));
+    syncToolbarActions();
     syncDrawAvailability();
   }
   async function hydrateSession(sessionId) {
@@ -1143,14 +1227,14 @@ function initRandomControls() {
     try {
       const response = await api.importReport(file);
       state.session = response.session;
-      state.lastDraw = null;
+      state.lastDraw = response.session.lastDraw || null;
       state.pendingDisplayColumn = response.session.defaults.displayColumn;
       window.localStorage.setItem(SESSION_STORAGE_KEY, response.session.id);
       window.localStorage.removeItem(DRAW_STORAGE_KEY);
       renderCurrentState();
       setStatus(
         statusElement,
-        "\u0424\u0430\u0439\u043B \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D. \u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u043F\u043E\u043B\u0435 \u0434\u043B\u044F \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448\u0430 \u0438 \u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u0435 \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0443.",
+        "\u0424\u0430\u0439\u043B \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D. \u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u043F\u043E\u043B\u0435 \u043E\u0442\u043E\u0431\u0440\u0430\u0436\u0435\u043D\u0438\u044F \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0435\u0439 \u0438 \u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u0435 \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0443.",
         "info"
       );
       openDisplayColumnModal();
@@ -1174,7 +1258,11 @@ function initRandomControls() {
       return;
     }
     if (state.isFieldModalOpen) {
-      setStatus(statusElement, "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0432\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u043F\u043E\u043B\u0435 \u0434\u043B\u044F \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448\u0430 \u0438 \u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u0435 \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0443.", "error");
+      setStatus(
+        statusElement,
+        "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0432\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u043F\u043E\u043B\u0435 \u0434\u043B\u044F \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448\u0430 \u0438 \u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u0435 \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0443.",
+        "error"
+      );
       return;
     }
     const payload = {
@@ -1198,7 +1286,6 @@ function initRandomControls() {
       });
       window.localStorage.setItem(SESSION_STORAGE_KEY, response.session.id);
       window.localStorage.setItem(DRAW_STORAGE_KEY, response.draw.id);
-      syncSidebarActions();
       setStatus(statusElement, "\u041F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0438 \u043E\u043F\u0440\u0435\u0434\u0435\u043B\u0435\u043D\u044B. \u041F\u0435\u0440\u0435\u0445\u043E\u0434\u0438\u043C \u043A \u044D\u043A\u0440\u0430\u043D\u0443 \u0440\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442\u043E\u0432\u2026", "success");
       window.setTimeout(() => {
         window.location.href = buildAppUrl("results.html");
@@ -1209,6 +1296,27 @@ function initRandomControls() {
       syncDrawAvailability();
     }
   }
+  function exportWinnerHistory() {
+    if (!state.session) {
+      return;
+    }
+    const rows = buildExportRows(state.session);
+    if (rows.length === 0) {
+      setStatus(statusElement, "\u041F\u043E\u043A\u0430 \u043D\u0435\u0447\u0435\u0433\u043E \u044D\u043A\u0441\u043F\u043E\u0440\u0442\u0438\u0440\u043E\u0432\u0430\u0442\u044C: \u0438\u0441\u0442\u043E\u0440\u0438\u044F \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0435\u0439 \u043F\u0443\u0441\u0442\u0430\u044F.", "error");
+      return;
+    }
+    const csvContent = [
+      ["\u2116", "\u0414\u0430\u0442\u0430 \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448\u0430", "\u041E\u0442\u043E\u0431\u0440\u0430\u0436\u0430\u0435\u043C\u043E\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435", "\u041A\u043B\u044E\u0447 \u0430\u043D\u0442\u0438\u0434\u0443\u0431\u043B\u044F", "\u0414\u043E\u043F\u043E\u043B\u043D\u0438\u0442\u0435\u043B\u044C\u043D\u043E"].map(buildCsvCell).join(";"),
+      ...rows.map((row) => row.map(buildCsvCell).join(";"))
+    ].join("\n");
+    const safeFileBase = String(state.session?.source?.originalName || "winners").replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9а-яА-ЯёЁ._-]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+    downloadFile(
+      `${safeFileBase || "winners"}-history.csv`,
+      `\uFEFF${csvContent}`,
+      "text/csv;charset=utf-8"
+    );
+    setStatus(statusElement, "\u0418\u0441\u0442\u043E\u0440\u0438\u044F \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0435\u0439 \u0432\u044B\u0433\u0440\u0443\u0436\u0435\u043D\u0430 \u0432 CSV.", "success");
+  }
   fileInputElement?.addEventListener("change", () => {
     const selectedFile = fileInputElement.files?.[0] || null;
     if (!selectedFile) {
@@ -1218,6 +1326,9 @@ function initRandomControls() {
   });
   importTriggerButtonElement?.addEventListener("click", () => {
     openFilePicker();
+  });
+  exportButtonElement?.addEventListener("click", () => {
+    exportWinnerHistory();
   });
   displayColumnButtonElement?.addEventListener("click", () => {
     openDisplayColumnModal();
@@ -1246,6 +1357,7 @@ function initRandomControls() {
         displayColumn: state.pendingDisplayColumn
       });
       state.session = response.session;
+      state.lastDraw = response.session.lastDraw || state.lastDraw;
       closeDisplayColumnModal();
       renderCurrentState();
       setStatus(
@@ -1267,26 +1379,61 @@ function initRandomControls() {
     state.isSidebarOpen = !state.isSidebarOpen;
     toggleSidebar(sidebarElement, state.isSidebarOpen);
   });
-  resetExclusionsButtonElement?.addEventListener("click", async () => {
-    if (!state.session) {
+  undoDrawButtonElement?.addEventListener("click", async () => {
+    if (!state.session || state.isUndoPending) {
       return;
     }
-    setStatus(statusElement, "\u041E\u0447\u0438\u0449\u0430\u0435\u043C \u0438\u0441\u0442\u043E\u0440\u0438\u044E \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0435\u0439 \u0438 \u0432\u043E\u0437\u0432\u0440\u0430\u0449\u0430\u0435\u043C \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432 \u0432 \u043F\u0443\u043B\u2026");
-    resetExclusionsButtonElement.disabled = true;
+    state.isUndoPending = true;
+    syncSidebarActions();
+    syncDrawAvailability();
+    setStatus(statusElement, "\u041E\u0442\u043C\u0435\u043D\u044F\u0435\u043C \u043F\u043E\u0441\u043B\u0435\u0434\u043D\u0438\u0439 \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448 \u0438 \u0441\u043D\u0438\u043C\u0430\u0435\u043C \u0435\u0433\u043E \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0435\u0439 \u0438\u0437 blacklist\u2026");
+    try {
+      const response = await api.undoLastDraw(state.session.id);
+      state.session = response.session;
+      state.lastDraw = response.session.lastDraw || null;
+      window.localStorage.removeItem(DRAW_STORAGE_KEY);
+      renderCurrentState();
+      setStatus(
+        statusElement,
+        "\u041F\u043E\u0441\u043B\u0435\u0434\u043D\u0438\u0439 \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448 \u043E\u0442\u043C\u0435\u043D\u0451\u043D. \u042D\u0442\u0438 \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0438 \u0441\u043D\u043E\u0432\u0430 \u0434\u043E\u0441\u0442\u0443\u043F\u043D\u044B \u0434\u043B\u044F \u0443\u0447\u0430\u0441\u0442\u0438\u044F.",
+        "success"
+      );
+    } catch (error) {
+      randomLogger.error("Undo failed", error);
+      setStatus(statusElement, error.message, "error");
+    } finally {
+      state.isUndoPending = false;
+      syncSidebarActions();
+      syncDrawAvailability();
+    }
+  });
+  resetExclusionsButtonElement?.addEventListener("click", async () => {
+    if (!state.session || state.isResetPending) {
+      return;
+    }
+    state.isResetPending = true;
+    syncSidebarActions();
+    syncDrawAvailability();
+    setStatus(statusElement, "\u041E\u0447\u0438\u0449\u0430\u0435\u043C \u0438\u0441\u0442\u043E\u0440\u0438\u044E \u0444\u0430\u0439\u043B\u0430 \u0438 \u043E\u0431\u0449\u0438\u0439 blacklist\u2026");
     try {
       const response = await api.resetExclusions(state.session.id);
       state.session = response.session;
       state.lastDraw = null;
+      window.localStorage.removeItem(DRAW_STORAGE_KEY);
       renderCurrentState();
       setStatus(
         statusElement,
-        "\u0418\u0441\u0442\u043E\u0440\u0438\u044F \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0435\u0439 \u043E\u0447\u0438\u0449\u0435\u043D\u0430. \u0412\u0441\u0435 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u0438 \u0441\u043D\u043E\u0432\u0430 \u0434\u043E\u0441\u0442\u0443\u043F\u043D\u044B \u0434\u043B\u044F \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448\u0430.",
+        "\u0418\u0441\u0442\u043E\u0440\u0438\u044F \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0435\u0439 \u0438 \u043E\u0431\u0449\u0438\u0439 blacklist \u043E\u0447\u0438\u0449\u0435\u043D\u044B. \u0412\u0441\u0435 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u0438 \u0441\u043D\u043E\u0432\u0430 \u0434\u043E\u0441\u0442\u0443\u043F\u043D\u044B.",
         "success"
       );
     } catch (error) {
       randomLogger.error("Reset exclusions failed", error);
       renderCurrentState();
       setStatus(statusElement, error.message, "error");
+    } finally {
+      state.isResetPending = false;
+      syncSidebarActions();
+      syncDrawAvailability();
     }
   });
   formElement?.addEventListener("submit", handleDraw);
@@ -1443,16 +1590,16 @@ function buildActionSelectConfig(draw) {
     return {
       value: "removed",
       options: [
-        { value: "removed", label: "\u041F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0438 \u0443\u0436\u0435 \u0443\u0431\u0440\u0430\u043D\u044B \u0438\u0437 \u0441\u043F\u0438\u0441\u043A\u0430" },
-        { value: "reset-exclusions", label: "\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0438\u0441\u0442\u043E\u0440\u0438\u044E \u0438 \u0438\u0441\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F" }
+        { value: "removed", label: "\u041F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0438 \u0443\u0436\u0435 \u0443\u0431\u0440\u0430\u043D\u044B \u0438\u0437 \u043E\u0431\u0449\u0435\u0433\u043E \u0441\u043F\u0438\u0441\u043A\u0430" },
+        { value: "reset-exclusions", label: "\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435 \u0438 \u0432\u0435\u0440\u043D\u0443\u0442\u044C \u0432\u0441\u0435\u0445 \u0432 \u043F\u0443\u043B" }
       ]
     };
   }
   return {
     value: "exclude-draw",
     options: [
-      { value: "exclude-draw", label: "\u0423\u0431\u0440\u0430\u0442\u044C \u0438\u0437 \u0441\u043F\u0438\u0441\u043A\u0430 \u0442\u0435\u043A\u0443\u0449\u0438\u0445 \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0435\u0439" },
-      { value: "reset-exclusions", label: "\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0438\u0441\u0442\u043E\u0440\u0438\u044E \u0438 \u0438\u0441\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F" }
+      { value: "exclude-draw", label: "\u0423\u0431\u0440\u0430\u0442\u044C \u0438\u0437 \u043E\u0431\u0449\u0435\u0433\u043E \u0441\u043F\u0438\u0441\u043A\u0430 \u0442\u0435\u043A\u0443\u0449\u0438\u0445 \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0435\u0439" },
+      { value: "reset-exclusions", label: "\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435 \u0438 \u0432\u0435\u0440\u043D\u0443\u0442\u044C \u0432\u0441\u0435\u0445 \u0432 \u043F\u0443\u043B" }
     ]
   };
 }
@@ -1519,7 +1666,7 @@ function initResultsPage() {
           renderActionSelect();
           setStatus2(
             statusElement,
-            "\u041F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0438 \u0438\u0441\u043A\u043B\u044E\u0447\u0435\u043D\u044B. \u041C\u043E\u0436\u043D\u043E \u0432\u043E\u0437\u0432\u0440\u0430\u0449\u0430\u0442\u044C\u0441\u044F \u043A \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0430\u043C.",
+            "\u041F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0438 \u0438\u0441\u043A\u043B\u044E\u0447\u0435\u043D\u044B \u0438\u0437 \u043E\u0431\u0449\u0435\u0433\u043E \u0441\u043F\u0438\u0441\u043A\u0430. \u041C\u043E\u0436\u043D\u043E \u0432\u043E\u0437\u0432\u0440\u0430\u0449\u0430\u0442\u044C\u0441\u044F \u043A \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0430\u043C.",
             "success"
           );
         } catch (error) {
@@ -1536,13 +1683,20 @@ function initResultsPage() {
         try {
           const response = await api.resetExclusions(state.session.id);
           state.session = response.session;
+          window.localStorage.removeItem(DRAW_STORAGE_KEY2);
+          drawId = "";
           if (state.draw) {
-            state.draw.appliedRemoval = false;
+            state.draw = {
+              ...state.draw,
+              appliedRemoval: false,
+              removeWinners: false,
+              globalContributionKeys: []
+            };
           }
           renderActionSelect();
           setStatus2(
             statusElement,
-            "\u0418\u0441\u0442\u043E\u0440\u0438\u044F \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0435\u0439 \u043E\u0447\u0438\u0449\u0435\u043D\u0430. \u0412\u0441\u0435 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u0438 \u0441\u043D\u043E\u0432\u0430 \u0432\u043E\u0437\u0432\u0440\u0430\u0449\u0435\u043D\u044B \u0432 \u0441\u043F\u0438\u0441\u043E\u043A.",
+            "\u0418\u0441\u0442\u043E\u0440\u0438\u044F \u0444\u0430\u0439\u043B\u0430 \u0438 \u043E\u0431\u0449\u0438\u0439 blacklist \u043E\u0447\u0438\u0449\u0435\u043D\u044B. \u0412\u0441\u0435 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u0438 \u0441\u043D\u043E\u0432\u0430 \u0432\u043E\u0437\u0432\u0440\u0430\u0449\u0435\u043D\u044B \u0432 \u043F\u0443\u043B.",
             "success"
           );
         } catch (error) {
@@ -1595,7 +1749,10 @@ function initResultsPage() {
     repeatButtonElement.disabled = true;
     repeatButtonElement.textContent = "\u0420\u0430\u0437\u044B\u0433\u0440\u044B\u0432\u0430\u0435\u043C...";
     resultsSectionElement.classList.add("results--refreshing");
-    renderSkeletonResults(listElement, previousDraw.winnersCount || previousDraw.winners.length || 1);
+    renderSkeletonResults(
+      listElement,
+      previousDraw.winnersCount || previousDraw.winners.length || 1
+    );
     setStatus2(statusElement, "\u041F\u0440\u043E\u0432\u043E\u0434\u0438\u043C \u0441\u043B\u0435\u0434\u0443\u044E\u0449\u0438\u0439 \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448...");
     try {
       const [response] = await Promise.all([

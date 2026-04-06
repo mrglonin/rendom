@@ -514,6 +514,12 @@
     }
   }
 
+  &__sidebar-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18rem;
+  }
+
   &__modal {
     position: fixed;
     inset: 0;
@@ -552,7 +558,11 @@
       inset: 0;
       border-radius: inherit;
       padding: 4rem;
-      background: linear-gradient(180deg, rgba($color-white, 0.86) 0%, rgba($color-white, 0.2) 100%);
+      background: linear-gradient(
+        180deg,
+        rgba($color-white, 0.86) 0%,
+        rgba($color-white, 0.2) 100%
+      );
       -webkit-mask:
         linear-gradient($color-white 0 0) content-box,
         linear-gradient($color-white 0 0);
@@ -692,7 +702,6 @@
       height: 16rem;
     }
   }
-
 }
 
 @media (max-width: 1280px) {
@@ -785,6 +794,7 @@
 
     &__tools {
       justify-content: center;
+      flex-wrap: wrap;
     }
 
     &__submit {
@@ -803,6 +813,15 @@
     &__sidebar-title {
       font-size: 26rem;
       line-height: 1.25;
+    }
+
+    &__sidebar-actions {
+      flex-direction: column;
+
+      .random__sidebar-button {
+        width: 100%;
+        min-width: 0;
+      }
     }
   }
 }

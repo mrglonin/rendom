@@ -95,7 +95,7 @@ function renderResults(listElement, draw) {
           <div class="results__digit"></div>
           <div class="results__text${display.className}">${display.markup}</div>
         </li>
-      `
+      `;
     })
     .join("");
 }
@@ -184,8 +184,8 @@ function buildActionSelectConfig(draw) {
     return {
       value: "removed",
       options: [
-        { value: "removed", label: "Победители уже убраны из списка" },
-        { value: "reset-exclusions", label: "Очистить историю и исключения" },
+        { value: "removed", label: "Победители уже убраны из общего списка" },
+        { value: "reset-exclusions", label: "Очистить все и вернуть всех в пул" },
       ],
     };
   }
@@ -193,8 +193,8 @@ function buildActionSelectConfig(draw) {
   return {
     value: "exclude-draw",
     options: [
-      { value: "exclude-draw", label: "Убрать из списка текущих победителей" },
-      { value: "reset-exclusions", label: "Очистить историю и исключения" },
+      { value: "exclude-draw", label: "Убрать из общего списка текущих победителей" },
+      { value: "reset-exclusions", label: "Очистить все и вернуть всех в пул" },
     ],
   };
 }
@@ -218,7 +218,8 @@ export function initResultsPage() {
   const repeatButtonElement = resultsSectionElement.querySelector("[data-repeat-button]");
 
   const queryParams = new URLSearchParams(window.location.search);
-  let sessionId = queryParams.get("sessionId") || window.localStorage.getItem(SESSION_STORAGE_KEY) || "";
+  let sessionId =
+    queryParams.get("sessionId") || window.localStorage.getItem(SESSION_STORAGE_KEY) || "";
   let drawId = queryParams.get("drawId") || window.localStorage.getItem(DRAW_STORAGE_KEY) || "";
 
   if (queryParams.get("sessionId") || queryParams.get("drawId")) {
@@ -280,7 +281,7 @@ export function initResultsPage() {
             renderActionSelect();
             setStatus(
               statusElement,
-              "Победители исключены. Можно возвращаться к настройкам.",
+              "Победители исключены из общего списка. Можно возвращаться к настройкам.",
               "success"
             );
           } catch (error) {
@@ -300,16 +301,23 @@ export function initResultsPage() {
           try {
             const response = await api.resetExclusions(state.session.id);
             state.session = response.session;
+            window.localStorage.removeItem(DRAW_STORAGE_KEY);
+            drawId = "";
 
             if (state.draw) {
-              state.draw.appliedRemoval = false;
+              state.draw = {
+                ...state.draw,
+                appliedRemoval: false,
+                removeWinners: false,
+                globalContributionKeys: [],
+              };
             }
 
             renderActionSelect();
             setStatus(
               statusElement,
-              "История победителей очищена. Все участники снова возвращены в список.",
-              "success",
+              "История файла и общий blacklist очищены. Все участники снова возвращены в пул.",
+              "success"
             );
           } catch (error) {
             resultsLogger.error("Failed to reset exclusions", error);
@@ -371,7 +379,10 @@ export function initResultsPage() {
     repeatButtonElement.disabled = true;
     repeatButtonElement.textContent = "Разыгрываем...";
     resultsSectionElement.classList.add("results--refreshing");
-    renderSkeletonResults(listElement, previousDraw.winnersCount || previousDraw.winners.length || 1);
+    renderSkeletonResults(
+      listElement,
+      previousDraw.winnersCount || previousDraw.winners.length || 1
+    );
     setStatus(statusElement, "Проводим следующий розыгрыш...");
 
     try {

@@ -94,6 +94,17 @@
                         fill="#666666" />
                     </svg>
                   </button>
+                  <button class="random__tool random__tool--export" type="button" data-export-button
+                    aria-label="Экспортировать победителей" disabled>
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path
+                        d="M16 2C16.8284 2 17.5 2.67157 17.5 3.5V17.3789L21.9395 12.9395C22.5253 12.3537 23.4747 12.3537 24.0605 12.9395C24.6463 13.5253 24.6463 14.4747 24.0605 15.0605L17.0605 22.0605C16.4747 22.6463 15.5253 22.6463 14.9395 22.0605L7.93945 15.0605C7.35366 14.4747 7.35366 13.5253 7.93945 12.9395C8.52524 12.3537 9.47465 12.3537 10.0605 12.9395L14.5 17.3789V3.5C14.5 2.67157 15.1716 2 16 2Z"
+                        fill="white" />
+                      <path
+                        d="M5.5 22C6.32843 22 7 22.6716 7 23.5V25.5C7 25.7761 7.22386 26 7.5 26H24.5C24.7761 26 25 25.7761 25 25.5V23.5C25 22.6716 25.6716 22 26.5 22C27.3284 22 28 22.6716 28 23.5V25.5C28 27.433 26.433 29 24.5 29H7.5C5.567 29 4 27.433 4 25.5V23.5C4 22.6716 4.67157 22 5.5 22Z"
+                        fill="#666666" />
+                    </svg>
+                  </button>
                   <button class="random__tool random__tool--setup" type="button" data-settings-toggle
                     aria-label="Показать настройки">
                     <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -163,15 +174,21 @@
               <div class="random__sidebar-item">
                 <div class="random__sidebar-header">
                   <div class="random__sidebar-title">
-                    Очистить все исключения
+                    Управление победителями
                   </div>
                   <div class="random__sidebar-description" data-reset-exclusions-description>
-                    Кнопка станет доступна после загрузки файла.
+                    После загрузки файла здесь можно отменить последний розыгрыш или очистить общий blacklist.
                   </div>
                 </div>
-                <button class="random__sidebar-button" type="button" data-reset-exclusions-button disabled>
-                  Очистить все
-                </button>
+                <div class="random__sidebar-actions">
+                  <button class="random__sidebar-button" type="button" data-undo-draw-button disabled>
+                    Отменить
+                  </button>
+                  <button class="random__sidebar-button random__sidebar-button--accent" type="button"
+                    data-reset-exclusions-button disabled>
+                    Очистить все
+                  </button>
+                </div>
               </div>
             </aside>
           </div>
@@ -191,10 +208,9 @@
         <div class="random__modal-file" data-display-column-modal-file></div>
       </div>
       <div class="random__modal-select-mount" data-display-column-select></div>
-      <div class="random__modal-note">
-        Важно: защита от повторных победителей работает только внутри текущего загруженного файла.
-        Если затем загрузить другой Excel или вести розыгрыш по другому полю, прошлые победители
-        автоматически не исключаются.
+      <div class="random__modal-note" data-display-column-modal-note>
+        Загрузка данных завершена. Поле для отображения можно выбрать вручную, а повторы между файлами
+        будут автоматически блокироваться по стабильному ключу.
       </div>
       <div class="random__modal-actions">
         <button class="random__sidebar-button" type="button" data-display-column-cancel>

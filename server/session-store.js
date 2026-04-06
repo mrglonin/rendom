@@ -3,6 +3,7 @@ const path = require("path");
 const { randomUUID } = require("crypto");
 
 const { config } = require("./config");
+const { getGlobalWinnerCount, getGlobalWinnerKeySet } = require("./global-store");
 const { createScopedLogger } = require("./logger");
 
 const storeLogger = createScopedLogger("session-store");
@@ -22,12 +23,28 @@ const FILTER_PRIORITY = [
   "Владелец",
 ];
 
-const META_COLUMNS = [
-  "Тип билета",
-  "Цена",
+const META_COLUMNS = ["Тип билета", "Цена", "Промо-код", "Дата сеанса"];
+const DEFAULT_DEDUPLICATION_COLUMN_CANDIDATES = [
+  "Код билета",
+  "ID билета",
+  "ID продажи",
   "Промо-код",
-  "Дата сеанса",
+  "Владелец",
 ];
+
+function normalizeFilterValue(value) {
+  return String(value ?? "").trim();
+}
+
+function pickDefaultDeduplicationColumn(columns) {
+  for (const candidate of DEFAULT_DEDUPLICATION_COLUMN_CANDIDATES) {
+    if (columns.includes(candidate)) {
+      return candidate;
+    }
+  }
+
+  return columns[0] || "";
+}
 
 function buildWinnerHistoryEntry(winner, draw, index) {
   return {
@@ -36,36 +53,13 @@ function buildWinnerHistoryEntry(winner, draw, index) {
     createdAt: draw.createdAt,
     recordId: winner.recordId,
     displayValue: winner.displayValue,
+    dedupeValue: winner.dedupeValue || "",
     meta: Array.isArray(winner.meta) ? winner.meta : [],
   };
 }
 
-function normalizeFilterValue(value) {
-  return String(value ?? "").trim();
-}
-
 function getSessionPath(sessionId) {
   return path.join(config.sessionsDir, `${sessionId}.json`);
-}
-
-function saveSession(session) {
-  const nextSession = {
-    ...session,
-    updatedAt: new Date().toISOString(),
-  };
-
-  fs.writeFileSync(getSessionPath(nextSession.id), JSON.stringify(nextSession, null, 2), "utf8");
-  return nextSession;
-}
-
-function loadSession(sessionId) {
-  const sessionPath = getSessionPath(sessionId);
-
-  if (!fs.existsSync(sessionPath)) {
-    return null;
-  }
-
-  return JSON.parse(fs.readFileSync(sessionPath, "utf8"));
 }
 
 function buildFilterDefinitions(records, columns) {
@@ -92,7 +86,7 @@ function buildFilterDefinitions(records, columns) {
           left[0].localeCompare(right[0], "ru", {
             numeric: true,
             sensitivity: "base",
-          }),
+          })
         )
         .map(([value, count]) => ({
           value,
@@ -115,52 +109,186 @@ function buildRecordMeta(record) {
     .slice(0, 3);
 }
 
-function serializeRecord(record, displayColumn) {
+function getSafeDisplayColumn(session) {
+  const columns = Array.isArray(session?.columns) ? session.columns : [];
+  const displayColumn = String(session?.defaults?.displayColumn || "").trim();
+
+  if (displayColumn && columns.includes(displayColumn)) {
+    return displayColumn;
+  }
+
+  return columns[0] || "";
+}
+
+function getSafeDeduplicationColumn(session) {
+  const columns = Array.isArray(session?.columns) ? session.columns : [];
+  const dedupeColumn = String(session?.defaults?.dedupeColumn || "").trim();
+
+  if (dedupeColumn && columns.includes(dedupeColumn)) {
+    return dedupeColumn;
+  }
+
+  return pickDefaultDeduplicationColumn(columns);
+}
+
+function getRecordDeduplicationValue(record, dedupeColumn, displayColumn = "") {
+  const candidateColumns = [
+    dedupeColumn,
+    "Код билета",
+    "ID билета",
+    "ID продажи",
+    "Промо-код",
+    displayColumn,
+  ].filter(Boolean);
+
+  for (const columnName of candidateColumns) {
+    const value = normalizeFilterValue(record?.[columnName]);
+
+    if (value) {
+      return value;
+    }
+  }
+
+  return normalizeFilterValue(record?.__recordId || record?.__rowNumber || "");
+}
+
+function serializeRecord(record, displayColumn, dedupeColumn) {
+  const safeDisplayValue = String(
+    record?.[displayColumn] || record?.["Код билета"] || record?.["ID билета"] || ""
+  ).trim();
+
   return {
     recordId: record.__recordId,
     rowNumber: record.__rowNumber,
-    displayValue: String(record[displayColumn] || record["Код билета"] || record["ID билета"] || ""),
+    displayValue: safeDisplayValue,
+    dedupeValue: getRecordDeduplicationValue(record, dedupeColumn, displayColumn),
     meta: buildRecordMeta(record),
   };
 }
 
-function getWinnerHistory(session) {
-  if (Array.isArray(session.winnerHistory)) {
-    return session.winnerHistory;
-  }
-
-  const draws = Array.isArray(session.draws) ? session.draws : [];
-
-  return draws.flatMap((draw) =>
-    (Array.isArray(draw.winners) ? draw.winners : []).map((winner, index) =>
-      buildWinnerHistoryEntry(winner, draw, index + 1),
-    ),
+function getRecordMap(session) {
+  return new Map(
+    (Array.isArray(session?.records) ? session.records : []).map((record) => [
+      record.__recordId,
+      record,
+    ])
   );
 }
 
-function buildSessionSummary(session) {
-  const winnerHistory = getWinnerHistory(session);
-  const excludedRecordIds = Array.isArray(session.excludedRecordIds) ? session.excludedRecordIds : [];
-  const draws = Array.isArray(session.draws) ? session.draws : [];
+function hydrateDraw(draw, recordMap, session) {
+  const displayColumn =
+    Array.isArray(session?.columns) && session.columns.includes(draw?.displayColumn)
+      ? draw.displayColumn
+      : getSafeDisplayColumn(session);
+  const dedupeColumn = getSafeDeduplicationColumn(session);
+  const winners = Array.isArray(draw?.winners) ? draw.winners : [];
 
   return {
-    id: session.id,
-    createdAt: session.createdAt,
-    updatedAt: session.updatedAt,
-    source: session.source,
-    columns: session.columns,
-    defaults: session.defaults,
-    filters: session.filters,
-    counts: {
-      totalRecords: session.records.length,
-      excludedRecords: excludedRecordIds.length,
-      activeRecords: Math.max(session.records.length - excludedRecordIds.length, 0),
-      draws: draws.length,
-      winnerHistory: winnerHistory.length,
-    },
-    lastDraw: draws.at(-1) || null,
-    winnerHistory,
+    ...draw,
+    displayColumn,
+    filters: draw?.filters || {},
+    globalContributionKeys: Array.isArray(draw?.globalContributionKeys)
+      ? draw.globalContributionKeys
+      : [],
+    winners: winners.map((winner, index) => {
+      const record = recordMap.get(winner.recordId);
+      const serializedRecord = record
+        ? serializeRecord(record, displayColumn, dedupeColumn)
+        : {
+            recordId: winner.recordId,
+            rowNumber: winner.rowNumber,
+            displayValue: String(winner.displayValue || "").trim(),
+            dedupeValue: String(winner.dedupeValue || "").trim(),
+            meta: Array.isArray(winner.meta) ? winner.meta : [],
+          };
+
+      return {
+        ...serializedRecord,
+        ...winner,
+        displayValue: String(winner.displayValue || serializedRecord.displayValue || "").trim(),
+        dedupeValue: String(winner.dedupeValue || serializedRecord.dedupeValue || "").trim(),
+        meta: Array.isArray(winner.meta) ? winner.meta : serializedRecord.meta,
+        historyEntryId: winner.historyEntryId || `${draw.id}:${index + 1}`,
+      };
+    }),
   };
+}
+
+function getWinnerHistory(session) {
+  const draws = Array.isArray(session?.draws) ? session.draws : [];
+
+  if (Array.isArray(session?.winnerHistory) && session.winnerHistory.length > 0) {
+    return session.winnerHistory.map((entry) => ({
+      id: entry.id,
+      drawId: entry.drawId,
+      createdAt: entry.createdAt,
+      recordId: entry.recordId,
+      displayValue: entry.displayValue,
+      dedupeValue: entry.dedupeValue || "",
+      meta: Array.isArray(entry.meta) ? entry.meta : [],
+    }));
+  }
+
+  return draws.flatMap((draw) =>
+    (Array.isArray(draw.winners) ? draw.winners : []).map((winner, index) =>
+      buildWinnerHistoryEntry(winner, draw, index + 1)
+    )
+  );
+}
+
+function hydrateSession(session) {
+  const safeDisplayColumn = getSafeDisplayColumn(session);
+  const safeDeduplicationColumn = getSafeDeduplicationColumn(session);
+  const recordMap = getRecordMap(session);
+  const draws = (Array.isArray(session?.draws) ? session.draws : []).map((draw) =>
+    hydrateDraw(draw, recordMap, {
+      ...session,
+      defaults: {
+        ...session?.defaults,
+        displayColumn: safeDisplayColumn,
+        dedupeColumn: safeDeduplicationColumn,
+      },
+    })
+  );
+  const winnerHistory = getWinnerHistory({
+    ...session,
+    draws,
+  });
+
+  return {
+    ...session,
+    version: config.sessionVersion,
+    defaults: {
+      ...session?.defaults,
+      displayColumn: safeDisplayColumn,
+      dedupeColumn: safeDeduplicationColumn,
+    },
+    records: Array.isArray(session?.records) ? session.records : [],
+    filters: Array.isArray(session?.filters) ? session.filters : [],
+    draws,
+    winnerHistory,
+    excludedRecordIds: Array.isArray(session?.excludedRecordIds) ? session.excludedRecordIds : [],
+  };
+}
+
+function saveSession(session) {
+  const nextSession = {
+    ...hydrateSession(session),
+    updatedAt: new Date().toISOString(),
+  };
+
+  fs.writeFileSync(getSessionPath(nextSession.id), JSON.stringify(nextSession, null, 2), "utf8");
+  return nextSession;
+}
+
+function loadSession(sessionId) {
+  const sessionPath = getSessionPath(sessionId);
+
+  if (!fs.existsSync(sessionPath)) {
+    return null;
+  }
+
+  return hydrateSession(JSON.parse(fs.readFileSync(sessionPath, "utf8")));
 }
 
 function createSession({ originalName, savedFileName, fileSize, parsedReport }) {
@@ -181,6 +309,7 @@ function createSession({ originalName, savedFileName, fileSize, parsedReport }) 
     columns: parsedReport.columns,
     defaults: {
       displayColumn: parsedReport.defaultDisplayColumn,
+      dedupeColumn: parsedReport.defaultDeduplicationColumn,
     },
     filters: buildFilterDefinitions(parsedReport.records, parsedReport.columns),
     records: parsedReport.records,
@@ -193,14 +322,30 @@ function createSession({ originalName, savedFileName, fileSize, parsedReport }) 
     sessionId: session.id,
     fileName: originalName,
     rows: session.records.length,
+    dedupeColumn: session.defaults.dedupeColumn,
   });
 
   return saveSession(session);
 }
 
-function getActiveRecords(session) {
-  const excludedIds = new Set(Array.isArray(session.excludedRecordIds) ? session.excludedRecordIds : []);
-  return session.records.filter((record) => !excludedIds.has(record.__recordId));
+function getExcludedRecordIds(session, globalState) {
+  const globalWinnerKeys = getGlobalWinnerKeySet(globalState);
+  const dedupeColumn = getSafeDeduplicationColumn(session);
+  const displayColumn = getSafeDisplayColumn(session);
+
+  return (Array.isArray(session?.records) ? session.records : [])
+    .filter((record) =>
+      globalWinnerKeys.has(getRecordDeduplicationValue(record, dedupeColumn, displayColumn))
+    )
+    .map((record) => record.__recordId);
+}
+
+function getActiveRecords(session, globalState) {
+  const blockedRecordIds = new Set(getExcludedRecordIds(session, globalState));
+
+  return (Array.isArray(session?.records) ? session.records : []).filter(
+    (record) => !blockedRecordIds.has(record.__recordId)
+  );
 }
 
 function applyFilters(records, filters = {}) {
@@ -216,15 +361,22 @@ function applyFilters(records, filters = {}) {
   }, {});
 
   return records.filter((record) =>
-    Object.entries(normalizedFilters).every(([columnName, value]) => normalizeFilterValue(record[columnName]) === value),
+    Object.entries(normalizedFilters).every(
+      ([columnName, value]) => normalizeFilterValue(record[columnName]) === value
+    )
   );
 }
 
-function createPreview(session, { displayColumn, filters, limit = config.previewLimit }) {
-  const safeDisplayColumn = session.columns.includes(displayColumn)
-    ? displayColumn
-    : session.defaults.displayColumn;
-  const activeRecords = getActiveRecords(session);
+function createPreview(
+  session,
+  { displayColumn, filters, limit = config.previewLimit },
+  globalState
+) {
+  const safeDisplayColumn =
+    Array.isArray(session?.columns) && session.columns.includes(displayColumn)
+      ? displayColumn
+      : getSafeDisplayColumn(session);
+  const activeRecords = getActiveRecords(session, globalState);
   const eligibleRecords = applyFilters(activeRecords, filters);
 
   return {
@@ -232,31 +384,49 @@ function createPreview(session, { displayColumn, filters, limit = config.preview
     activeCount: activeRecords.length,
     eligibleCount: eligibleRecords.length,
     filters: filters || {},
-    preview: eligibleRecords.slice(0, limit).map((record) => serializeRecord(record, safeDisplayColumn)),
+    preview: eligibleRecords
+      .slice(0, limit)
+      .map((record) =>
+        serializeRecord(record, safeDisplayColumn, getSafeDeduplicationColumn(session))
+      ),
   };
 }
 
-function excludeWinnerIds(session, winnerIds) {
-  const excludedIds = new Set(session.excludedRecordIds);
-
-  winnerIds.forEach((winnerId) => {
-    excludedIds.add(winnerId);
-  });
+function buildSessionSummary(session, globalState) {
+  const winnerHistory = getWinnerHistory(session);
+  const excludedRecordIds = getExcludedRecordIds(session, globalState);
+  const draws = Array.isArray(session?.draws) ? session.draws : [];
 
   return {
-    ...session,
-    excludedRecordIds: Array.from(excludedIds),
+    id: session.id,
+    createdAt: session.createdAt,
+    updatedAt: session.updatedAt,
+    source: session.source,
+    columns: session.columns,
+    defaults: session.defaults,
+    filters: session.filters,
+    counts: {
+      totalRecords: session.records.length,
+      excludedRecords: excludedRecordIds.length,
+      activeRecords: Math.max(session.records.length - excludedRecordIds.length, 0),
+      draws: draws.length,
+      winnerHistory: winnerHistory.length,
+      globalWinnerKeys: getGlobalWinnerCount(globalState),
+    },
+    lastDraw: draws.at(-1) || null,
+    winnerHistory,
   };
 }
 
 module.exports = {
   applyFilters,
-  buildWinnerHistoryEntry,
   buildSessionSummary,
+  buildWinnerHistoryEntry,
   createPreview,
   createSession,
-  excludeWinnerIds,
   getActiveRecords,
+  getExcludedRecordIds,
+  getSafeDeduplicationColumn,
   getWinnerHistory,
   loadSession,
   saveSession,

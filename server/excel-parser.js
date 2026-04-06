@@ -24,11 +24,14 @@ const HEADER_HINTS = new Set([
   "Промо-код",
 ]);
 
-const DEFAULT_DISPLAY_COLUMN_CANDIDATES = [
+const DEFAULT_DISPLAY_COLUMN_CANDIDATES = ["Код билета", "ID билета", "ID продажи", "Промо-код"];
+
+const DEFAULT_DEDUPLICATION_COLUMN_CANDIDATES = [
   "Код билета",
   "ID билета",
   "ID продажи",
   "Промо-код",
+  "Владелец",
 ];
 
 function normalizeText(value) {
@@ -105,6 +108,16 @@ function pickDefaultDisplayColumn(columns) {
   return columns[0] || "";
 }
 
+function pickDefaultDeduplicationColumn(columns) {
+  for (const candidate of DEFAULT_DEDUPLICATION_COLUMN_CANDIDATES) {
+    if (columns.includes(candidate)) {
+      return candidate;
+    }
+  }
+
+  return pickDefaultDisplayColumn(columns);
+}
+
 function parseExcelReport(filePath) {
   const workbook = XLSX.readFile(filePath, {
     cellDates: false,
@@ -169,9 +182,15 @@ function parseExcelReport(filePath) {
   return {
     sheetName,
     headerRowNumber: headerRowIndex + 1,
-    metadataLines: rows.slice(0, headerRowIndex).map((row) => row.map((value) => normalizeText(value)).join(" ").trim()),
+    metadataLines: rows.slice(0, headerRowIndex).map((row) =>
+      row
+        .map((value) => normalizeText(value))
+        .join(" ")
+        .trim()
+    ),
     columns: visibleColumns,
     defaultDisplayColumn: pickDefaultDisplayColumn(visibleColumns),
+    defaultDeduplicationColumn: pickDefaultDeduplicationColumn(visibleColumns),
     records,
   };
 }

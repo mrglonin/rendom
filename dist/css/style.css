@@ -679,6 +679,11 @@ body {
 .random__sidebar-button--accent:hover {
   background: #004c0f;
 }
+.random__sidebar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18rem;
+}
 .random__modal {
   position: fixed;
   inset: 0;
@@ -893,6 +898,7 @@ body {
   }
   .random__tools {
     justify-content: center;
+    flex-wrap: wrap;
   }
   .random__submit {
     width: 100%;
@@ -908,6 +914,13 @@ body {
   .random__sidebar-title {
     font-size: 26rem;
     line-height: 1.25;
+  }
+  .random__sidebar-actions {
+    flex-direction: column;
+  }
+  .random__sidebar-actions .random__sidebar-button {
+    width: 100%;
+    min-width: 0;
   }
 }
 .results {

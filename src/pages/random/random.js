@@ -95,7 +95,7 @@ function saveDrawSettings(settings) {
     JSON.stringify({
       ...settings,
       version: DRAW_SETTINGS_VERSION,
-    }),
+    })
   );
 }
 
@@ -150,7 +150,7 @@ function initCounter(counterElement) {
   counterElement.querySelectorAll(".random__quantity-stepper-button").forEach((buttonElement) => {
     buttonElement.addEventListener("click", () => {
       const direction = buttonElement.classList.contains(
-        "random__quantity-stepper-button--increase",
+        "random__quantity-stepper-button--increase"
       )
         ? "increase"
         : "decrease";
@@ -200,7 +200,13 @@ function renderHistoryCounter(targetElement, count) {
   });
 }
 
-function renderPlaceholder(listWrapperElement, listElement, hintElement, submitButtonElement, config) {
+function renderPlaceholder(
+  listWrapperElement,
+  listElement,
+  hintElement,
+  submitButtonElement,
+  config
+) {
   listWrapperElement.classList.add("random__list--empty");
   listElement.innerHTML = `
     <li class="random__list-item random__list-item--empty">
@@ -213,11 +219,42 @@ function renderPlaceholder(listWrapperElement, listElement, hintElement, submitB
   submitButtonElement.disabled = config.submitDisabled;
 }
 
+function buildCsvCell(value) {
+  return `"${String(value ?? "").replaceAll('"', '""')}"`;
+}
+
+function downloadFile(fileName, content, mimeType) {
+  const blob = new Blob([content], { type: mimeType });
+  const objectUrl = window.URL.createObjectURL(blob);
+  const linkElement = document.createElement("a");
+
+  linkElement.href = objectUrl;
+  linkElement.download = fileName;
+  document.body.append(linkElement);
+  linkElement.click();
+  linkElement.remove();
+  window.URL.revokeObjectURL(objectUrl);
+}
+
+function buildExportRows(session) {
+  const winnerHistory = Array.isArray(session?.winnerHistory) ? session.winnerHistory : [];
+
+  return winnerHistory.map((entry, index) => [
+    index + 1,
+    entry.createdAt || "",
+    entry.displayValue || "",
+    entry.dedupeValue || "",
+    Array.isArray(entry.meta) ? entry.meta.join(" | ") : "",
+  ]);
+}
+
 function buildSessionHint(session) {
   const totalCount = session?.counts?.totalRecords ?? 0;
   const activeCount = session?.counts?.activeRecords ?? 0;
   const excludedCount = session?.counts?.excludedRecords ?? 0;
+  const globalWinnerCount = session?.counts?.globalWinnerKeys ?? 0;
   const displayColumn = String(session?.defaults?.displayColumn || "").trim();
+  const dedupeColumn = String(session?.defaults?.dedupeColumn || "").trim();
   const parts = [];
 
   if (session?.source?.originalName) {
@@ -229,7 +266,11 @@ function buildSessionHint(session) {
   }
 
   if (displayColumn) {
-    parts.push(`Поле розыгрыша: ${displayColumn}.`);
+    parts.push(`Поле показа: ${displayColumn}.`);
+  }
+
+  if (dedupeColumn) {
+    parts.push(`Антидубль: ${dedupeColumn}.`);
   }
 
   if (activeCount > 0) {
@@ -239,7 +280,13 @@ function buildSessionHint(session) {
   }
 
   if (excludedCount > 0) {
-    parts.push(`Уже исключено ${excludedCount} ${getRecordWord(excludedCount)}.`);
+    parts.push(`Из этого файла уже исключено ${excludedCount} ${getRecordWord(excludedCount)}.`);
+  }
+
+  if (globalWinnerCount > 0) {
+    parts.push(
+      `В общем blacklist сейчас ${globalWinnerCount} ${getWinnerWord(globalWinnerCount)}.`
+    );
   }
 
   return parts.join(" ");
@@ -250,9 +297,11 @@ function renderWinnerHistory(
   listElement,
   hintElement,
   submitButtonElement,
-  session,
+  session
 ) {
-  const winnerHistory = Array.isArray(session?.winnerHistory) ? [...session.winnerHistory].reverse() : [];
+  const winnerHistory = Array.isArray(session?.winnerHistory)
+    ? [...session.winnerHistory].reverse()
+    : [];
 
   if (winnerHistory.length === 0) {
     renderPlaceholder(listWrapperElement, listElement, hintElement, submitButtonElement, {
@@ -271,7 +320,7 @@ function renderWinnerHistory(
           <div class="random__list-item-digit"></div>
           <div class="random__list-item-text">${escapeHtml(formatDisplayValue(entry.displayValue))}</div>
         </li>
-      `,
+      `
     )
     .join("");
   hintElement.textContent = buildSessionHint(session);
@@ -302,6 +351,8 @@ export function initRandomControls() {
     isImporting: false,
     isFieldModalOpen: false,
     isSavingDisplayColumn: false,
+    isUndoPending: false,
+    isResetPending: false,
     pendingDisplayColumn: "",
   };
 
@@ -316,31 +367,40 @@ export function initRandomControls() {
   const recordsSelectMountElement = randomSectionElement.querySelector("[data-records-select]");
   const winnersCountInputElement = randomSectionElement.querySelector(".random__quantity-input");
   const importTriggerButtonElement = randomSectionElement.querySelector("[data-import-trigger]");
-  const displayColumnButtonElement = randomSectionElement.querySelector("[data-display-column-button]");
-  const displayColumnDescriptionElement = randomSectionElement.querySelector(
-    "[data-display-column-description]",
+  const exportButtonElement = randomSectionElement.querySelector("[data-export-button]");
+  const displayColumnButtonElement = randomSectionElement.querySelector(
+    "[data-display-column-button]"
   );
+  const displayColumnDescriptionElement = randomSectionElement.querySelector(
+    "[data-display-column-description]"
+  );
+  const undoDrawButtonElement = randomSectionElement.querySelector("[data-undo-draw-button]");
   const resetExclusionsButtonElement = randomSectionElement.querySelector(
-    "[data-reset-exclusions-button]",
+    "[data-reset-exclusions-button]"
   );
   const resetExclusionsDescriptionElement = randomSectionElement.querySelector(
-    "[data-reset-exclusions-description]",
+    "[data-reset-exclusions-description]"
   );
-  const displayColumnModalElement = randomSectionElement.querySelector("[data-display-column-modal]");
+  const displayColumnModalElement = randomSectionElement.querySelector(
+    "[data-display-column-modal]"
+  );
   const displayColumnSelectMountElement = randomSectionElement.querySelector(
-    "[data-display-column-select]",
+    "[data-display-column-select]"
   );
   const displayColumnModalDescriptionElement = randomSectionElement.querySelector(
-    "[data-display-column-modal-description]",
+    "[data-display-column-modal-description]"
   );
   const displayColumnModalFileElement = randomSectionElement.querySelector(
-    "[data-display-column-modal-file]",
+    "[data-display-column-modal-file]"
+  );
+  const displayColumnModalNoteElement = randomSectionElement.querySelector(
+    "[data-display-column-modal-note]"
   );
   const displayColumnSaveButtonElement = randomSectionElement.querySelector(
-    "[data-display-column-save]",
+    "[data-display-column-save]"
   );
   const displayColumnCancelButtonElement = randomSectionElement.querySelector(
-    "[data-display-column-cancel]",
+    "[data-display-column-cancel]"
   );
 
   randomSectionElement
@@ -353,11 +413,20 @@ export function initRandomControls() {
     return String(state.session?.defaults?.displayColumn || "").trim();
   }
 
+  function getDeduplicationColumnLabel() {
+    return String(state.session?.defaults?.dedupeColumn || "").trim();
+  }
+
   function syncDrawAvailability() {
     const hasActiveRecords = (state.session?.counts?.activeRecords ?? 0) > 0;
 
     submitButtonElement.disabled =
-      !hasActiveRecords || state.isImporting || state.isSavingDisplayColumn || state.isFieldModalOpen;
+      !hasActiveRecords ||
+      state.isImporting ||
+      state.isSavingDisplayColumn ||
+      state.isFieldModalOpen ||
+      state.isUndoPending ||
+      state.isResetPending;
   }
 
   function setFieldModalOpen(isOpen) {
@@ -385,12 +454,24 @@ export function initRandomControls() {
     }
 
     const displayColumn = getDisplayColumnLabel();
+    const dedupeColumn = getDeduplicationColumnLabel();
 
     displayColumnButtonElement.disabled = false;
     displayColumnButtonElement.textContent = displayColumn ? "Изменить поле" : "Выбрать поле";
     displayColumnDescriptionElement.textContent = displayColumn
-      ? `Сейчас розыгрыш идёт по полю «${displayColumn}».`
+      ? `Сейчас показываем победителей по полю «${displayColumn}», а антидубль идёт по «${dedupeColumn}».`
       : "Поле ещё не выбрано. Укажите колонку из Excel.";
+  }
+
+  function syncToolbarActions() {
+    if (!exportButtonElement) {
+      return;
+    }
+
+    const winnerHistoryCount =
+      state.session?.counts?.winnerHistory ?? state.session?.winnerHistory?.length ?? 0;
+
+    exportButtonElement.disabled = winnerHistoryCount === 0 || state.isImporting;
   }
 
   function openDisplayColumnModal() {
@@ -417,13 +498,21 @@ export function initRandomControls() {
 
     if (displayColumnModalDescriptionElement) {
       displayColumnModalDescriptionElement.textContent =
-        "Выберите колонку из Excel, по которой будут отображаться победители.";
+        "Выберите колонку из Excel, которая будет отображаться у победителей на экране и в истории.";
     }
 
     if (displayColumnModalFileElement) {
       displayColumnModalFileElement.textContent = state.session.source?.originalName
         ? `Файл: ${state.session.source.originalName}`
         : "";
+    }
+
+    if (displayColumnModalNoteElement) {
+      const dedupeColumn = getDeduplicationColumnLabel();
+
+      displayColumnModalNoteElement.textContent = dedupeColumn
+        ? `Повторы между файлами автоматически блокируются по полю «${dedupeColumn}». Кнопка «Очистить все» очищает и историю текущего файла, и общий blacklist.`
+        : "Повторы между файлами автоматически блокируются по стабильному ключу. Кнопка «Очистить все» очищает и историю текущего файла, и общий blacklist.";
     }
 
     displayColumnSaveButtonElement.disabled = false;
@@ -447,56 +536,79 @@ export function initRandomControls() {
 
     applySelectValue(
       formElement.querySelector('input[name="removeWinners"]')?.closest(".select"),
-      savedSettings.removeWinners || "yes",
+      savedSettings.removeWinners || "yes"
     );
     applySelectValue(
       formElement.querySelector('input[name="sortResults"]')?.closest(".select"),
-      savedSettings.sortResults || "no",
+      savedSettings.sortResults || "no"
     );
   }
 
   function syncSidebarActions() {
     syncDisplayColumnControls();
 
-    if (!resetExclusionsButtonElement || !resetExclusionsDescriptionElement) {
+    if (
+      !undoDrawButtonElement ||
+      !resetExclusionsButtonElement ||
+      !resetExclusionsDescriptionElement
+    ) {
       return;
     }
 
     const excludedCount = state.session?.counts?.excludedRecords ?? 0;
     const winnerHistoryCount =
       state.session?.counts?.winnerHistory ?? state.session?.winnerHistory?.length ?? 0;
-
-    resetExclusionsButtonElement.textContent =
-      excludedCount > 0 || winnerHistoryCount > 0
-        ? `Очистить все (${Math.max(excludedCount, winnerHistoryCount)})`
-        : "Очистить все";
+    const globalWinnerCount = state.session?.counts?.globalWinnerKeys ?? 0;
+    const lastDraw = state.session?.lastDraw || state.lastDraw || null;
+    const canUndo = Boolean(lastDraw);
 
     if (!state.session) {
+      undoDrawButtonElement.disabled = true;
       resetExclusionsButtonElement.disabled = true;
+      resetExclusionsButtonElement.textContent = "Очистить все";
       resetExclusionsDescriptionElement.textContent =
-        "Сначала загрузите файл. После этого здесь можно очистить историю победителей и исключения.";
+        "Сначала загрузите файл. После этого здесь можно отменить последний розыгрыш или полностью очистить blacklist.";
       return;
     }
 
-    if (excludedCount === 0 && winnerHistoryCount === 0) {
-      resetExclusionsButtonElement.disabled = true;
+    undoDrawButtonElement.disabled = !canUndo || state.isUndoPending || state.isResetPending;
+    resetExclusionsButtonElement.disabled =
+      (winnerHistoryCount === 0 && globalWinnerCount === 0) ||
+      state.isUndoPending ||
+      state.isResetPending;
+    resetExclusionsButtonElement.textContent =
+      winnerHistoryCount > 0 || globalWinnerCount > 0
+        ? `Очистить все (${Math.max(winnerHistoryCount, globalWinnerCount)})`
+        : "Очистить все";
+
+    if (!canUndo && winnerHistoryCount === 0 && globalWinnerCount === 0) {
       resetExclusionsDescriptionElement.textContent =
-        "Для текущего файла пока нечего очищать.";
+        "Для текущего файла пока нечего отменять или очищать.";
       return;
     }
 
     const details = [];
 
-    if (winnerHistoryCount > 0) {
-      details.push(`очистит историю из ${winnerHistoryCount} ${getWinnerWord(winnerHistoryCount)}`);
+    if (canUndo && lastDraw) {
+      const drawWinnerCount = Array.isArray(lastDraw.winners)
+        ? lastDraw.winners.length
+        : lastDraw.winnersCount || 0;
+      details.push(
+        `«Отменить» снимет последний розыгрыш на ${drawWinnerCount} ${getWinnerWord(drawWinnerCount)}`
+      );
+    }
+
+    if (winnerHistoryCount > 0 || globalWinnerCount > 0) {
+      details.push(
+        `«Очистить все» обнулит историю файла и общий blacklist из ${globalWinnerCount} ${getWinnerWord(globalWinnerCount)}`
+      );
     }
 
     if (excludedCount > 0) {
-      details.push(`вернёт в пул ${excludedCount} ${getRecordWord(excludedCount)}`);
+      details.push(`в текущий пул вернётся ${excludedCount} ${getRecordWord(excludedCount)}`);
     }
 
-    resetExclusionsButtonElement.disabled = false;
-    resetExclusionsDescriptionElement.textContent = `Кнопка ${details.join(" и ")}.`;
+    resetExclusionsDescriptionElement.textContent = `${details.join(". ")}.`;
   }
 
   function renderCurrentState() {
@@ -511,6 +623,7 @@ export function initRandomControls() {
         hint: "Нажмите на иконку справа, чтобы выбрать и загрузить Excel-файл.",
         submitDisabled: true,
       });
+      syncToolbarActions();
       syncSidebarActions();
       syncDrawAvailability();
       return;
@@ -521,8 +634,9 @@ export function initRandomControls() {
       listElement,
       hintElement,
       submitButtonElement,
-      state.session,
+      state.session
     );
+    syncToolbarActions();
     syncSidebarActions();
     syncDrawAvailability();
   }
@@ -530,12 +644,12 @@ export function initRandomControls() {
   function setImportingState(isImporting) {
     state.isImporting = isImporting;
 
-    if (!importTriggerButtonElement) {
-      return;
+    if (importTriggerButtonElement) {
+      importTriggerButtonElement.disabled = isImporting;
+      importTriggerButtonElement.setAttribute("aria-busy", String(isImporting));
     }
 
-    importTriggerButtonElement.disabled = isImporting;
-    importTriggerButtonElement.setAttribute("aria-busy", String(isImporting));
+    syncToolbarActions();
     syncDrawAvailability();
   }
 
@@ -556,7 +670,7 @@ export function initRandomControls() {
       setStatus(
         statusElement,
         "Не удалось восстановить прошлую сессию. Загрузите файл заново.",
-        "error",
+        "error"
       );
       state.session = null;
       state.lastDraw = null;
@@ -594,7 +708,7 @@ export function initRandomControls() {
       const response = await api.importReport(file);
 
       state.session = response.session;
-      state.lastDraw = null;
+      state.lastDraw = response.session.lastDraw || null;
       state.pendingDisplayColumn = response.session.defaults.displayColumn;
 
       window.localStorage.setItem(SESSION_STORAGE_KEY, response.session.id);
@@ -602,8 +716,8 @@ export function initRandomControls() {
       renderCurrentState();
       setStatus(
         statusElement,
-        "Файл загружен. Выберите поле для розыгрыша и сохраните настройку.",
-        "info",
+        "Файл загружен. Выберите поле отображения победителей и сохраните настройку.",
+        "info"
       );
       openDisplayColumnModal();
     } catch (error) {
@@ -630,7 +744,11 @@ export function initRandomControls() {
     }
 
     if (state.isFieldModalOpen) {
-      setStatus(statusElement, "Сначала выберите поле для розыгрыша и сохраните настройку.", "error");
+      setStatus(
+        statusElement,
+        "Сначала выберите поле для розыгрыша и сохраните настройку.",
+        "error"
+      );
       return;
     }
 
@@ -663,7 +781,6 @@ export function initRandomControls() {
       });
       window.localStorage.setItem(SESSION_STORAGE_KEY, response.session.id);
       window.localStorage.setItem(DRAW_STORAGE_KEY, response.draw.id);
-      syncSidebarActions();
       setStatus(statusElement, "Победители определены. Переходим к экрану результатов…", "success");
 
       window.setTimeout(() => {
@@ -674,6 +791,38 @@ export function initRandomControls() {
       setStatus(statusElement, error.message, "error");
       syncDrawAvailability();
     }
+  }
+
+  function exportWinnerHistory() {
+    if (!state.session) {
+      return;
+    }
+
+    const rows = buildExportRows(state.session);
+
+    if (rows.length === 0) {
+      setStatus(statusElement, "Пока нечего экспортировать: история победителей пустая.", "error");
+      return;
+    }
+
+    const csvContent = [
+      ["№", "Дата розыгрыша", "Отображаемое значение", "Ключ антидубля", "Дополнительно"]
+        .map(buildCsvCell)
+        .join(";"),
+      ...rows.map((row) => row.map(buildCsvCell).join(";")),
+    ].join("\n");
+    const safeFileBase = String(state.session?.source?.originalName || "winners")
+      .replace(/\.[^.]+$/, "")
+      .replace(/[^a-zA-Z0-9а-яА-ЯёЁ._-]+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+
+    downloadFile(
+      `${safeFileBase || "winners"}-history.csv`,
+      `\uFEFF${csvContent}`,
+      "text/csv;charset=utf-8"
+    );
+    setStatus(statusElement, "История победителей выгружена в CSV.", "success");
   }
 
   fileInputElement?.addEventListener("change", () => {
@@ -690,6 +839,10 @@ export function initRandomControls() {
     openFilePicker();
   });
 
+  exportButtonElement?.addEventListener("click", () => {
+    exportWinnerHistory();
+  });
+
   displayColumnButtonElement?.addEventListener("click", () => {
     openDisplayColumnModal();
   });
@@ -701,7 +854,7 @@ export function initRandomControls() {
       setStatus(
         statusElement,
         `Используется поле «${getDisplayColumnLabel()}». При необходимости его можно изменить снова.`,
-        "info",
+        "info"
       );
     }
   });
@@ -723,12 +876,13 @@ export function initRandomControls() {
       });
 
       state.session = response.session;
+      state.lastDraw = response.session.lastDraw || state.lastDraw;
       closeDisplayColumnModal();
       renderCurrentState();
       setStatus(
         statusElement,
         `Поле «${getDisplayColumnLabel()}» сохранено. Можно запускать розыгрыш.`,
-        "success",
+        "success"
       );
     } catch (error) {
       randomLogger.error("Failed to update display column", error);
@@ -746,28 +900,66 @@ export function initRandomControls() {
     toggleSidebar(sidebarElement, state.isSidebarOpen);
   });
 
-  resetExclusionsButtonElement?.addEventListener("click", async () => {
-    if (!state.session) {
+  undoDrawButtonElement?.addEventListener("click", async () => {
+    if (!state.session || state.isUndoPending) {
       return;
     }
 
-    setStatus(statusElement, "Очищаем историю победителей и возвращаем участников в пул…");
-    resetExclusionsButtonElement.disabled = true;
+    state.isUndoPending = true;
+    syncSidebarActions();
+    syncDrawAvailability();
+    setStatus(statusElement, "Отменяем последний розыгрыш и снимаем его победителей из blacklist…");
+
+    try {
+      const response = await api.undoLastDraw(state.session.id);
+      state.session = response.session;
+      state.lastDraw = response.session.lastDraw || null;
+      window.localStorage.removeItem(DRAW_STORAGE_KEY);
+      renderCurrentState();
+      setStatus(
+        statusElement,
+        "Последний розыгрыш отменён. Эти победители снова доступны для участия.",
+        "success"
+      );
+    } catch (error) {
+      randomLogger.error("Undo failed", error);
+      setStatus(statusElement, error.message, "error");
+    } finally {
+      state.isUndoPending = false;
+      syncSidebarActions();
+      syncDrawAvailability();
+    }
+  });
+
+  resetExclusionsButtonElement?.addEventListener("click", async () => {
+    if (!state.session || state.isResetPending) {
+      return;
+    }
+
+    state.isResetPending = true;
+    syncSidebarActions();
+    syncDrawAvailability();
+    setStatus(statusElement, "Очищаем историю файла и общий blacklist…");
 
     try {
       const response = await api.resetExclusions(state.session.id);
       state.session = response.session;
       state.lastDraw = null;
+      window.localStorage.removeItem(DRAW_STORAGE_KEY);
       renderCurrentState();
       setStatus(
         statusElement,
-        "История победителей очищена. Все участники снова доступны для розыгрыша.",
-        "success",
+        "История победителей и общий blacklist очищены. Все участники снова доступны.",
+        "success"
       );
     } catch (error) {
       randomLogger.error("Reset exclusions failed", error);
       renderCurrentState();
       setStatus(statusElement, error.message, "error");
+    } finally {
+      state.isResetPending = false;
+      syncSidebarActions();
+      syncDrawAvailability();
     }
   });
 

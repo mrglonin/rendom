@@ -5,6 +5,13 @@ const path = require("path");
 
 const { config, ensureRuntimeDirs } = require("./config");
 const { parseExcelReport } = require("./excel-parser");
+const {
+  addGlobalWinners,
+  loadGlobalState,
+  removeGlobalWinnerKeys,
+  resetGlobalState,
+  saveGlobalState,
+} = require("./global-store");
 const { logger, requestLogger } = require("./logger");
 const { pickWinners, sortDrawResults } = require("./randomizer");
 const {
@@ -13,8 +20,8 @@ const {
   buildSessionSummary,
   createPreview,
   createSession,
-  excludeWinnerIds,
   getActiveRecords,
+  getSafeDeduplicationColumn,
   getWinnerHistory,
   loadSession,
   saveSession,
@@ -29,7 +36,7 @@ function stripPreviewPrefix(url) {
   const [pathname, search = ""] = String(url || "").split("?");
   const normalizedPathname = pathname.replace(
     /^\/plesk-site-preview\/[^/]+\/https?\/[^/]+(?=\/|$)/,
-    "",
+    ""
   );
 
   if (normalizedPathname === pathname) {
@@ -135,6 +142,7 @@ app.post("/api/import", upload.single("reportFile"), (request, response, next) =
       fileSize: request.file.size,
       parsedReport,
     });
+    const globalState = loadGlobalState();
 
     logger.info("Excel import completed", {
       sessionId: session.id,
@@ -144,11 +152,15 @@ app.post("/api/import", upload.single("reportFile"), (request, response, next) =
 
     response.json({
       ok: true,
-      session: buildSessionSummary(session),
-      preview: createPreview(session, {
-        displayColumn: session.defaults.displayColumn,
-        filters: {},
-      }),
+      session: buildSessionSummary(session, globalState),
+      preview: createPreview(
+        session,
+        {
+          displayColumn: session.defaults.displayColumn,
+          filters: {},
+        },
+        globalState
+      ),
     });
   } catch (error) {
     next(error);
@@ -158,10 +170,11 @@ app.post("/api/import", upload.single("reportFile"), (request, response, next) =
 app.get("/api/sessions/:sessionId", (request, response, next) => {
   try {
     const session = getSessionOrThrow(request.params.sessionId);
+    const globalState = loadGlobalState();
 
     response.json({
       ok: true,
-      session: buildSessionSummary(session),
+      session: buildSessionSummary(session, globalState),
     });
   } catch (error) {
     next(error);
@@ -171,6 +184,7 @@ app.get("/api/sessions/:sessionId", (request, response, next) => {
 app.post("/api/sessions/:sessionId/settings", (request, response, next) => {
   try {
     const session = getSessionOrThrow(request.params.sessionId);
+    const globalState = loadGlobalState();
     const displayColumn = String(request.body.displayColumn || "").trim();
 
     if (!displayColumn || !session.columns.includes(displayColumn)) {
@@ -192,7 +206,7 @@ app.post("/api/sessions/:sessionId/settings", (request, response, next) => {
 
     response.json({
       ok: true,
-      session: buildSessionSummary(nextSession),
+      session: buildSessionSummary(nextSession, globalState),
     });
   } catch (error) {
     next(error);
@@ -202,11 +216,16 @@ app.post("/api/sessions/:sessionId/settings", (request, response, next) => {
 app.post("/api/sessions/:sessionId/preview", (request, response, next) => {
   try {
     const session = getSessionOrThrow(request.params.sessionId);
-    const preview = createPreview(session, {
-      displayColumn: request.body.displayColumn,
-      filters: request.body.filters,
-      limit: request.body.limit,
-    });
+    const globalState = loadGlobalState();
+    const preview = createPreview(
+      session,
+      {
+        displayColumn: request.body.displayColumn,
+        filters: request.body.filters,
+        limit: request.body.limit,
+      },
+      globalState
+    );
 
     logger.debug("Preview generated", {
       sessionId: session.id,
@@ -217,7 +236,7 @@ app.post("/api/sessions/:sessionId/preview", (request, response, next) => {
     response.json({
       ok: true,
       preview,
-      session: buildSessionSummary(session),
+      session: buildSessionSummary(session, globalState),
     });
   } catch (error) {
     next(error);
@@ -227,16 +246,19 @@ app.post("/api/sessions/:sessionId/preview", (request, response, next) => {
 app.post("/api/sessions/:sessionId/draw", (request, response, next) => {
   try {
     const session = getSessionOrThrow(request.params.sessionId);
+    const globalState = loadGlobalState();
     const displayColumn = session.columns.includes(request.body.displayColumn)
       ? request.body.displayColumn
       : session.defaults.displayColumn;
+    const dedupeColumn = getSafeDeduplicationColumn(session);
     const filters = request.body.filters || {};
     const winnersCount = parseWinnersCount(request.body.winnersCount);
     const sortResults = ["no", "asc", "desc"].includes(request.body.sortResults)
       ? request.body.sortResults
       : "no";
-    const removeWinners = request.body.removeWinners === "yes" || parseBoolean(request.body.removeWinners);
-    const activeRecords = getActiveRecords(session);
+    const removeWinners =
+      request.body.removeWinners === "yes" || parseBoolean(request.body.removeWinners);
+    const activeRecords = getActiveRecords(session, globalState);
     const eligibleRecords = applyFilters(activeRecords, filters);
 
     if (eligibleRecords.length === 0) {
@@ -246,53 +268,73 @@ app.post("/api/sessions/:sessionId/draw", (request, response, next) => {
     if (winnersCount > eligibleRecords.length) {
       throw createHttpError(
         400,
-        `Нельзя выбрать ${winnersCount} победителей: доступно только ${eligibleRecords.length} записей`,
+        `Нельзя выбрать ${winnersCount} победителей: доступно только ${eligibleRecords.length} записей`
       );
     }
 
-    const winners = sortDrawResults(pickWinners(eligibleRecords, winnersCount), displayColumn, sortResults);
-    const winnerIds = winners.map((record) => record.__recordId);
+    const winners = sortDrawResults(
+      pickWinners(eligibleRecords, winnersCount),
+      displayColumn,
+      sortResults
+    );
+    const serializedWinners = winners.map((record) =>
+      serializeRecord(record, displayColumn, dedupeColumn)
+    );
     const draw = {
       id: `draw-${Date.now()}`,
       createdAt: new Date().toISOString(),
       displayColumn,
+      dedupeColumn,
       filters,
       winnersCount,
       sortResults,
       removeWinners,
-      appliedRemoval: removeWinners,
+      appliedRemoval: false,
+      globalContributionKeys: [],
       activeCountBeforeDraw: activeRecords.length,
       eligibleCountAtDraw: eligibleRecords.length,
-      winners: winners.map((record) => serializeRecord(record, displayColumn)),
+      winners: serializedWinners,
     };
     const winnerHistoryEntries = draw.winners.map((winner, index) =>
-      buildWinnerHistoryEntry(winner, draw, index + 1),
+      buildWinnerHistoryEntry(winner, draw, index + 1)
     );
+    let nextGlobalState = globalState;
 
-    let nextSession = {
+    if (removeWinners) {
+      const { nextState, addedKeys } = addGlobalWinners(globalState, draw.winners, {
+        sessionId: session.id,
+        drawId: draw.id,
+        createdAt: draw.createdAt,
+        dedupeColumn,
+        displayColumn,
+      });
+
+      draw.appliedRemoval = addedKeys.length > 0;
+      draw.globalContributionKeys = addedKeys;
+      nextGlobalState = saveGlobalState(nextState);
+    }
+
+    const nextSession = saveSession({
       ...session,
       draws: [...(session.draws || []), draw],
       winnerHistory: [...getWinnerHistory(session), ...winnerHistoryEntries],
-    };
-
-    if (removeWinners) {
-      nextSession = excludeWinnerIds(nextSession, winnerIds);
-    }
-
-    nextSession = saveSession(nextSession);
+      excludedRecordIds: [],
+    });
 
     logger.info("Draw completed", {
       sessionId: session.id,
       drawId: draw.id,
       winnersCount,
       removeWinners,
+      dedupeColumn,
+      globalAddedCount: draw.globalContributionKeys.length,
       eligibleCount: eligibleRecords.length,
     });
 
     response.json({
       ok: true,
       draw,
-      session: buildSessionSummary(nextSession),
+      session: buildSessionSummary(nextSession, nextGlobalState),
     });
   } catch (error) {
     next(error);
@@ -302,6 +344,7 @@ app.post("/api/sessions/:sessionId/draw", (request, response, next) => {
 app.get("/api/sessions/:sessionId/draws/:drawId", (request, response, next) => {
   try {
     const session = getSessionOrThrow(request.params.sessionId);
+    const globalState = loadGlobalState();
     const draw = session.draws.find((item) => item.id === request.params.drawId);
 
     if (!draw) {
@@ -311,7 +354,7 @@ app.get("/api/sessions/:sessionId/draws/:drawId", (request, response, next) => {
     response.json({
       ok: true,
       draw,
-      session: buildSessionSummary(session),
+      session: buildSessionSummary(session, globalState),
     });
   } catch (error) {
     next(error);
@@ -328,35 +371,92 @@ app.post("/api/sessions/:sessionId/exclude-draw", (request, response, next) => {
     }
 
     if (draw.appliedRemoval) {
+      const globalState = loadGlobalState();
+
       response.json({
         ok: true,
-        session: buildSessionSummary(session),
+        session: buildSessionSummary(session, globalState),
         draw,
       });
       return;
     }
 
-    const winnerIds = draw.winners.map((winner) => winner.recordId);
-    const nextDraw = {
-      ...draw,
-      appliedRemoval: true,
-      removeWinners: true,
-    };
-    const nextSession = saveSession({
-      ...excludeWinnerIds(session, winnerIds),
-      draws: session.draws.map((item) => (item.id === draw.id ? nextDraw : item)),
-    });
-
-    logger.info("Draw winners excluded from session", {
+    const globalState = loadGlobalState();
+    const dedupeColumn = getSafeDeduplicationColumn(session);
+    const { nextState, addedKeys } = addGlobalWinners(globalState, draw.winners, {
       sessionId: session.id,
       drawId: draw.id,
-      excludedCount: winnerIds.length,
+      createdAt: draw.createdAt,
+      dedupeColumn,
+      displayColumn: draw.displayColumn,
+    });
+    const nextDraw = {
+      ...draw,
+      appliedRemoval: addedKeys.length > 0,
+      removeWinners: true,
+      globalContributionKeys: addedKeys,
+    };
+    const nextGlobalState = saveGlobalState(nextState);
+    const nextSession = saveSession({
+      ...session,
+      draws: session.draws.map((item) => (item.id === draw.id ? nextDraw : item)),
+      excludedRecordIds: [],
+      winnerHistory: getWinnerHistory(session),
+    });
+
+    logger.info("Draw winners excluded globally", {
+      sessionId: session.id,
+      drawId: draw.id,
+      excludedCount: addedKeys.length,
     });
 
     response.json({
       ok: true,
-      session: buildSessionSummary(nextSession),
+      session: buildSessionSummary(nextSession, nextGlobalState),
       draw: nextDraw,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post("/api/sessions/:sessionId/undo-last-draw", (request, response, next) => {
+  try {
+    const session = getSessionOrThrow(request.params.sessionId);
+    const lastDraw = Array.isArray(session.draws) ? session.draws.at(-1) : null;
+
+    if (!lastDraw) {
+      throw createHttpError(400, "Для текущего файла пока нет розыгрыша, который можно отменить");
+    }
+
+    const globalState = loadGlobalState();
+    const candidateKeys =
+      Array.isArray(lastDraw.globalContributionKeys) && lastDraw.globalContributionKeys.length > 0
+        ? lastDraw.globalContributionKeys
+        : lastDraw.winners.map((winner) => winner.dedupeValue).filter(Boolean);
+    const { nextState, removedKeys } = removeGlobalWinnerKeys(
+      globalState,
+      candidateKeys,
+      lastDraw.id
+    );
+    const nextGlobalState = saveGlobalState(nextState);
+    const nextSession = saveSession({
+      ...session,
+      draws: session.draws.slice(0, -1),
+      winnerHistory: getWinnerHistory(session).filter((entry) => entry.drawId !== lastDraw.id),
+      excludedRecordIds: [],
+    });
+
+    logger.info("Last draw undone", {
+      sessionId: session.id,
+      drawId: lastDraw.id,
+      removedGlobalKeys: removedKeys.length,
+    });
+
+    response.json({
+      ok: true,
+      undoneDraw: lastDraw,
+      session: buildSessionSummary(nextSession, nextGlobalState),
     });
   } catch (error) {
     next(error);
@@ -366,24 +466,22 @@ app.post("/api/sessions/:sessionId/exclude-draw", (request, response, next) => {
 app.post("/api/sessions/:sessionId/reset-exclusions", (request, response, next) => {
   try {
     const session = getSessionOrThrow(request.params.sessionId);
+    const nextGlobalState = resetGlobalState();
     const nextSession = saveSession({
       ...session,
       excludedRecordIds: [],
       winnerHistory: [],
-      draws: (session.draws || []).map((draw) => ({
-        ...draw,
-        appliedRemoval: false,
-        removeWinners: false,
-      })),
+      draws: [],
     });
 
     logger.info("Session exclusions reset", {
       sessionId: session.id,
+      globalWinnerKeysCleared: true,
     });
 
     response.json({
       ok: true,
-      session: buildSessionSummary(nextSession),
+      session: buildSessionSummary(nextSession, nextGlobalState),
     });
   } catch (error) {
     next(error);

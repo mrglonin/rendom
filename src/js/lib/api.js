@@ -104,4 +104,13 @@ export const api = {
       body: JSON.stringify({}),
     });
   },
+  undoLastDraw(sessionId) {
+    return request(buildAppUrl(`api/sessions/${sessionId}/undo-last-draw`), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({}),
+    });
+  },
 };
