@@ -710,6 +710,8 @@ var SESSION_STORAGE_KEY = "freedom-generator:last-session-id";
 var DRAW_STORAGE_KEY = "freedom-generator:last-draw-id";
 var DRAW_SETTINGS_STORAGE_KEY = "freedom-generator:last-draw-settings";
 var DRAW_SETTINGS_VERSION = 2;
+var LIST_MODE_HISTORY = "history";
+var LIST_MODE_PARTICIPANTS = "participants";
 function escapeHtml2(value) {
   return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
 }
@@ -747,6 +749,20 @@ function getWinnerWord(value) {
     return "\u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u044C";
   }
   return "\u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0435\u0439";
+}
+function getParticipantWord(value) {
+  const normalized = Math.abs(value) % 100;
+  const tail = normalized % 10;
+  if (normalized > 10 && normalized < 20) {
+    return "\u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432";
+  }
+  if (tail > 1 && tail < 5) {
+    return "\u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u0430";
+  }
+  if (tail === 1) {
+    return "\u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A";
+  }
+  return "\u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432";
 }
 function readSavedSettings() {
   try {
@@ -837,17 +853,28 @@ function toggleSidebar(sidebarElement, isOpen) {
   sidebarElement.classList.toggle("random__sidebar--open", isOpen);
   sidebarElement.setAttribute("aria-hidden", String(!isOpen));
 }
-function renderHistoryCounter(targetElement, count) {
-  const safeCount = Math.max(0, Number(count) || 0);
-  mountDynamicSelect(targetElement, {
-    name: "winnersCounter",
-    value: String(safeCount),
-    options: [
-      {
-        value: String(safeCount),
-        label: `${safeCount} ${getWinnerWord(safeCount)}`
-      }
-    ],
+function renderListModeSelect(targetElement, session, selectedMode) {
+  const winnerHistoryCount = session?.counts?.winnerHistory ?? session?.winnerHistory?.length ?? 0;
+  const activeCount = session?.counts?.activeRecords ?? 0;
+  const options = session ? [
+    {
+      value: LIST_MODE_HISTORY,
+      label: `${winnerHistoryCount} ${getWinnerWord(winnerHistoryCount)}`
+    },
+    {
+      value: LIST_MODE_PARTICIPANTS,
+      label: `${activeCount} ${getParticipantWord(activeCount)}`
+    }
+  ] : [
+    {
+      value: LIST_MODE_HISTORY,
+      label: `0 ${getWinnerWord(0)}`
+    }
+  ];
+  return mountDynamicSelect(targetElement, {
+    name: "listMode",
+    value: selectedMode,
+    options,
     classes: "random__select"
   });
 }
@@ -944,6 +971,36 @@ function renderWinnerHistory(listWrapperElement, listElement, hintElement, submi
   hintElement.textContent = buildSessionHint(session);
   submitButtonElement.disabled = (session?.counts?.activeRecords ?? 0) === 0;
 }
+function renderParticipantsList(listWrapperElement, listElement, hintElement, submitButtonElement, session, preview, isLoading) {
+  if (isLoading) {
+    renderPlaceholder(listWrapperElement, listElement, hintElement, submitButtonElement, {
+      label: "\u0417\u0430\u0433\u0440\u0443\u0436\u0430\u0435\u043C \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432 \u0442\u0435\u043A\u0443\u0449\u0435\u0433\u043E \u0444\u0430\u0439\u043B\u0430\u2026",
+      hint: buildSessionHint(session),
+      submitDisabled: (session?.counts?.activeRecords ?? 0) === 0
+    });
+    return;
+  }
+  const participants = Array.isArray(preview?.preview) ? preview.preview : [];
+  if (participants.length === 0) {
+    renderPlaceholder(listWrapperElement, listElement, hintElement, submitButtonElement, {
+      label: "\u0412 \u0442\u0435\u043A\u0443\u0449\u0435\u043C \u0444\u0430\u0439\u043B\u0435 \u0441\u0435\u0439\u0447\u0430\u0441 \u043D\u0435\u0442 \u0434\u043E\u0441\u0442\u0443\u043F\u043D\u044B\u0445 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432",
+      hint: buildSessionHint(session),
+      submitDisabled: (session?.counts?.activeRecords ?? 0) === 0
+    });
+    return;
+  }
+  listWrapperElement.classList.remove("random__list--empty");
+  listElement.innerHTML = participants.map(
+    (entry) => `
+        <li class="random__list-item" data-record-id="${escapeHtml2(entry.recordId)}">
+          <div class="random__list-item-digit"></div>
+          <div class="random__list-item-text">${escapeHtml2(formatDisplayValue(entry.displayValue))}</div>
+        </li>
+      `
+  ).join("");
+  hintElement.textContent = `${buildSessionHint(session)} \u0421\u0435\u0439\u0447\u0430\u0441 \u043F\u043E\u043A\u0430\u0437\u044B\u0432\u0430\u0435\u043C \u0432\u0441\u0435\u0445 \u0434\u043E\u0441\u0442\u0443\u043F\u043D\u044B\u0445 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432 \u0442\u0435\u043A\u0443\u0449\u0435\u0433\u043E \u0444\u0430\u0439\u043B\u0430.`;
+  submitButtonElement.disabled = (session?.counts?.activeRecords ?? 0) === 0;
+}
 function highlightWinnerHistory(listElement, historyEntryIds) {
   const targetIds = new Set(historyEntryIds);
   listElement.querySelectorAll(".random__list-item").forEach((itemElement) => {
@@ -959,6 +1016,10 @@ function initRandomControls() {
   const state = {
     session: null,
     lastDraw: null,
+    listMode: LIST_MODE_HISTORY,
+    participantsPreview: null,
+    isParticipantsPreviewLoading: false,
+    previewRequestId: 0,
     isSidebarOpen: false,
     isImporting: false,
     isFieldModalOpen: false,
@@ -1025,6 +1086,67 @@ function initRandomControls() {
   function syncDrawAvailability() {
     const hasActiveRecords = (state.session?.counts?.activeRecords ?? 0) > 0;
     submitButtonElement.disabled = !hasActiveRecords || state.isImporting || state.isSavingDisplayColumn || state.isFieldModalOpen || state.isUndoPending || state.isResetPending;
+  }
+  function invalidateParticipantsPreview() {
+    state.previewRequestId += 1;
+    state.participantsPreview = null;
+    state.isParticipantsPreviewLoading = false;
+  }
+  function shouldRefreshParticipantsPreview() {
+    if (!state.session || state.listMode !== LIST_MODE_PARTICIPANTS) {
+      return false;
+    }
+    if (state.isParticipantsPreviewLoading) {
+      return false;
+    }
+    if (!state.participantsPreview) {
+      return true;
+    }
+    return state.participantsPreview.displayColumn !== getDisplayColumnLabel() || state.participantsPreview.activeCount !== (state.session?.counts?.activeRecords ?? 0);
+  }
+  async function loadParticipantsPreview() {
+    if (!state.session) {
+      return;
+    }
+    const requestId = state.previewRequestId + 1;
+    const activeCount = Math.max(1, state.session?.counts?.activeRecords ?? 0);
+    state.previewRequestId = requestId;
+    state.isParticipantsPreviewLoading = true;
+    renderCurrentState();
+    try {
+      const response = await api.getPreview(state.session.id, {
+        displayColumn: getDisplayColumnLabel(),
+        filters: {},
+        limit: activeCount
+      });
+      if (state.previewRequestId !== requestId) {
+        return;
+      }
+      state.participantsPreview = response.preview;
+      state.isParticipantsPreviewLoading = false;
+      renderCurrentState();
+    } catch (error) {
+      if (state.previewRequestId !== requestId) {
+        return;
+      }
+      randomLogger.error("Failed to load participants preview", error);
+      if (error?.status === 404) {
+        window.localStorage.removeItem(SESSION_STORAGE_KEY);
+        window.localStorage.removeItem(DRAW_STORAGE_KEY);
+        state.session = null;
+        state.lastDraw = null;
+        state.participantsPreview = null;
+        state.listMode = LIST_MODE_HISTORY;
+        state.isParticipantsPreviewLoading = false;
+        renderCurrentState();
+        setStatus(statusElement, "\u0421\u0435\u0441\u0441\u0438\u044F \u0431\u043E\u043B\u044C\u0448\u0435 \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u043D\u0430. \u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u0435 \u043D\u043E\u0432\u044B\u0439 \u0444\u0430\u0439\u043B.", "info");
+        return;
+      }
+      state.participantsPreview = null;
+      state.isParticipantsPreviewLoading = false;
+      renderCurrentState();
+      setStatus(statusElement, "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432 \u0442\u0435\u043A\u0443\u0449\u0435\u0433\u043E \u0444\u0430\u0439\u043B\u0430.", "error");
+    }
   }
   function setFieldModalOpen(isOpen) {
     if (!displayColumnModalElement) {
@@ -1122,6 +1244,7 @@ function initRandomControls() {
       const response = await api.updateSessionSettings(state.session.id, {
         displayColumn: nextDisplayColumn
       });
+      invalidateParticipantsPreview();
       state.session = response.session;
       state.lastDraw = response.session.lastDraw || state.lastDraw;
       closeDisplayColumnModal();
@@ -1200,8 +1323,15 @@ function initRandomControls() {
     resetExclusionsDescriptionElement.textContent = `${details.join(". ")}.`;
   }
   function renderCurrentState() {
-    const winnerHistoryCount = state.session?.counts?.winnerHistory ?? state.session?.winnerHistory?.length ?? 0;
-    renderHistoryCounter(recordsSelectMountElement, winnerHistoryCount);
+    const modeInputElement = renderListModeSelect(
+      recordsSelectMountElement,
+      state.session,
+      state.listMode
+    );
+    modeInputElement?.addEventListener("change", (event) => {
+      state.listMode = event.target.value || LIST_MODE_HISTORY;
+      renderCurrentState();
+    });
     if (!state.session) {
       renderPlaceholder(listWrapperElement, listElement, hintElement, submitButtonElement, {
         label: "\u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u0435 \u0444\u0430\u0439\u043B",
@@ -1213,16 +1343,32 @@ function initRandomControls() {
       syncDrawAvailability();
       return;
     }
-    renderWinnerHistory(
-      listWrapperElement,
-      listElement,
-      hintElement,
-      submitButtonElement,
-      state.session
-    );
+    if (state.listMode === LIST_MODE_PARTICIPANTS) {
+      const shouldShowParticipantsLoading = state.isParticipantsPreviewLoading || shouldRefreshParticipantsPreview();
+      renderParticipantsList(
+        listWrapperElement,
+        listElement,
+        hintElement,
+        submitButtonElement,
+        state.session,
+        state.participantsPreview,
+        shouldShowParticipantsLoading
+      );
+    } else {
+      renderWinnerHistory(
+        listWrapperElement,
+        listElement,
+        hintElement,
+        submitButtonElement,
+        state.session
+      );
+    }
     syncToolbarActions();
     syncSidebarActions();
     syncDrawAvailability();
+    if (shouldRefreshParticipantsPreview()) {
+      void loadParticipantsPreview();
+    }
   }
   function setImportingState(isImporting) {
     state.isImporting = isImporting;
@@ -1237,6 +1383,7 @@ function initRandomControls() {
     try {
       setStatus(statusElement, "\u0417\u0430\u0433\u0440\u0443\u0436\u0430\u0435\u043C \u0442\u0435\u043A\u0443\u0449\u0443\u044E \u0441\u0435\u0441\u0441\u0438\u044E\u2026");
       const response = await api.getSession(sessionId);
+      invalidateParticipantsPreview();
       state.session = response.session;
       state.lastDraw = response.session.lastDraw || null;
       window.localStorage.setItem(SESSION_STORAGE_KEY, response.session.id);
@@ -1287,6 +1434,7 @@ function initRandomControls() {
     });
     try {
       const response = await api.importReport(file);
+      invalidateParticipantsPreview();
       state.session = response.session;
       state.lastDraw = response.session.lastDraw || null;
       state.pendingDisplayColumn = response.session.defaults.displayColumn;
@@ -1338,6 +1486,7 @@ function initRandomControls() {
       const response = await api.draw(state.session.id, payload);
       const latestHistory = Array.isArray(response.session.winnerHistory) ? response.session.winnerHistory : [];
       const latestEntryIds = latestHistory.slice(-response.draw.winners.length).map((entry) => entry.id);
+      invalidateParticipantsPreview();
       state.session = response.session;
       state.lastDraw = response.draw;
       renderCurrentState();
@@ -1432,6 +1581,7 @@ function initRandomControls() {
     setStatus(statusElement, "\u041E\u0442\u043C\u0435\u043D\u044F\u0435\u043C \u043F\u043E\u0441\u043B\u0435\u0434\u043D\u0438\u0439 \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448 \u0438 \u0441\u043D\u0438\u043C\u0430\u0435\u043C \u0435\u0433\u043E \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0435\u0439 \u0438\u0437 blacklist\u2026");
     try {
       const response = await api.undoLastDraw(state.session.id);
+      invalidateParticipantsPreview();
       state.session = response.session;
       state.lastDraw = response.session.lastDraw || null;
       window.localStorage.removeItem(DRAW_STORAGE_KEY);
@@ -1460,6 +1610,7 @@ function initRandomControls() {
     setStatus(statusElement, "\u041E\u0447\u0438\u0449\u0430\u0435\u043C \u0438\u0441\u0442\u043E\u0440\u0438\u044E \u0444\u0430\u0439\u043B\u0430 \u0438 \u043E\u0431\u0449\u0438\u0439 blacklist\u2026");
     try {
       const response = await api.resetExclusions(state.session.id);
+      invalidateParticipantsPreview();
       state.session = response.session;
       state.lastDraw = null;
       window.localStorage.removeItem(DRAW_STORAGE_KEY);

@@ -8,6 +8,8 @@ const SESSION_STORAGE_KEY = "freedom-generator:last-session-id";
 const DRAW_STORAGE_KEY = "freedom-generator:last-draw-id";
 const DRAW_SETTINGS_STORAGE_KEY = "freedom-generator:last-draw-settings";
 const DRAW_SETTINGS_VERSION = 2;
+const LIST_MODE_HISTORY = "history";
+const LIST_MODE_PARTICIPANTS = "participants";
 
 function escapeHtml(value) {
   return String(value)
@@ -64,6 +66,25 @@ function getWinnerWord(value) {
   }
 
   return "победителей";
+}
+
+function getParticipantWord(value) {
+  const normalized = Math.abs(value) % 100;
+  const tail = normalized % 10;
+
+  if (normalized > 10 && normalized < 20) {
+    return "участников";
+  }
+
+  if (tail > 1 && tail < 5) {
+    return "участника";
+  }
+
+  if (tail === 1) {
+    return "участник";
+  }
+
+  return "участников";
 }
 
 function readSavedSettings() {
@@ -184,18 +205,32 @@ function toggleSidebar(sidebarElement, isOpen) {
   sidebarElement.setAttribute("aria-hidden", String(!isOpen));
 }
 
-function renderHistoryCounter(targetElement, count) {
-  const safeCount = Math.max(0, Number(count) || 0);
+function renderListModeSelect(targetElement, session, selectedMode) {
+  const winnerHistoryCount =
+    session?.counts?.winnerHistory ?? session?.winnerHistory?.length ?? 0;
+  const activeCount = session?.counts?.activeRecords ?? 0;
+  const options = session
+    ? [
+        {
+          value: LIST_MODE_HISTORY,
+          label: `${winnerHistoryCount} ${getWinnerWord(winnerHistoryCount)}`,
+        },
+        {
+          value: LIST_MODE_PARTICIPANTS,
+          label: `${activeCount} ${getParticipantWord(activeCount)}`,
+        },
+      ]
+    : [
+        {
+          value: LIST_MODE_HISTORY,
+          label: `0 ${getWinnerWord(0)}`,
+        },
+      ];
 
-  mountDynamicSelect(targetElement, {
-    name: "winnersCounter",
-    value: String(safeCount),
-    options: [
-      {
-        value: String(safeCount),
-        label: `${safeCount} ${getWinnerWord(safeCount)}`,
-      },
-    ],
+  return mountDynamicSelect(targetElement, {
+    name: "listMode",
+    value: selectedMode,
+    options,
     classes: "random__select",
   });
 }
@@ -327,6 +362,50 @@ function renderWinnerHistory(
   submitButtonElement.disabled = (session?.counts?.activeRecords ?? 0) === 0;
 }
 
+function renderParticipantsList(
+  listWrapperElement,
+  listElement,
+  hintElement,
+  submitButtonElement,
+  session,
+  preview,
+  isLoading
+) {
+  if (isLoading) {
+    renderPlaceholder(listWrapperElement, listElement, hintElement, submitButtonElement, {
+      label: "Загружаем участников текущего файла…",
+      hint: buildSessionHint(session),
+      submitDisabled: (session?.counts?.activeRecords ?? 0) === 0,
+    });
+    return;
+  }
+
+  const participants = Array.isArray(preview?.preview) ? preview.preview : [];
+
+  if (participants.length === 0) {
+    renderPlaceholder(listWrapperElement, listElement, hintElement, submitButtonElement, {
+      label: "В текущем файле сейчас нет доступных участников",
+      hint: buildSessionHint(session),
+      submitDisabled: (session?.counts?.activeRecords ?? 0) === 0,
+    });
+    return;
+  }
+
+  listWrapperElement.classList.remove("random__list--empty");
+  listElement.innerHTML = participants
+    .map(
+      (entry) => `
+        <li class="random__list-item" data-record-id="${escapeHtml(entry.recordId)}">
+          <div class="random__list-item-digit"></div>
+          <div class="random__list-item-text">${escapeHtml(formatDisplayValue(entry.displayValue))}</div>
+        </li>
+      `
+    )
+    .join("");
+  hintElement.textContent = `${buildSessionHint(session)} Сейчас показываем всех доступных участников текущего файла.`;
+  submitButtonElement.disabled = (session?.counts?.activeRecords ?? 0) === 0;
+}
+
 function highlightWinnerHistory(listElement, historyEntryIds) {
   const targetIds = new Set(historyEntryIds);
 
@@ -347,6 +426,10 @@ export function initRandomControls() {
   const state = {
     session: null,
     lastDraw: null,
+    listMode: LIST_MODE_HISTORY,
+    participantsPreview: null,
+    isParticipantsPreviewLoading: false,
+    previewRequestId: 0,
     isSidebarOpen: false,
     isImporting: false,
     isFieldModalOpen: false,
@@ -427,6 +510,84 @@ export function initRandomControls() {
       state.isFieldModalOpen ||
       state.isUndoPending ||
       state.isResetPending;
+  }
+
+  function invalidateParticipantsPreview() {
+    state.previewRequestId += 1;
+    state.participantsPreview = null;
+    state.isParticipantsPreviewLoading = false;
+  }
+
+  function shouldRefreshParticipantsPreview() {
+    if (!state.session || state.listMode !== LIST_MODE_PARTICIPANTS) {
+      return false;
+    }
+
+    if (state.isParticipantsPreviewLoading) {
+      return false;
+    }
+
+    if (!state.participantsPreview) {
+      return true;
+    }
+
+    return (
+      state.participantsPreview.displayColumn !== getDisplayColumnLabel() ||
+      state.participantsPreview.activeCount !== (state.session?.counts?.activeRecords ?? 0)
+    );
+  }
+
+  async function loadParticipantsPreview() {
+    if (!state.session) {
+      return;
+    }
+
+    const requestId = state.previewRequestId + 1;
+    const activeCount = Math.max(1, state.session?.counts?.activeRecords ?? 0);
+
+    state.previewRequestId = requestId;
+    state.isParticipantsPreviewLoading = true;
+    renderCurrentState();
+
+    try {
+      const response = await api.getPreview(state.session.id, {
+        displayColumn: getDisplayColumnLabel(),
+        filters: {},
+        limit: activeCount,
+      });
+
+      if (state.previewRequestId !== requestId) {
+        return;
+      }
+
+      state.participantsPreview = response.preview;
+      state.isParticipantsPreviewLoading = false;
+      renderCurrentState();
+    } catch (error) {
+      if (state.previewRequestId !== requestId) {
+        return;
+      }
+
+      randomLogger.error("Failed to load participants preview", error);
+
+      if (error?.status === 404) {
+        window.localStorage.removeItem(SESSION_STORAGE_KEY);
+        window.localStorage.removeItem(DRAW_STORAGE_KEY);
+        state.session = null;
+        state.lastDraw = null;
+        state.participantsPreview = null;
+        state.listMode = LIST_MODE_HISTORY;
+        state.isParticipantsPreviewLoading = false;
+        renderCurrentState();
+        setStatus(statusElement, "Сессия больше недоступна. Загрузите новый файл.", "info");
+        return;
+      }
+
+      state.participantsPreview = null;
+      state.isParticipantsPreviewLoading = false;
+      renderCurrentState();
+      setStatus(statusElement, "Не удалось загрузить участников текущего файла.", "error");
+    }
   }
 
   function setFieldModalOpen(isOpen) {
@@ -559,6 +720,7 @@ export function initRandomControls() {
         displayColumn: nextDisplayColumn,
       });
 
+      invalidateParticipantsPreview();
       state.session = response.session;
       state.lastDraw = response.session.lastDraw || state.lastDraw;
       closeDisplayColumnModal();
@@ -667,10 +829,16 @@ export function initRandomControls() {
   }
 
   function renderCurrentState() {
-    const winnerHistoryCount =
-      state.session?.counts?.winnerHistory ?? state.session?.winnerHistory?.length ?? 0;
+    const modeInputElement = renderListModeSelect(
+      recordsSelectMountElement,
+      state.session,
+      state.listMode
+    );
 
-    renderHistoryCounter(recordsSelectMountElement, winnerHistoryCount);
+    modeInputElement?.addEventListener("change", (event) => {
+      state.listMode = event.target.value || LIST_MODE_HISTORY;
+      renderCurrentState();
+    });
 
     if (!state.session) {
       renderPlaceholder(listWrapperElement, listElement, hintElement, submitButtonElement, {
@@ -684,16 +852,36 @@ export function initRandomControls() {
       return;
     }
 
-    renderWinnerHistory(
-      listWrapperElement,
-      listElement,
-      hintElement,
-      submitButtonElement,
-      state.session
-    );
+    if (state.listMode === LIST_MODE_PARTICIPANTS) {
+      const shouldShowParticipantsLoading =
+        state.isParticipantsPreviewLoading || shouldRefreshParticipantsPreview();
+
+      renderParticipantsList(
+        listWrapperElement,
+        listElement,
+        hintElement,
+        submitButtonElement,
+        state.session,
+        state.participantsPreview,
+        shouldShowParticipantsLoading
+      );
+    } else {
+      renderWinnerHistory(
+        listWrapperElement,
+        listElement,
+        hintElement,
+        submitButtonElement,
+        state.session
+      );
+    }
+
     syncToolbarActions();
     syncSidebarActions();
     syncDrawAvailability();
+
+    if (shouldRefreshParticipantsPreview()) {
+      void loadParticipantsPreview();
+    }
   }
 
   function setImportingState(isImporting) {
@@ -713,6 +901,7 @@ export function initRandomControls() {
       setStatus(statusElement, "Загружаем текущую сессию…");
       const response = await api.getSession(sessionId);
 
+      invalidateParticipantsPreview();
       state.session = response.session;
       state.lastDraw = response.session.lastDraw || null;
       window.localStorage.setItem(SESSION_STORAGE_KEY, response.session.id);
@@ -774,6 +963,7 @@ export function initRandomControls() {
     try {
       const response = await api.importReport(file);
 
+      invalidateParticipantsPreview();
       state.session = response.session;
       state.lastDraw = response.session.lastDraw || null;
       state.pendingDisplayColumn = response.session.defaults.displayColumn;
@@ -838,6 +1028,7 @@ export function initRandomControls() {
         .slice(-response.draw.winners.length)
         .map((entry) => entry.id);
 
+      invalidateParticipantsPreview();
       state.session = response.session;
       state.lastDraw = response.draw;
 
@@ -961,6 +1152,7 @@ export function initRandomControls() {
 
     try {
       const response = await api.undoLastDraw(state.session.id);
+      invalidateParticipantsPreview();
       state.session = response.session;
       state.lastDraw = response.session.lastDraw || null;
       window.localStorage.removeItem(DRAW_STORAGE_KEY);
@@ -992,6 +1184,7 @@ export function initRandomControls() {
 
     try {
       const response = await api.resetExclusions(state.session.id);
+      invalidateParticipantsPreview();
       state.session = response.session;
       state.lastDraw = null;
       window.localStorage.removeItem(DRAW_STORAGE_KEY);
