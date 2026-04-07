@@ -14,6 +14,7 @@ const browserslistToEsbuild = require("browserslist-to-esbuild").default;
 const fs = require("fs");
 const path = require("path");
 const convertFonts = require("./scripts/convert-fonts");
+const buildAssetVersion = Date.now().toString();
 
 const paths = {
   root: {
@@ -67,6 +68,7 @@ function html() {
         build: {
           isProd: isProduction(),
           year: new Date().getFullYear(),
+          assetVersion: buildAssetVersion,
         },
       }))
     )

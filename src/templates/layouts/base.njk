@@ -7,7 +7,7 @@
     <title>{{ page.title or site.name }}</title>
     <meta name="description"
           content="{{ page.description or site.description }}" />
-    <link rel="stylesheet" href="css/{{ 'style.min.css' if build.isProd else 'style.css' }}" />
+    <link rel="stylesheet" href="css/{{ 'style.min.css' if build.isProd else 'style.css' }}?v={{ build.assetVersion }}" />
   </head>
   <body class="{{ page.bodyClass or '' }}">
     <div class="wrapper">
@@ -15,6 +15,6 @@
         {% block content %}{% endblock %}
       </main>
     </div>
-    <script type="module" src="js/{{ 'main.min.js' if build.isProd else 'main.js' }}"></script>
+    <script type="module" src="js/{{ 'main.min.js' if build.isProd else 'main.js' }}?v={{ build.assetVersion }}"></script>
   </body>
 </html>
