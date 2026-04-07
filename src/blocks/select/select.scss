@@ -110,11 +110,13 @@
     top: 99%;
     left: 0;
     right: 0;
-    max-height: 320px;
+    display: block;
+    max-height: 320rem;
     overflow-y: auto;
     overflow-x: hidden;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
+    scrollbar-gutter: stable;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s;
@@ -169,6 +171,6 @@
 
 .random__modal-select {
   .select__dropdown {
-    max-height: min(320px, 42vh);
+    max-height: min(320rem, 42vh);
   }
 }
