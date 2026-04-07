@@ -672,8 +672,8 @@ export function initRandomControls() {
       const dedupeColumn = getDeduplicationColumnLabel();
 
       displayColumnModalNoteElement.textContent = dedupeColumn
-        ? `Повторы между файлами автоматически блокируются по полю «${dedupeColumn}». Кнопка «Очистить все» очищает и историю текущего файла, и общий blacklist.`
-        : "Повторы между файлами автоматически блокируются по стабильному ключу. Кнопка «Очистить все» очищает и историю текущего файла, и общий blacklist.";
+        ? `Повторы между файлами автоматически блокируются по полю «${dedupeColumn}». Кнопка «Очистить все» удаляет историю текущего файла, общий blacklist и сам загруженный Excel.`
+        : "Повторы между файлами автоматически блокируются по стабильному ключу. Кнопка «Очистить все» удаляет историю текущего файла, общий blacklist и сам загруженный Excel.";
     }
 
     displayColumnSaveButtonElement.disabled = false;
@@ -784,15 +784,12 @@ export function initRandomControls() {
       resetExclusionsButtonElement.disabled = true;
       resetExclusionsButtonElement.textContent = "Очистить все";
       resetExclusionsDescriptionElement.textContent =
-        "Сначала загрузите файл. После этого здесь можно отменить последний розыгрыш или полностью очистить blacklist.";
+        "Сначала загрузите файл. После этого здесь можно отменить последний розыгрыш или полностью очистить всё, включая текущий файл.";
       return;
     }
 
     undoDrawButtonElement.disabled = !canUndo || state.isUndoPending || state.isResetPending;
-    resetExclusionsButtonElement.disabled =
-      (winnerHistoryCount === 0 && globalWinnerCount === 0) ||
-      state.isUndoPending ||
-      state.isResetPending;
+    resetExclusionsButtonElement.disabled = state.isUndoPending || state.isResetPending;
     resetExclusionsButtonElement.textContent =
       winnerHistoryCount > 0 || globalWinnerCount > 0
         ? `Очистить все (${Math.max(winnerHistoryCount, globalWinnerCount)})`
@@ -800,7 +797,7 @@ export function initRandomControls() {
 
     if (!canUndo && winnerHistoryCount === 0 && globalWinnerCount === 0) {
       resetExclusionsDescriptionElement.textContent =
-        "Для текущего файла пока нечего отменять или очищать.";
+        "«Очистить все» удалит текущий файл, очистит blacklist и вернёт экран в пустое состояние.";
       return;
     }
 
@@ -817,7 +814,7 @@ export function initRandomControls() {
 
     if (winnerHistoryCount > 0 || globalWinnerCount > 0) {
       details.push(
-        `«Очистить все» обнулит историю файла и общий blacklist из ${globalWinnerCount} ${getWinnerWord(globalWinnerCount)}`
+        `«Очистить все» удалит историю файла, общий blacklist и сам загруженный Excel`
       );
     }
 
@@ -1180,18 +1177,25 @@ export function initRandomControls() {
     state.isResetPending = true;
     syncSidebarActions();
     syncDrawAvailability();
-    setStatus(statusElement, "Очищаем историю файла и общий blacklist…");
+    setStatus(statusElement, "Полностью очищаем историю, blacklist и загруженный файл…");
 
     try {
-      const response = await api.resetExclusions(state.session.id);
+      await api.resetExclusions(state.session.id);
       invalidateParticipantsPreview();
-      state.session = response.session;
+      state.session = null;
       state.lastDraw = null;
+      state.pendingDisplayColumn = "";
+      state.listMode = LIST_MODE_HISTORY;
+      state.isSidebarOpen = false;
+      toggleSidebar(sidebarElement, false);
+      closeDisplayColumnModal();
+      fileInputElement.value = "";
+      window.localStorage.removeItem(SESSION_STORAGE_KEY);
       window.localStorage.removeItem(DRAW_STORAGE_KEY);
       renderCurrentState();
       setStatus(
         statusElement,
-        "История победителей и общий blacklist очищены. Все участники снова доступны.",
+        "Все очищено. История, blacklist и текущий файл удалены. Можно загружать новый Excel.",
         "success"
       );
     } catch (error) {

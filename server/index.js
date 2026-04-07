@@ -20,6 +20,7 @@ const {
   buildSessionSummary,
   createPreview,
   createSession,
+  deleteSession,
   getActiveRecords,
   getSafeDeduplicationColumn,
   getWinnerHistory,
@@ -119,6 +120,23 @@ function getSessionOrThrow(sessionId) {
   }
 
   return session;
+}
+
+function removeUploadedFile(savedFileName) {
+  const normalizedName = path.basename(String(savedFileName || "").trim());
+
+  if (!normalizedName) {
+    return false;
+  }
+
+  const uploadPath = path.join(config.uploadsDir, normalizedName);
+
+  if (!fs.existsSync(uploadPath)) {
+    return false;
+  }
+
+  fs.unlinkSync(uploadPath);
+  return true;
 }
 
 app.get("/api/health", (_, response) => {
@@ -467,21 +485,23 @@ app.post("/api/sessions/:sessionId/reset-exclusions", (request, response, next) 
   try {
     const session = getSessionOrThrow(request.params.sessionId);
     const nextGlobalState = resetGlobalState();
-    const nextSession = saveSession({
-      ...session,
-      excludedRecordIds: [],
-      winnerHistory: [],
-      draws: [],
-    });
+    const sessionDeleted = deleteSession(session.id);
+    const uploadDeleted = removeUploadedFile(session?.source?.savedFileName);
 
-    logger.info("Session exclusions reset", {
+    logger.info("Session fully cleared", {
       sessionId: session.id,
       globalWinnerKeysCleared: true,
+      sessionDeleted,
+      uploadDeleted,
     });
 
     response.json({
       ok: true,
-      session: buildSessionSummary(nextSession, nextGlobalState),
+      resetToEmpty: true,
+      session: null,
+      counts: {
+        globalWinnerKeys: Object.keys(nextGlobalState.winnersByKey || {}).length,
+      },
     });
   } catch (error) {
     next(error);

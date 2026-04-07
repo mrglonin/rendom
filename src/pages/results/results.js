@@ -185,7 +185,7 @@ function buildActionSelectConfig(draw) {
       value: "removed",
       options: [
         { value: "removed", label: "Победители уже убраны из общего списка" },
-        { value: "reset-exclusions", label: "Очистить все и вернуть всех в пул" },
+        { value: "reset-exclusions", label: "Очистить всё и начать заново" },
       ],
     };
   }
@@ -194,7 +194,7 @@ function buildActionSelectConfig(draw) {
     value: "exclude-draw",
     options: [
       { value: "exclude-draw", label: "Убрать из общего списка текущих победителей" },
-      { value: "reset-exclusions", label: "Очистить все и вернуть всех в пул" },
+      { value: "reset-exclusions", label: "Очистить всё и начать заново" },
     ],
   };
 }
@@ -296,29 +296,20 @@ export function initResultsPage() {
 
         if (event.target.value === "reset-exclusions") {
           state.isActionPending = true;
-          setStatus(statusElement, "Сбрасываем все исключения…");
+          setStatus(statusElement, "Полностью очищаем историю, blacklist и текущий файл…");
 
           try {
-            const response = await api.resetExclusions(state.session.id);
-            state.session = response.session;
+            await api.resetExclusions(state.session.id);
+            state.session = null;
+            state.draw = null;
+            window.localStorage.removeItem(SESSION_STORAGE_KEY);
             window.localStorage.removeItem(DRAW_STORAGE_KEY);
+            sessionId = "";
             drawId = "";
-
-            if (state.draw) {
-              state.draw = {
-                ...state.draw,
-                appliedRemoval: false,
-                removeWinners: false,
-                globalContributionKeys: [],
-              };
-            }
-
-            renderActionSelect();
-            setStatus(
-              statusElement,
-              "История файла и общий blacklist очищены. Все участники снова возвращены в пул.",
-              "success"
-            );
+            setStatus(statusElement, "Все очищено. Возвращаемся к пустой странице настроек.", "success");
+            window.setTimeout(() => {
+              window.location.href = buildAppUrl("random.html");
+            }, 250);
           } catch (error) {
             resultsLogger.error("Failed to reset exclusions", error);
             setStatus(statusElement, error.message, "error");

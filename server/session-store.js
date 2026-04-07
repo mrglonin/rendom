@@ -291,6 +291,17 @@ function loadSession(sessionId) {
   return hydrateSession(JSON.parse(fs.readFileSync(sessionPath, "utf8")));
 }
 
+function deleteSession(sessionId) {
+  const sessionPath = getSessionPath(sessionId);
+
+  if (!fs.existsSync(sessionPath)) {
+    return false;
+  }
+
+  fs.unlinkSync(sessionPath);
+  return true;
+}
+
 function createSession({ originalName, savedFileName, fileSize, parsedReport }) {
   const now = new Date().toISOString();
   const session = {
@@ -428,6 +439,7 @@ module.exports = {
   getExcludedRecordIds,
   getSafeDeduplicationColumn,
   getWinnerHistory,
+  deleteSession,
   loadSession,
   saveSession,
   serializeRecord,
