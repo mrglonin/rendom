@@ -1101,7 +1101,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 115rem;
-  max-height: 720rem;
+  max-height: 770rem;
   overflow-y: auto;
   padding-right: 16rem;
   margin-right: -16rem;
@@ -1282,7 +1282,7 @@ body {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 30rem;
   align-items: stretch;
-  max-height: 720rem;
+  max-height: 770rem;
   padding-top: 50rem;
 }
 .results--view-blocks .results__item {
