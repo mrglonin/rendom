@@ -43,6 +43,8 @@
     flex-direction: column;
     flex-grow: 1;
     width: 100%;
+    max-width: 1540rem;
+    margin: 0 auto;
   }
 
   &__head {
@@ -164,6 +166,7 @@
     flex-direction: column;
     justify-content: center;
     margin-bottom: 60rem;
+    width: 100%;
   }
 
   &__list {
@@ -196,6 +199,7 @@
     justify-content: center;
     counter-increment: results-item;
     animation: results-item-appear 0.35s ease both;
+    width: 100%;
 
     &--empty {
       .results__text {
@@ -256,7 +260,9 @@
 
   &__text {
     position: relative;
-    width: 100%;
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
     margin-left: -30rem;
     padding: 24rem 56rem;
     border-radius: 1600rem;
@@ -309,9 +315,14 @@
   &__text--ticket {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 22rem;
+    row-gap: 12rem;
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.01em;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
   }
 
   &__value-group {
@@ -340,7 +351,7 @@
 
   &__form {
     margin: 0 auto;
-    max-width: 860rem;
+    max-width: 980rem;
     width: 100%;
   }
 
@@ -361,7 +372,7 @@
 
   &__status {
     min-height: 58rem;
-    max-width: 860rem;
+    max-width: 980rem;
     margin: 18rem auto 0;
     display: flex;
     align-items: center;
