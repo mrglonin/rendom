@@ -636,7 +636,7 @@ body {
 .random__sidebar {
   position: absolute;
   top: 95rem;
-  right: -720rem;
+  right: 0%;
   width: 100%;
   max-width: 865rem;
   padding: 82rem;
@@ -668,6 +668,10 @@ body {
   visibility: visible;
   pointer-events: auto;
 }
+.random__sidebar--import {
+  left: 0%;
+  right: auto;
+}
 .random__sidebar-header {
   margin-bottom: 20rem;
 }
@@ -683,6 +687,10 @@ body {
   font-size: 24rem;
   line-height: 29rem;
   font-weight: 500;
+}
+.random__sidebar-description--compact {
+  margin-top: 14rem;
+  opacity: 0.92;
 }
 .random__sidebar-button {
   min-width: 280rem;
@@ -870,6 +878,10 @@ body {
   .random__sidebar {
     right: 20rem;
   }
+  .random__sidebar--import {
+    left: 20rem;
+    right: auto;
+  }
 }
 @media (max-width: 1024px) {
   .random__sidebar {
@@ -878,6 +890,10 @@ body {
     left: 0;
     margin: 0 auto;
     max-width: 905rem;
+  }
+  .random__sidebar--import {
+    right: 0;
+    left: 0;
   }
 }
 @media (max-width: 768px) {

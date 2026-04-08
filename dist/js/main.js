@@ -1021,8 +1021,8 @@ function initRandomControls() {
     isParticipantsPreviewLoading: false,
     previewRequestId: 0,
     isSidebarOpen: false,
+    isFieldSidebarOpen: false,
     isImporting: false,
-    isFieldModalOpen: false,
     isSavingDisplayColumn: false,
     isUndoPending: false,
     isResetPending: false,
@@ -1053,20 +1053,23 @@ function initRandomControls() {
   const resetExclusionsDescriptionElement = randomSectionElement.querySelector(
     "[data-reset-exclusions-description]"
   );
-  const displayColumnModalElement = randomSectionElement.querySelector(
-    "[data-display-column-modal]"
+  const displayColumnSidebarElement = randomSectionElement.querySelector(
+    "[data-display-column-sidebar]"
   );
   const displayColumnSelectMountElement = randomSectionElement.querySelector(
     "[data-display-column-select]"
   );
-  const displayColumnModalDescriptionElement = randomSectionElement.querySelector(
-    "[data-display-column-modal-description]"
+  const displayColumnSidebarDescriptionElement = randomSectionElement.querySelector(
+    "[data-display-column-sidebar-description]"
   );
-  const displayColumnModalFileElement = randomSectionElement.querySelector(
-    "[data-display-column-modal-file]"
+  const displayColumnSidebarFileElement = randomSectionElement.querySelector(
+    "[data-display-column-sidebar-file]"
   );
-  const displayColumnModalNoteElement = randomSectionElement.querySelector(
-    "[data-display-column-modal-note]"
+  const displayColumnSidebarSummaryElement = randomSectionElement.querySelector(
+    "[data-display-column-sidebar-summary]"
+  );
+  const displayColumnSidebarNoteElement = randomSectionElement.querySelector(
+    "[data-display-column-sidebar-note]"
   );
   const displayColumnSaveButtonElement = randomSectionElement.querySelector(
     "[data-display-column-save]"
@@ -1085,7 +1088,7 @@ function initRandomControls() {
   }
   function syncDrawAvailability() {
     const hasActiveRecords = (state.session?.counts?.activeRecords ?? 0) > 0;
-    submitButtonElement.disabled = !hasActiveRecords || state.isImporting || state.isSavingDisplayColumn || state.isFieldModalOpen || state.isUndoPending || state.isResetPending;
+    submitButtonElement.disabled = !hasActiveRecords || state.isImporting || state.isSavingDisplayColumn || state.isFieldSidebarOpen || state.isUndoPending || state.isResetPending;
   }
   function invalidateParticipantsPreview() {
     state.previewRequestId += 1;
@@ -1138,6 +1141,8 @@ function initRandomControls() {
         state.participantsPreview = null;
         state.listMode = LIST_MODE_HISTORY;
         state.isParticipantsPreviewLoading = false;
+        setSettingsSidebarOpen(false);
+        closeDisplayColumnSidebar();
         renderCurrentState();
         setStatus(statusElement, "\u0421\u0435\u0441\u0441\u0438\u044F \u0431\u043E\u043B\u044C\u0448\u0435 \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u043D\u0430. \u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u0435 \u043D\u043E\u0432\u044B\u0439 \u0444\u0430\u0439\u043B.", "info");
         return;
@@ -1148,13 +1153,25 @@ function initRandomControls() {
       setStatus(statusElement, "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432 \u0442\u0435\u043A\u0443\u0449\u0435\u0433\u043E \u0444\u0430\u0439\u043B\u0430.", "error");
     }
   }
-  function setFieldModalOpen(isOpen) {
-    if (!displayColumnModalElement) {
+  function setSettingsSidebarOpen(isOpen) {
+    state.isSidebarOpen = isOpen;
+    toggleSidebar(sidebarElement, isOpen);
+    if (isOpen) {
+      state.isFieldSidebarOpen = false;
+      toggleSidebar(displayColumnSidebarElement, false);
+    }
+    syncDrawAvailability();
+  }
+  function setFieldSidebarOpen(isOpen) {
+    if (!displayColumnSidebarElement) {
       return;
     }
-    state.isFieldModalOpen = isOpen;
-    displayColumnModalElement.classList.toggle("random__modal--open", isOpen);
-    displayColumnModalElement.setAttribute("aria-hidden", String(!isOpen));
+    state.isFieldSidebarOpen = isOpen;
+    toggleSidebar(displayColumnSidebarElement, isOpen);
+    if (isOpen) {
+      state.isSidebarOpen = false;
+      toggleSidebar(sidebarElement, false);
+    }
     syncDrawAvailability();
   }
   function syncDisplayColumnControls() {
@@ -1180,8 +1197,17 @@ function initRandomControls() {
     const winnerHistoryCount = state.session?.counts?.winnerHistory ?? state.session?.winnerHistory?.length ?? 0;
     exportButtonElement.disabled = winnerHistoryCount === 0 || state.isImporting;
   }
-  function openDisplayColumnModal() {
-    if (!state.session || !displayColumnModalElement || !displayColumnSelectMountElement) {
+  function buildDisplayColumnSidebarSummary() {
+    if (!state.session) {
+      return "";
+    }
+    const totalCount = state.session?.counts?.totalRecords ?? 0;
+    const activeCount = state.session?.counts?.activeRecords ?? 0;
+    const dedupeColumn = getDeduplicationColumnLabel();
+    return `\u0417\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u043E ${totalCount} ${getRecordWord(totalCount)}. \u0421\u0435\u0439\u0447\u0430\u0441 \u0432 \u043F\u0443\u043B\u0435 ${activeCount} ${getRecordWord(activeCount)}. \u0410\u043D\u0442\u0438\u0434\u0443\u0431\u043B\u044C: ${dedupeColumn || "\u0441\u0442\u0430\u0431\u0438\u043B\u044C\u043D\u044B\u0439 \u043A\u043B\u044E\u0447"}.`;
+  }
+  function openDisplayColumnSidebar() {
+    if (!state.session || !displayColumnSidebarElement || !displayColumnSelectMountElement) {
       return;
     }
     const selectedValue = getDisplayColumnLabel() || state.session.columns[0] || "";
@@ -1198,22 +1224,25 @@ function initRandomControls() {
     hiddenInputElement?.addEventListener("change", (event) => {
       state.pendingDisplayColumn = event.target.value;
     });
-    if (displayColumnModalDescriptionElement) {
-      displayColumnModalDescriptionElement.textContent = "\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u043A\u043E\u043B\u043E\u043D\u043A\u0443 \u0438\u0437 Excel, \u043A\u043E\u0442\u043E\u0440\u0430\u044F \u0431\u0443\u0434\u0435\u0442 \u043E\u0442\u043E\u0431\u0440\u0430\u0436\u0430\u0442\u044C\u0441\u044F \u0443 \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0435\u0439 \u043D\u0430 \u044D\u043A\u0440\u0430\u043D\u0435 \u0438 \u0432 \u0438\u0441\u0442\u043E\u0440\u0438\u0438.";
+    if (displayColumnSidebarDescriptionElement) {
+      displayColumnSidebarDescriptionElement.textContent = "\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u043A\u043E\u043B\u043E\u043D\u043A\u0443 \u0438\u0437 Excel, \u043A\u043E\u0442\u043E\u0440\u0430\u044F \u0431\u0443\u0434\u0435\u0442 \u043E\u0442\u043E\u0431\u0440\u0430\u0436\u0430\u0442\u044C\u0441\u044F \u0443 \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0435\u0439 \u043D\u0430 \u044D\u043A\u0440\u0430\u043D\u0435 \u0438 \u0432 \u0438\u0441\u0442\u043E\u0440\u0438\u0438.";
     }
-    if (displayColumnModalFileElement) {
-      displayColumnModalFileElement.textContent = state.session.source?.originalName ? `\u0424\u0430\u0439\u043B: ${state.session.source.originalName}` : "";
+    if (displayColumnSidebarFileElement) {
+      displayColumnSidebarFileElement.textContent = state.session.source?.originalName ? `\u0424\u0430\u0439\u043B: ${state.session.source.originalName}` : "";
     }
-    if (displayColumnModalNoteElement) {
+    if (displayColumnSidebarSummaryElement) {
+      displayColumnSidebarSummaryElement.textContent = buildDisplayColumnSidebarSummary();
+    }
+    if (displayColumnSidebarNoteElement) {
       const dedupeColumn = getDeduplicationColumnLabel();
-      displayColumnModalNoteElement.textContent = dedupeColumn ? `\u041F\u043E\u0432\u0442\u043E\u0440\u044B \u043C\u0435\u0436\u0434\u0443 \u0444\u0430\u0439\u043B\u0430\u043C\u0438 \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438 \u0431\u043B\u043E\u043A\u0438\u0440\u0443\u044E\u0442\u0441\u044F \u043F\u043E \u043F\u043E\u043B\u044E \xAB${dedupeColumn}\xBB. \u041A\u043D\u043E\u043F\u043A\u0430 \xAB\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435\xBB \u0443\u0434\u0430\u043B\u044F\u0435\u0442 \u0438\u0441\u0442\u043E\u0440\u0438\u044E \u0442\u0435\u043A\u0443\u0449\u0435\u0433\u043E \u0444\u0430\u0439\u043B\u0430, \u043E\u0431\u0449\u0438\u0439 blacklist \u0438 \u0441\u0430\u043C \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u043D\u044B\u0439 Excel.` : "\u041F\u043E\u0432\u0442\u043E\u0440\u044B \u043C\u0435\u0436\u0434\u0443 \u0444\u0430\u0439\u043B\u0430\u043C\u0438 \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438 \u0431\u043B\u043E\u043A\u0438\u0440\u0443\u044E\u0442\u0441\u044F \u043F\u043E \u0441\u0442\u0430\u0431\u0438\u043B\u044C\u043D\u043E\u043C\u0443 \u043A\u043B\u044E\u0447\u0443. \u041A\u043D\u043E\u043F\u043A\u0430 \xAB\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435\xBB \u0443\u0434\u0430\u043B\u044F\u0435\u0442 \u0438\u0441\u0442\u043E\u0440\u0438\u044E \u0442\u0435\u043A\u0443\u0449\u0435\u0433\u043E \u0444\u0430\u0439\u043B\u0430, \u043E\u0431\u0449\u0438\u0439 blacklist \u0438 \u0441\u0430\u043C \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u043D\u044B\u0439 Excel.";
+      displayColumnSidebarNoteElement.textContent = dedupeColumn ? `\u041F\u043E\u0432\u0442\u043E\u0440\u044B \u043C\u0435\u0436\u0434\u0443 \u0444\u0430\u0439\u043B\u0430\u043C\u0438 \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438 \u0431\u043B\u043E\u043A\u0438\u0440\u0443\u044E\u0442\u0441\u044F \u043F\u043E \u043F\u043E\u043B\u044E \xAB${dedupeColumn}\xBB. \u041A\u043D\u043E\u043F\u043A\u0430 \xAB\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435\xBB \u0443\u0434\u0430\u043B\u044F\u0435\u0442 \u0438\u0441\u0442\u043E\u0440\u0438\u044E \u0442\u0435\u043A\u0443\u0449\u0435\u0433\u043E \u0444\u0430\u0439\u043B\u0430, \u043E\u0431\u0449\u0438\u0439 blacklist \u0438 \u0441\u0430\u043C \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u043D\u044B\u0439 Excel.` : "\u041F\u043E\u0432\u0442\u043E\u0440\u044B \u043C\u0435\u0436\u0434\u0443 \u0444\u0430\u0439\u043B\u0430\u043C\u0438 \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438 \u0431\u043B\u043E\u043A\u0438\u0440\u0443\u044E\u0442\u0441\u044F \u043F\u043E \u0441\u0442\u0430\u0431\u0438\u043B\u044C\u043D\u043E\u043C\u0443 \u043A\u043B\u044E\u0447\u0443. \u041A\u043D\u043E\u043F\u043A\u0430 \xAB\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435\xBB \u0443\u0434\u0430\u043B\u044F\u0435\u0442 \u0438\u0441\u0442\u043E\u0440\u0438\u044E \u0442\u0435\u043A\u0443\u0449\u0435\u0433\u043E \u0444\u0430\u0439\u043B\u0430, \u043E\u0431\u0449\u0438\u0439 blacklist \u0438 \u0441\u0430\u043C \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u043D\u044B\u0439 Excel.";
     }
     displayColumnSaveButtonElement.disabled = false;
     displayColumnCancelButtonElement.disabled = false;
-    setFieldModalOpen(true);
+    setFieldSidebarOpen(true);
   }
-  function closeDisplayColumnModal() {
-    setFieldModalOpen(false);
+  function closeDisplayColumnSidebar() {
+    setFieldSidebarOpen(false);
   }
   async function saveDisplayColumnSelection() {
     if (!state.session || !state.pendingDisplayColumn || state.isSavingDisplayColumn) {
@@ -1226,7 +1255,7 @@ function initRandomControls() {
       return;
     }
     if (nextDisplayColumn === currentDisplayColumn) {
-      closeDisplayColumnModal();
+      closeDisplayColumnSidebar();
       renderCurrentState();
       setStatus(
         statusElement,
@@ -1247,7 +1276,7 @@ function initRandomControls() {
       invalidateParticipantsPreview();
       state.session = response.session;
       state.lastDraw = response.session.lastDraw || state.lastDraw;
-      closeDisplayColumnModal();
+      closeDisplayColumnSidebar();
       renderCurrentState();
       setStatus(
         statusElement,
@@ -1395,6 +1424,8 @@ function initRandomControls() {
       if (error?.status === 404) {
         window.localStorage.removeItem(SESSION_STORAGE_KEY);
         window.localStorage.removeItem(DRAW_STORAGE_KEY);
+        setSettingsSidebarOpen(false);
+        closeDisplayColumnSidebar();
         setStatus(
           statusElement,
           "\u041F\u0440\u043E\u0448\u043B\u0430\u044F \u0441\u0435\u0441\u0441\u0438\u044F \u0431\u043E\u043B\u044C\u0448\u0435 \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u043D\u0430. \u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u0435 \u043D\u043E\u0432\u044B\u0439 \u0444\u0430\u0439\u043B.",
@@ -1424,7 +1455,7 @@ function initRandomControls() {
     }
     const previousSession = state.session;
     const previousDraw = state.lastDraw;
-    closeDisplayColumnModal();
+    closeDisplayColumnSidebar();
     setImportingState(true);
     setStatus(statusElement, "\u0418\u043C\u043F\u043E\u0440\u0442\u0438\u0440\u0443\u0435\u043C Excel-\u0444\u0430\u0439\u043B \u0438 \u0441\u043E\u0431\u0438\u0440\u0430\u0435\u043C \u043F\u0443\u043B \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432\u2026");
     renderPlaceholder(listWrapperElement, listElement, hintElement, submitButtonElement, {
@@ -1446,7 +1477,7 @@ function initRandomControls() {
         "\u0424\u0430\u0439\u043B \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D. \u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u043F\u043E\u043B\u0435 \u043E\u0442\u043E\u0431\u0440\u0430\u0436\u0435\u043D\u0438\u044F \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0435\u0439 \u0438 \u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u0435 \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0443.",
         "info"
       );
-      openDisplayColumnModal();
+      openDisplayColumnSidebar();
     } catch (error) {
       randomLogger.error("Import failed", error);
       state.session = previousSession;
@@ -1466,7 +1497,7 @@ function initRandomControls() {
       setStatus(statusElement, "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u0435 Excel-\u0444\u0430\u0439\u043B.", "error");
       return;
     }
-    if (state.isFieldModalOpen) {
+    if (state.isFieldSidebarOpen) {
       setStatus(
         statusElement,
         "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0432\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u043F\u043E\u043B\u0435 \u0434\u043B\u044F \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448\u0430 \u0438 \u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u0435 \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0443.",
@@ -1541,10 +1572,10 @@ function initRandomControls() {
     exportWinnerHistory();
   });
   displayColumnButtonElement?.addEventListener("click", () => {
-    openDisplayColumnModal();
+    openDisplayColumnSidebar();
   });
   displayColumnCancelButtonElement?.addEventListener("click", () => {
-    closeDisplayColumnModal();
+    closeDisplayColumnSidebar();
     if (state.session) {
       setStatus(
         statusElement,
@@ -1557,8 +1588,16 @@ function initRandomControls() {
     event.preventDefault();
     await saveDisplayColumnSelection();
   });
-  displayColumnModalElement?.addEventListener("keydown", async (event) => {
-    if (event.key !== "Enter" || !state.isFieldModalOpen) {
+  displayColumnSidebarElement?.addEventListener("keydown", async (event) => {
+    if (!state.isFieldSidebarOpen) {
+      return;
+    }
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeDisplayColumnSidebar();
+      return;
+    }
+    if (event.key !== "Enter") {
       return;
     }
     if (event.target.closest(".select__trigger") || event.target.closest(".select__option")) {
@@ -1568,8 +1607,7 @@ function initRandomControls() {
     await saveDisplayColumnSelection();
   });
   randomSectionElement.querySelector("[data-settings-toggle]")?.addEventListener("click", () => {
-    state.isSidebarOpen = !state.isSidebarOpen;
-    toggleSidebar(sidebarElement, state.isSidebarOpen);
+    setSettingsSidebarOpen(!state.isSidebarOpen);
   });
   undoDrawButtonElement?.addEventListener("click", async () => {
     if (!state.session || state.isUndoPending) {
@@ -1615,9 +1653,8 @@ function initRandomControls() {
       state.lastDraw = null;
       state.pendingDisplayColumn = "";
       state.listMode = LIST_MODE_HISTORY;
-      state.isSidebarOpen = false;
-      toggleSidebar(sidebarElement, false);
-      closeDisplayColumnModal();
+      setSettingsSidebarOpen(false);
+      closeDisplayColumnSidebar();
       fileInputElement.value = "";
       window.localStorage.removeItem(SESSION_STORAGE_KEY);
       window.localStorage.removeItem(DRAW_STORAGE_KEY);
@@ -1644,8 +1681,7 @@ function initRandomControls() {
   applySavedSidebarSettings(readSavedSettings());
   renderCurrentState();
   if (shouldOpenSettings) {
-    state.isSidebarOpen = true;
-    toggleSidebar(sidebarElement, true);
+    setSettingsSidebarOpen(true);
   }
   if (storedSessionId) {
     hydrateSession(storedSessionId);

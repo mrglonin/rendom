@@ -125,6 +125,36 @@
                 Найти победителей
               </button>
             </div>
+            <aside class="random__sidebar random__sidebar--import" data-display-column-sidebar aria-hidden="true"
+              aria-labelledby="display-column-sidebar-title">
+              <div class="random__sidebar-item">
+                <div class="random__sidebar-header">
+                  <div class="random__sidebar-title" id="display-column-sidebar-title">
+                    Поле для розыгрыша
+                  </div>
+                  <div class="random__sidebar-description" data-display-column-sidebar-description>
+                    Выберите колонку из Excel, которая будет отображаться у победителей на экране и в истории.
+                  </div>
+                  <div class="random__modal-file" data-display-column-sidebar-file></div>
+                  <div class="random__sidebar-description random__sidebar-description--compact"
+                    data-display-column-sidebar-summary></div>
+                </div>
+                <div class="random__modal-select-mount" data-display-column-select></div>
+                <div class="random__modal-note" data-display-column-sidebar-note>
+                  Загрузка данных завершена. Поле для отображения можно выбрать вручную, а повторы между файлами
+                  будут автоматически блокироваться по стабильному ключу.
+                </div>
+                <div class="random__modal-actions">
+                  <button class="random__sidebar-button" type="button" data-display-column-cancel>
+                    Отмена
+                  </button>
+                  <button class="random__sidebar-button random__sidebar-button--accent" type="button"
+                    data-display-column-save>
+                    Сохранить
+                  </button>
+                </div>
+              </div>
+            </aside>
             <aside class="random__sidebar" data-settings-sidebar aria-hidden="true">
               <div class="random__sidebar-item">
                 <div class="random__sidebar-header">
@@ -199,33 +229,6 @@
             </aside>
           </div>
         </form>
-      </div>
-    </div>
-  </div>
-  <div class="random__modal" data-display-column-modal aria-hidden="true">
-    <div class="random__modal-dialog" role="dialog" aria-modal="true" aria-labelledby="display-column-modal-title">
-      <div class="random__modal-header">
-        <div class="random__modal-title" id="display-column-modal-title">
-          Поле для розыгрыша
-        </div>
-        <div class="random__modal-description" data-display-column-modal-description>
-          Выберите колонку из Excel, по которой будут отображаться победители.
-        </div>
-        <div class="random__modal-file" data-display-column-modal-file></div>
-      </div>
-      <div class="random__modal-select-mount" data-display-column-select></div>
-      <div class="random__modal-note" data-display-column-modal-note>
-        Загрузка данных завершена. Поле для отображения можно выбрать вручную, а повторы между файлами
-        будут автоматически блокироваться по стабильному ключу.
-      </div>
-      <div class="random__modal-actions">
-        <button class="random__sidebar-button" type="button" data-display-column-cancel>
-          Отмена
-        </button>
-        <button class="random__sidebar-button random__sidebar-button--accent" type="button"
-          data-display-column-save>
-          Сохранить
-        </button>
       </div>
     </div>
   </div>

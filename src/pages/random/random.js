@@ -431,8 +431,8 @@ export function initRandomControls() {
     isParticipantsPreviewLoading: false,
     previewRequestId: 0,
     isSidebarOpen: false,
+    isFieldSidebarOpen: false,
     isImporting: false,
-    isFieldModalOpen: false,
     isSavingDisplayColumn: false,
     isUndoPending: false,
     isResetPending: false,
@@ -464,20 +464,23 @@ export function initRandomControls() {
   const resetExclusionsDescriptionElement = randomSectionElement.querySelector(
     "[data-reset-exclusions-description]"
   );
-  const displayColumnModalElement = randomSectionElement.querySelector(
-    "[data-display-column-modal]"
+  const displayColumnSidebarElement = randomSectionElement.querySelector(
+    "[data-display-column-sidebar]"
   );
   const displayColumnSelectMountElement = randomSectionElement.querySelector(
     "[data-display-column-select]"
   );
-  const displayColumnModalDescriptionElement = randomSectionElement.querySelector(
-    "[data-display-column-modal-description]"
+  const displayColumnSidebarDescriptionElement = randomSectionElement.querySelector(
+    "[data-display-column-sidebar-description]"
   );
-  const displayColumnModalFileElement = randomSectionElement.querySelector(
-    "[data-display-column-modal-file]"
+  const displayColumnSidebarFileElement = randomSectionElement.querySelector(
+    "[data-display-column-sidebar-file]"
   );
-  const displayColumnModalNoteElement = randomSectionElement.querySelector(
-    "[data-display-column-modal-note]"
+  const displayColumnSidebarSummaryElement = randomSectionElement.querySelector(
+    "[data-display-column-sidebar-summary]"
+  );
+  const displayColumnSidebarNoteElement = randomSectionElement.querySelector(
+    "[data-display-column-sidebar-note]"
   );
   const displayColumnSaveButtonElement = randomSectionElement.querySelector(
     "[data-display-column-save]"
@@ -507,7 +510,7 @@ export function initRandomControls() {
       !hasActiveRecords ||
       state.isImporting ||
       state.isSavingDisplayColumn ||
-      state.isFieldModalOpen ||
+      state.isFieldSidebarOpen ||
       state.isUndoPending ||
       state.isResetPending;
   }
@@ -578,6 +581,8 @@ export function initRandomControls() {
         state.participantsPreview = null;
         state.listMode = LIST_MODE_HISTORY;
         state.isParticipantsPreviewLoading = false;
+        setSettingsSidebarOpen(false);
+        closeDisplayColumnSidebar();
         renderCurrentState();
         setStatus(statusElement, "Сессия больше недоступна. Загрузите новый файл.", "info");
         return;
@@ -590,14 +595,31 @@ export function initRandomControls() {
     }
   }
 
-  function setFieldModalOpen(isOpen) {
-    if (!displayColumnModalElement) {
+  function setSettingsSidebarOpen(isOpen) {
+    state.isSidebarOpen = isOpen;
+    toggleSidebar(sidebarElement, isOpen);
+
+    if (isOpen) {
+      state.isFieldSidebarOpen = false;
+      toggleSidebar(displayColumnSidebarElement, false);
+    }
+
+    syncDrawAvailability();
+  }
+
+  function setFieldSidebarOpen(isOpen) {
+    if (!displayColumnSidebarElement) {
       return;
     }
 
-    state.isFieldModalOpen = isOpen;
-    displayColumnModalElement.classList.toggle("random__modal--open", isOpen);
-    displayColumnModalElement.setAttribute("aria-hidden", String(!isOpen));
+    state.isFieldSidebarOpen = isOpen;
+    toggleSidebar(displayColumnSidebarElement, isOpen);
+
+    if (isOpen) {
+      state.isSidebarOpen = false;
+      toggleSidebar(sidebarElement, false);
+    }
+
     syncDrawAvailability();
   }
 
@@ -635,8 +657,20 @@ export function initRandomControls() {
     exportButtonElement.disabled = winnerHistoryCount === 0 || state.isImporting;
   }
 
-  function openDisplayColumnModal() {
-    if (!state.session || !displayColumnModalElement || !displayColumnSelectMountElement) {
+  function buildDisplayColumnSidebarSummary() {
+    if (!state.session) {
+      return "";
+    }
+
+    const totalCount = state.session?.counts?.totalRecords ?? 0;
+    const activeCount = state.session?.counts?.activeRecords ?? 0;
+    const dedupeColumn = getDeduplicationColumnLabel();
+
+    return `Загружено ${totalCount} ${getRecordWord(totalCount)}. Сейчас в пуле ${activeCount} ${getRecordWord(activeCount)}. Антидубль: ${dedupeColumn || "стабильный ключ"}.`;
+  }
+
+  function openDisplayColumnSidebar() {
+    if (!state.session || !displayColumnSidebarElement || !displayColumnSelectMountElement) {
       return;
     }
 
@@ -657,32 +691,36 @@ export function initRandomControls() {
       state.pendingDisplayColumn = event.target.value;
     });
 
-    if (displayColumnModalDescriptionElement) {
-      displayColumnModalDescriptionElement.textContent =
+    if (displayColumnSidebarDescriptionElement) {
+      displayColumnSidebarDescriptionElement.textContent =
         "Выберите колонку из Excel, которая будет отображаться у победителей на экране и в истории.";
     }
 
-    if (displayColumnModalFileElement) {
-      displayColumnModalFileElement.textContent = state.session.source?.originalName
+    if (displayColumnSidebarFileElement) {
+      displayColumnSidebarFileElement.textContent = state.session.source?.originalName
         ? `Файл: ${state.session.source.originalName}`
         : "";
     }
 
-    if (displayColumnModalNoteElement) {
+    if (displayColumnSidebarSummaryElement) {
+      displayColumnSidebarSummaryElement.textContent = buildDisplayColumnSidebarSummary();
+    }
+
+    if (displayColumnSidebarNoteElement) {
       const dedupeColumn = getDeduplicationColumnLabel();
 
-      displayColumnModalNoteElement.textContent = dedupeColumn
+      displayColumnSidebarNoteElement.textContent = dedupeColumn
         ? `Повторы между файлами автоматически блокируются по полю «${dedupeColumn}». Кнопка «Очистить все» удаляет историю текущего файла, общий blacklist и сам загруженный Excel.`
         : "Повторы между файлами автоматически блокируются по стабильному ключу. Кнопка «Очистить все» удаляет историю текущего файла, общий blacklist и сам загруженный Excel.";
     }
 
     displayColumnSaveButtonElement.disabled = false;
     displayColumnCancelButtonElement.disabled = false;
-    setFieldModalOpen(true);
+    setFieldSidebarOpen(true);
   }
 
-  function closeDisplayColumnModal() {
-    setFieldModalOpen(false);
+  function closeDisplayColumnSidebar() {
+    setFieldSidebarOpen(false);
   }
 
   async function saveDisplayColumnSelection() {
@@ -699,7 +737,7 @@ export function initRandomControls() {
     }
 
     if (nextDisplayColumn === currentDisplayColumn) {
-      closeDisplayColumnModal();
+      closeDisplayColumnSidebar();
       renderCurrentState();
       setStatus(
         statusElement,
@@ -723,7 +761,7 @@ export function initRandomControls() {
       invalidateParticipantsPreview();
       state.session = response.session;
       state.lastDraw = response.session.lastDraw || state.lastDraw;
-      closeDisplayColumnModal();
+      closeDisplayColumnSidebar();
       renderCurrentState();
       setStatus(
         statusElement,
@@ -912,6 +950,8 @@ export function initRandomControls() {
       if (error?.status === 404) {
         window.localStorage.removeItem(SESSION_STORAGE_KEY);
         window.localStorage.removeItem(DRAW_STORAGE_KEY);
+        setSettingsSidebarOpen(false);
+        closeDisplayColumnSidebar();
         setStatus(
           statusElement,
           "Прошлая сессия больше недоступна. Загрузите новый файл.",
@@ -947,7 +987,7 @@ export function initRandomControls() {
     const previousSession = state.session;
     const previousDraw = state.lastDraw;
 
-    closeDisplayColumnModal();
+    closeDisplayColumnSidebar();
 
     setImportingState(true);
     setStatus(statusElement, "Импортируем Excel-файл и собираем пул участников…");
@@ -973,7 +1013,7 @@ export function initRandomControls() {
         "Файл загружен. Выберите поле отображения победителей и сохраните настройку.",
         "info"
       );
-      openDisplayColumnModal();
+      openDisplayColumnSidebar();
     } catch (error) {
       randomLogger.error("Import failed", error);
       state.session = previousSession;
@@ -997,7 +1037,7 @@ export function initRandomControls() {
       return;
     }
 
-    if (state.isFieldModalOpen) {
+    if (state.isFieldSidebarOpen) {
       setStatus(
         statusElement,
         "Сначала выберите поле для розыгрыша и сохраните настройку.",
@@ -1099,11 +1139,11 @@ export function initRandomControls() {
   });
 
   displayColumnButtonElement?.addEventListener("click", () => {
-    openDisplayColumnModal();
+    openDisplayColumnSidebar();
   });
 
   displayColumnCancelButtonElement?.addEventListener("click", () => {
-    closeDisplayColumnModal();
+    closeDisplayColumnSidebar();
 
     if (state.session) {
       setStatus(
@@ -1119,8 +1159,18 @@ export function initRandomControls() {
     await saveDisplayColumnSelection();
   });
 
-  displayColumnModalElement?.addEventListener("keydown", async (event) => {
-    if (event.key !== "Enter" || !state.isFieldModalOpen) {
+  displayColumnSidebarElement?.addEventListener("keydown", async (event) => {
+    if (!state.isFieldSidebarOpen) {
+      return;
+    }
+
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeDisplayColumnSidebar();
+      return;
+    }
+
+    if (event.key !== "Enter") {
       return;
     }
 
@@ -1133,8 +1183,7 @@ export function initRandomControls() {
   });
 
   randomSectionElement.querySelector("[data-settings-toggle]")?.addEventListener("click", () => {
-    state.isSidebarOpen = !state.isSidebarOpen;
-    toggleSidebar(sidebarElement, state.isSidebarOpen);
+    setSettingsSidebarOpen(!state.isSidebarOpen);
   });
 
   undoDrawButtonElement?.addEventListener("click", async () => {
@@ -1186,9 +1235,8 @@ export function initRandomControls() {
       state.lastDraw = null;
       state.pendingDisplayColumn = "";
       state.listMode = LIST_MODE_HISTORY;
-      state.isSidebarOpen = false;
-      toggleSidebar(sidebarElement, false);
-      closeDisplayColumnModal();
+      setSettingsSidebarOpen(false);
+      closeDisplayColumnSidebar();
       fileInputElement.value = "";
       window.localStorage.removeItem(SESSION_STORAGE_KEY);
       window.localStorage.removeItem(DRAW_STORAGE_KEY);
@@ -1220,8 +1268,7 @@ export function initRandomControls() {
   renderCurrentState();
 
   if (shouldOpenSettings) {
-    state.isSidebarOpen = true;
-    toggleSidebar(sidebarElement, true);
+    setSettingsSidebarOpen(true);
   }
 
   if (storedSessionId) {

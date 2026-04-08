@@ -406,7 +406,7 @@
   &__sidebar {
     position: absolute;
     top: 95rem;
-    right: -720rem;
+    right: 0%;
     width: 100%;
     max-width: 865rem;
     padding: 82rem;
@@ -460,6 +460,11 @@
       visibility: visible;
       pointer-events: auto;
     }
+
+    &--import {
+      left: 0%;
+      right: auto;
+    }
   }
 
   &__sidebar-header {
@@ -479,6 +484,11 @@
     font-size: 24rem;
     line-height: 29rem;
     font-weight: 500;
+
+    &--compact {
+      margin-top: 14rem;
+      opacity: 0.92;
+    }
   }
 
   &__sidebar-button {
@@ -708,6 +718,11 @@
   .random {
     &__sidebar {
       right: 20rem;
+
+      &--import {
+        left: 20rem;
+        right: auto;
+      }
     }
   }
 }
@@ -720,6 +735,11 @@
       left: 0;
       margin: 0 auto;
       max-width: 905rem;
+
+      &--import {
+        right: 0;
+        left: 0;
+      }
     }
   }
 }
