@@ -1040,11 +1040,8 @@ function initRandomControls() {
   const winnersCountInputElement = randomSectionElement.querySelector(".random__quantity-input");
   const importTriggerButtonElement = randomSectionElement.querySelector("[data-import-trigger]");
   const exportButtonElement = randomSectionElement.querySelector("[data-export-button]");
-  const displayColumnButtonElement = randomSectionElement.querySelector(
-    "[data-display-column-button]"
-  );
-  const displayColumnDescriptionElement = randomSectionElement.querySelector(
-    "[data-display-column-description]"
+  const displayColumnImportButtonElement = randomSectionElement.querySelector(
+    "[data-display-column-import-button]"
   );
   const undoDrawButtonElement = randomSectionElement.querySelector("[data-undo-draw-button]");
   const resetExclusionsButtonElement = randomSectionElement.querySelector(
@@ -1174,22 +1171,6 @@ function initRandomControls() {
     }
     syncDrawAvailability();
   }
-  function syncDisplayColumnControls() {
-    if (!displayColumnButtonElement || !displayColumnDescriptionElement) {
-      return;
-    }
-    if (!state.session) {
-      displayColumnButtonElement.disabled = true;
-      displayColumnButtonElement.textContent = "\u0412\u044B\u0431\u0440\u0430\u0442\u044C \u043F\u043E\u043B\u0435";
-      displayColumnDescriptionElement.textContent = "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u0435 \u0444\u0430\u0439\u043B, \u0437\u0430\u0442\u0435\u043C \u043C\u043E\u0436\u043D\u043E \u0432\u044B\u0431\u0440\u0430\u0442\u044C \u043A\u043E\u043B\u043E\u043D\u043A\u0443 \u0438\u0437 Excel.";
-      return;
-    }
-    const displayColumn = getDisplayColumnLabel();
-    const dedupeColumn = getDeduplicationColumnLabel();
-    displayColumnButtonElement.disabled = false;
-    displayColumnButtonElement.textContent = displayColumn ? "\u0418\u0437\u043C\u0435\u043D\u0438\u0442\u044C \u043F\u043E\u043B\u0435" : "\u0412\u044B\u0431\u0440\u0430\u0442\u044C \u043F\u043E\u043B\u0435";
-    displayColumnDescriptionElement.textContent = displayColumn ? `\u0421\u0435\u0439\u0447\u0430\u0441 \u043F\u043E\u043A\u0430\u0437\u044B\u0432\u0430\u0435\u043C \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0435\u0439 \u043F\u043E \u043F\u043E\u043B\u044E \xAB${displayColumn}\xBB, \u0430 \u0430\u043D\u0442\u0438\u0434\u0443\u0431\u043B\u044C \u0438\u0434\u0451\u0442 \u043F\u043E \xAB${dedupeColumn}\xBB.` : "\u041F\u043E\u043B\u0435 \u0435\u0449\u0451 \u043D\u0435 \u0432\u044B\u0431\u0440\u0430\u043D\u043E. \u0423\u043A\u0430\u0436\u0438\u0442\u0435 \u043A\u043E\u043B\u043E\u043D\u043A\u0443 \u0438\u0437 Excel.";
-  }
   function syncToolbarActions() {
     if (!exportButtonElement) {
       return;
@@ -1204,40 +1185,54 @@ function initRandomControls() {
     const totalCount = state.session?.counts?.totalRecords ?? 0;
     const activeCount = state.session?.counts?.activeRecords ?? 0;
     const dedupeColumn = getDeduplicationColumnLabel();
-    return `\u0417\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u043E ${totalCount} ${getRecordWord(totalCount)}. \u0421\u0435\u0439\u0447\u0430\u0441 \u0432 \u043F\u0443\u043B\u0435 ${activeCount} ${getRecordWord(activeCount)}. \u0410\u043D\u0442\u0438\u0434\u0443\u0431\u043B\u044C: ${dedupeColumn || "\u0441\u0442\u0430\u0431\u0438\u043B\u044C\u043D\u044B\u0439 \u043A\u043B\u044E\u0447"}.`;
+    const displayColumn = getDisplayColumnLabel();
+    return `\u0417\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u043E ${totalCount} ${getRecordWord(totalCount)}. \u0421\u0435\u0439\u0447\u0430\u0441 \u0432 \u043F\u0443\u043B\u0435 ${activeCount} ${getRecordWord(activeCount)}. \u041F\u043E\u043B\u0435 \u043F\u043E\u043A\u0430\u0437\u0430: ${displayColumn || "\u043D\u0435 \u0432\u044B\u0431\u0440\u0430\u043D\u043E"}. \u0410\u043D\u0442\u0438\u0434\u0443\u0431\u043B\u044C: ${dedupeColumn || "\u0441\u0442\u0430\u0431\u0438\u043B\u044C\u043D\u044B\u0439 \u043A\u043B\u044E\u0447"}.`;
   }
   function openDisplayColumnSidebar() {
-    if (!state.session || !displayColumnSidebarElement || !displayColumnSelectMountElement) {
+    if (!displayColumnSidebarElement || !displayColumnSelectMountElement) {
       return;
     }
-    const selectedValue = getDisplayColumnLabel() || state.session.columns[0] || "";
-    const hiddenInputElement = mountDynamicSelect(displayColumnSelectMountElement, {
-      name: "displayColumn",
-      value: selectedValue,
-      options: state.session.columns.map((column) => ({
-        value: column,
-        label: column
-      })),
-      classes: "random__sidebar-select random__select random__modal-select"
-    });
-    state.pendingDisplayColumn = hiddenInputElement?.value || selectedValue;
-    hiddenInputElement?.addEventListener("change", (event) => {
-      state.pendingDisplayColumn = event.target.value;
-    });
     if (displayColumnSidebarDescriptionElement) {
-      displayColumnSidebarDescriptionElement.textContent = "\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u043A\u043E\u043B\u043E\u043D\u043A\u0443 \u0438\u0437 Excel, \u043A\u043E\u0442\u043E\u0440\u0430\u044F \u0431\u0443\u0434\u0435\u0442 \u043E\u0442\u043E\u0431\u0440\u0430\u0436\u0430\u0442\u044C\u0441\u044F \u0443 \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0435\u0439 \u043D\u0430 \u044D\u043A\u0440\u0430\u043D\u0435 \u0438 \u0432 \u0438\u0441\u0442\u043E\u0440\u0438\u0438.";
+      displayColumnSidebarDescriptionElement.textContent = state.session ? "\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u043A\u043E\u043B\u043E\u043D\u043A\u0443 \u0438\u0437 Excel, \u043A\u043E\u0442\u043E\u0440\u0430\u044F \u0431\u0443\u0434\u0435\u0442 \u043E\u0442\u043E\u0431\u0440\u0430\u0436\u0430\u0442\u044C\u0441\u044F \u0443 \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0435\u0439 \u043D\u0430 \u044D\u043A\u0440\u0430\u043D\u0435 \u0438 \u0432 \u0438\u0441\u0442\u043E\u0440\u0438\u0438." : "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0432\u044B\u0431\u0435\u0440\u0438\u0442\u0435 Excel-\u0444\u0430\u0439\u043B. \u041F\u043E\u0441\u043B\u0435 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0438 \u043D\u0438\u0436\u0435 \u043F\u043E\u044F\u0432\u0438\u0442\u0441\u044F \u043F\u043E\u043B\u0435 \u0434\u043B\u044F \u0440\u043E\u0437\u044B\u0433\u0440\u044B\u0448\u0430.";
+    }
+    if (displayColumnImportButtonElement) {
+      displayColumnImportButtonElement.disabled = state.isImporting;
+      displayColumnImportButtonElement.textContent = state.session ? "\u0412\u044B\u0431\u0440\u0430\u0442\u044C \u0434\u0440\u0443\u0433\u043E\u0439 \u0444\u0430\u0439\u043B" : "\u0412\u044B\u0431\u0440\u0430\u0442\u044C \u0444\u0430\u0439\u043B";
     }
     if (displayColumnSidebarFileElement) {
-      displayColumnSidebarFileElement.textContent = state.session.source?.originalName ? `\u0424\u0430\u0439\u043B: ${state.session.source.originalName}` : "";
+      displayColumnSidebarFileElement.textContent = state.session?.source?.originalName ? `\u0424\u0430\u0439\u043B: ${state.session.source.originalName}` : "\u0424\u0430\u0439\u043B \u0435\u0449\u0451 \u043D\u0435 \u0432\u044B\u0431\u0440\u0430\u043D";
     }
     if (displayColumnSidebarSummaryElement) {
       displayColumnSidebarSummaryElement.textContent = buildDisplayColumnSidebarSummary();
     }
     if (displayColumnSidebarNoteElement) {
-      const dedupeColumn = getDeduplicationColumnLabel();
-      displayColumnSidebarNoteElement.textContent = dedupeColumn ? `\u041F\u043E\u0432\u0442\u043E\u0440\u044B \u043C\u0435\u0436\u0434\u0443 \u0444\u0430\u0439\u043B\u0430\u043C\u0438 \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438 \u0431\u043B\u043E\u043A\u0438\u0440\u0443\u044E\u0442\u0441\u044F \u043F\u043E \u043F\u043E\u043B\u044E \xAB${dedupeColumn}\xBB. \u041A\u043D\u043E\u043F\u043A\u0430 \xAB\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435\xBB \u0443\u0434\u0430\u043B\u044F\u0435\u0442 \u0438\u0441\u0442\u043E\u0440\u0438\u044E \u0442\u0435\u043A\u0443\u0449\u0435\u0433\u043E \u0444\u0430\u0439\u043B\u0430, \u043E\u0431\u0449\u0438\u0439 blacklist \u0438 \u0441\u0430\u043C \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u043D\u044B\u0439 Excel.` : "\u041F\u043E\u0432\u0442\u043E\u0440\u044B \u043C\u0435\u0436\u0434\u0443 \u0444\u0430\u0439\u043B\u0430\u043C\u0438 \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438 \u0431\u043B\u043E\u043A\u0438\u0440\u0443\u044E\u0442\u0441\u044F \u043F\u043E \u0441\u0442\u0430\u0431\u0438\u043B\u044C\u043D\u043E\u043C\u0443 \u043A\u043B\u044E\u0447\u0443. \u041A\u043D\u043E\u043F\u043A\u0430 \xAB\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435\xBB \u0443\u0434\u0430\u043B\u044F\u0435\u0442 \u0438\u0441\u0442\u043E\u0440\u0438\u044E \u0442\u0435\u043A\u0443\u0449\u0435\u0433\u043E \u0444\u0430\u0439\u043B\u0430, \u043E\u0431\u0449\u0438\u0439 blacklist \u0438 \u0441\u0430\u043C \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u043D\u044B\u0439 Excel.";
+      if (state.session) {
+        const dedupeColumn = getDeduplicationColumnLabel();
+        displayColumnSidebarNoteElement.textContent = dedupeColumn ? `\u041F\u043E\u0432\u0442\u043E\u0440\u044B \u043C\u0435\u0436\u0434\u0443 \u0444\u0430\u0439\u043B\u0430\u043C\u0438 \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438 \u0431\u043B\u043E\u043A\u0438\u0440\u0443\u044E\u0442\u0441\u044F \u043F\u043E \u043F\u043E\u043B\u044E \xAB${dedupeColumn}\xBB. \u041A\u043D\u043E\u043F\u043A\u0430 \xAB\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435\xBB \u0443\u0434\u0430\u043B\u044F\u0435\u0442 \u0438\u0441\u0442\u043E\u0440\u0438\u044E \u0442\u0435\u043A\u0443\u0449\u0435\u0433\u043E \u0444\u0430\u0439\u043B\u0430, \u043E\u0431\u0449\u0438\u0439 blacklist \u0438 \u0441\u0430\u043C \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u043D\u044B\u0439 Excel.` : "\u041F\u043E\u0432\u0442\u043E\u0440\u044B \u043C\u0435\u0436\u0434\u0443 \u0444\u0430\u0439\u043B\u0430\u043C\u0438 \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438 \u0431\u043B\u043E\u043A\u0438\u0440\u0443\u044E\u0442\u0441\u044F \u043F\u043E \u0441\u0442\u0430\u0431\u0438\u043B\u044C\u043D\u043E\u043C\u0443 \u043A\u043B\u044E\u0447\u0443. \u041A\u043D\u043E\u043F\u043A\u0430 \xAB\u041E\u0447\u0438\u0441\u0442\u0438\u0442\u044C \u0432\u0441\u0435\xBB \u0443\u0434\u0430\u043B\u044F\u0435\u0442 \u0438\u0441\u0442\u043E\u0440\u0438\u044E \u0442\u0435\u043A\u0443\u0449\u0435\u0433\u043E \u0444\u0430\u0439\u043B\u0430, \u043E\u0431\u0449\u0438\u0439 blacklist \u0438 \u0441\u0430\u043C \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u043D\u044B\u0439 Excel.";
+      } else {
+        displayColumnSidebarNoteElement.textContent = "\u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u0435 Excel-\u0444\u0430\u0439\u043B \u0441 \u043D\u0443\u0436\u043D\u043E\u0439 \u0441\u0442\u0440\u0443\u043A\u0442\u0443\u0440\u043E\u0439. \u041F\u043E\u0441\u043B\u0435 \u044D\u0442\u043E\u0433\u043E \u043C\u043E\u0436\u043D\u043E \u0431\u0443\u0434\u0435\u0442 \u0432\u044B\u0431\u0440\u0430\u0442\u044C \u043A\u043E\u043B\u043E\u043D\u043A\u0443 \u0434\u043B\u044F \u043E\u0442\u043E\u0431\u0440\u0430\u0436\u0435\u043D\u0438\u044F \u043F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u0435\u0439.";
+      }
     }
-    displayColumnSaveButtonElement.disabled = false;
+    if (state.session) {
+      const selectedValue = getDisplayColumnLabel() || state.session.columns[0] || "";
+      const hiddenInputElement = mountDynamicSelect(displayColumnSelectMountElement, {
+        name: "displayColumn",
+        value: selectedValue,
+        options: state.session.columns.map((column) => ({
+          value: column,
+          label: column
+        })),
+        classes: "random__sidebar-select random__select random__modal-select"
+      });
+      state.pendingDisplayColumn = hiddenInputElement?.value || selectedValue;
+      hiddenInputElement?.addEventListener("change", (event) => {
+        state.pendingDisplayColumn = event.target.value;
+      });
+    } else {
+      displayColumnSelectMountElement.innerHTML = "";
+      state.pendingDisplayColumn = "";
+    }
+    displayColumnSaveButtonElement.disabled = !state.session;
     displayColumnCancelButtonElement.disabled = false;
     setFieldSidebarOpen(true);
   }
@@ -1311,7 +1306,6 @@ function initRandomControls() {
     );
   }
   function syncSidebarActions() {
-    syncDisplayColumnControls();
     if (!undoDrawButtonElement || !resetExclusionsButtonElement || !resetExclusionsDescriptionElement) {
       return;
     }
@@ -1364,7 +1358,7 @@ function initRandomControls() {
     if (!state.session) {
       renderPlaceholder(listWrapperElement, listElement, hintElement, submitButtonElement, {
         label: "\u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u0435 \u0444\u0430\u0439\u043B",
-        hint: "\u041D\u0430\u0436\u043C\u0438\u0442\u0435 \u043D\u0430 \u0438\u043A\u043E\u043D\u043A\u0443 \u0441\u043F\u0440\u0430\u0432\u0430, \u0447\u0442\u043E\u0431\u044B \u0432\u044B\u0431\u0440\u0430\u0442\u044C \u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C Excel-\u0444\u0430\u0439\u043B.",
+        hint: "\u041D\u0430\u0436\u043C\u0438\u0442\u0435 \u043D\u0430 \u0438\u043A\u043E\u043D\u043A\u0443 \u0441\u043F\u0440\u0430\u0432\u0430, \u0447\u0442\u043E\u0431\u044B \u043E\u0442\u043A\u0440\u044B\u0442\u044C \u043F\u0430\u043D\u0435\u043B\u044C \u0438\u043C\u043F\u043E\u0440\u0442\u0430 \u0438 \u0432\u044B\u0431\u0440\u0430\u0442\u044C Excel-\u0444\u0430\u0439\u043B.",
         submitDisabled: true
       });
       syncToolbarActions();
@@ -1404,6 +1398,10 @@ function initRandomControls() {
     if (importTriggerButtonElement) {
       importTriggerButtonElement.disabled = isImporting;
       importTriggerButtonElement.setAttribute("aria-busy", String(isImporting));
+    }
+    if (displayColumnImportButtonElement) {
+      displayColumnImportButtonElement.disabled = isImporting;
+      displayColumnImportButtonElement.textContent = isImporting ? "\u0417\u0430\u0433\u0440\u0443\u0436\u0430\u0435\u043C \u0444\u0430\u0439\u043B\u2026" : state.session ? "\u0412\u044B\u0431\u0440\u0430\u0442\u044C \u0434\u0440\u0443\u0433\u043E\u0439 \u0444\u0430\u0439\u043B" : "\u0412\u044B\u0431\u0440\u0430\u0442\u044C \u0444\u0430\u0439\u043B";
     }
     syncToolbarActions();
     syncDrawAvailability();
@@ -1566,13 +1564,13 @@ function initRandomControls() {
     importFile(selectedFile);
   });
   importTriggerButtonElement?.addEventListener("click", () => {
+    openDisplayColumnSidebar();
+  });
+  displayColumnImportButtonElement?.addEventListener("click", () => {
     openFilePicker();
   });
   exportButtonElement?.addEventListener("click", () => {
     exportWinnerHistory();
-  });
-  displayColumnButtonElement?.addEventListener("click", () => {
-    openDisplayColumnSidebar();
   });
   displayColumnCancelButtonElement?.addEventListener("click", () => {
     closeDisplayColumnSidebar();
@@ -1582,7 +1580,9 @@ function initRandomControls() {
         `\u0418\u0441\u043F\u043E\u043B\u044C\u0437\u0443\u0435\u0442\u0441\u044F \u043F\u043E\u043B\u0435 \xAB${getDisplayColumnLabel()}\xBB. \u041F\u0440\u0438 \u043D\u0435\u043E\u0431\u0445\u043E\u0434\u0438\u043C\u043E\u0441\u0442\u0438 \u0435\u0433\u043E \u043C\u043E\u0436\u043D\u043E \u0438\u0437\u043C\u0435\u043D\u0438\u0442\u044C \u0441\u043D\u043E\u0432\u0430.`,
         "info"
       );
+      return;
     }
+    setStatus(statusElement, "\u041F\u0430\u043D\u0435\u043B\u044C \u0438\u043C\u043F\u043E\u0440\u0442\u0430 \u0437\u0430\u043A\u0440\u044B\u0442\u0430. \u041F\u0440\u0438 \u043D\u0435\u043E\u0431\u0445\u043E\u0434\u0438\u043C\u043E\u0441\u0442\u0438 \u0435\u0451 \u043C\u043E\u0436\u043D\u043E \u043E\u0442\u043A\u0440\u044B\u0442\u044C \u0441\u043D\u043E\u0432\u0430.", "info");
   });
   displayColumnSaveButtonElement?.addEventListener("click", async (event) => {
     event.preventDefault();
@@ -1600,7 +1600,7 @@ function initRandomControls() {
     if (event.key !== "Enter") {
       return;
     }
-    if (event.target.closest(".select__trigger") || event.target.closest(".select__option")) {
+    if (event.target.closest(".select__trigger") || event.target.closest(".select__option") || event.target.closest("button")) {
       return;
     }
     event.preventDefault();

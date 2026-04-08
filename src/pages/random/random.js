@@ -451,11 +451,8 @@ export function initRandomControls() {
   const winnersCountInputElement = randomSectionElement.querySelector(".random__quantity-input");
   const importTriggerButtonElement = randomSectionElement.querySelector("[data-import-trigger]");
   const exportButtonElement = randomSectionElement.querySelector("[data-export-button]");
-  const displayColumnButtonElement = randomSectionElement.querySelector(
-    "[data-display-column-button]"
-  );
-  const displayColumnDescriptionElement = randomSectionElement.querySelector(
-    "[data-display-column-description]"
+  const displayColumnImportButtonElement = randomSectionElement.querySelector(
+    "[data-display-column-import-button]"
   );
   const undoDrawButtonElement = randomSectionElement.querySelector("[data-undo-draw-button]");
   const resetExclusionsButtonElement = randomSectionElement.querySelector(
@@ -623,29 +620,6 @@ export function initRandomControls() {
     syncDrawAvailability();
   }
 
-  function syncDisplayColumnControls() {
-    if (!displayColumnButtonElement || !displayColumnDescriptionElement) {
-      return;
-    }
-
-    if (!state.session) {
-      displayColumnButtonElement.disabled = true;
-      displayColumnButtonElement.textContent = "Выбрать поле";
-      displayColumnDescriptionElement.textContent =
-        "Сначала загрузите файл, затем можно выбрать колонку из Excel.";
-      return;
-    }
-
-    const displayColumn = getDisplayColumnLabel();
-    const dedupeColumn = getDeduplicationColumnLabel();
-
-    displayColumnButtonElement.disabled = false;
-    displayColumnButtonElement.textContent = displayColumn ? "Изменить поле" : "Выбрать поле";
-    displayColumnDescriptionElement.textContent = displayColumn
-      ? `Сейчас показываем победителей по полю «${displayColumn}», а антидубль идёт по «${dedupeColumn}».`
-      : "Поле ещё не выбрано. Укажите колонку из Excel.";
-  }
-
   function syncToolbarActions() {
     if (!exportButtonElement) {
       return;
@@ -665,41 +639,33 @@ export function initRandomControls() {
     const totalCount = state.session?.counts?.totalRecords ?? 0;
     const activeCount = state.session?.counts?.activeRecords ?? 0;
     const dedupeColumn = getDeduplicationColumnLabel();
+    const displayColumn = getDisplayColumnLabel();
 
-    return `Загружено ${totalCount} ${getRecordWord(totalCount)}. Сейчас в пуле ${activeCount} ${getRecordWord(activeCount)}. Антидубль: ${dedupeColumn || "стабильный ключ"}.`;
+    return `Загружено ${totalCount} ${getRecordWord(totalCount)}. Сейчас в пуле ${activeCount} ${getRecordWord(activeCount)}. Поле показа: ${displayColumn || "не выбрано"}. Антидубль: ${dedupeColumn || "стабильный ключ"}.`;
   }
 
   function openDisplayColumnSidebar() {
-    if (!state.session || !displayColumnSidebarElement || !displayColumnSelectMountElement) {
+    if (!displayColumnSidebarElement || !displayColumnSelectMountElement) {
       return;
     }
 
-    const selectedValue = getDisplayColumnLabel() || state.session.columns[0] || "";
-    const hiddenInputElement = mountDynamicSelect(displayColumnSelectMountElement, {
-      name: "displayColumn",
-      value: selectedValue,
-      options: state.session.columns.map((column) => ({
-        value: column,
-        label: column,
-      })),
-      classes: "random__sidebar-select random__select random__modal-select",
-    });
-
-    state.pendingDisplayColumn = hiddenInputElement?.value || selectedValue;
-
-    hiddenInputElement?.addEventListener("change", (event) => {
-      state.pendingDisplayColumn = event.target.value;
-    });
-
     if (displayColumnSidebarDescriptionElement) {
-      displayColumnSidebarDescriptionElement.textContent =
-        "Выберите колонку из Excel, которая будет отображаться у победителей на экране и в истории.";
+      displayColumnSidebarDescriptionElement.textContent = state.session
+        ? "Выберите колонку из Excel, которая будет отображаться у победителей на экране и в истории."
+        : "Сначала выберите Excel-файл. После загрузки ниже появится поле для розыгрыша.";
+    }
+
+    if (displayColumnImportButtonElement) {
+      displayColumnImportButtonElement.disabled = state.isImporting;
+      displayColumnImportButtonElement.textContent = state.session
+        ? "Выбрать другой файл"
+        : "Выбрать файл";
     }
 
     if (displayColumnSidebarFileElement) {
-      displayColumnSidebarFileElement.textContent = state.session.source?.originalName
+      displayColumnSidebarFileElement.textContent = state.session?.source?.originalName
         ? `Файл: ${state.session.source.originalName}`
-        : "";
+        : "Файл ещё не выбран";
     }
 
     if (displayColumnSidebarSummaryElement) {
@@ -707,14 +673,41 @@ export function initRandomControls() {
     }
 
     if (displayColumnSidebarNoteElement) {
-      const dedupeColumn = getDeduplicationColumnLabel();
+      if (state.session) {
+        const dedupeColumn = getDeduplicationColumnLabel();
 
-      displayColumnSidebarNoteElement.textContent = dedupeColumn
-        ? `Повторы между файлами автоматически блокируются по полю «${dedupeColumn}». Кнопка «Очистить все» удаляет историю текущего файла, общий blacklist и сам загруженный Excel.`
-        : "Повторы между файлами автоматически блокируются по стабильному ключу. Кнопка «Очистить все» удаляет историю текущего файла, общий blacklist и сам загруженный Excel.";
+        displayColumnSidebarNoteElement.textContent = dedupeColumn
+          ? `Повторы между файлами автоматически блокируются по полю «${dedupeColumn}». Кнопка «Очистить все» удаляет историю текущего файла, общий blacklist и сам загруженный Excel.`
+          : "Повторы между файлами автоматически блокируются по стабильному ключу. Кнопка «Очистить все» удаляет историю текущего файла, общий blacklist и сам загруженный Excel.";
+      } else {
+        displayColumnSidebarNoteElement.textContent =
+          "Загрузите Excel-файл с нужной структурой. После этого можно будет выбрать колонку для отображения победителей.";
+      }
     }
 
-    displayColumnSaveButtonElement.disabled = false;
+    if (state.session) {
+      const selectedValue = getDisplayColumnLabel() || state.session.columns[0] || "";
+      const hiddenInputElement = mountDynamicSelect(displayColumnSelectMountElement, {
+        name: "displayColumn",
+        value: selectedValue,
+        options: state.session.columns.map((column) => ({
+          value: column,
+          label: column,
+        })),
+        classes: "random__sidebar-select random__select random__modal-select",
+      });
+
+      state.pendingDisplayColumn = hiddenInputElement?.value || selectedValue;
+
+      hiddenInputElement?.addEventListener("change", (event) => {
+        state.pendingDisplayColumn = event.target.value;
+      });
+    } else {
+      displayColumnSelectMountElement.innerHTML = "";
+      state.pendingDisplayColumn = "";
+    }
+
+    displayColumnSaveButtonElement.disabled = !state.session;
     displayColumnCancelButtonElement.disabled = false;
     setFieldSidebarOpen(true);
   }
@@ -800,8 +793,6 @@ export function initRandomControls() {
   }
 
   function syncSidebarActions() {
-    syncDisplayColumnControls();
-
     if (
       !undoDrawButtonElement ||
       !resetExclusionsButtonElement ||
@@ -878,7 +869,7 @@ export function initRandomControls() {
     if (!state.session) {
       renderPlaceholder(listWrapperElement, listElement, hintElement, submitButtonElement, {
         label: "Загрузите файл",
-        hint: "Нажмите на иконку справа, чтобы выбрать и загрузить Excel-файл.",
+        hint: "Нажмите на иконку справа, чтобы открыть панель импорта и выбрать Excel-файл.",
         submitDisabled: true,
       });
       syncToolbarActions();
@@ -925,6 +916,15 @@ export function initRandomControls() {
     if (importTriggerButtonElement) {
       importTriggerButtonElement.disabled = isImporting;
       importTriggerButtonElement.setAttribute("aria-busy", String(isImporting));
+    }
+
+    if (displayColumnImportButtonElement) {
+      displayColumnImportButtonElement.disabled = isImporting;
+      displayColumnImportButtonElement.textContent = isImporting
+        ? "Загружаем файл…"
+        : state.session
+          ? "Выбрать другой файл"
+          : "Выбрать файл";
     }
 
     syncToolbarActions();
@@ -1131,15 +1131,15 @@ export function initRandomControls() {
   });
 
   importTriggerButtonElement?.addEventListener("click", () => {
+    openDisplayColumnSidebar();
+  });
+
+  displayColumnImportButtonElement?.addEventListener("click", () => {
     openFilePicker();
   });
 
   exportButtonElement?.addEventListener("click", () => {
     exportWinnerHistory();
-  });
-
-  displayColumnButtonElement?.addEventListener("click", () => {
-    openDisplayColumnSidebar();
   });
 
   displayColumnCancelButtonElement?.addEventListener("click", () => {
@@ -1151,7 +1151,10 @@ export function initRandomControls() {
         `Используется поле «${getDisplayColumnLabel()}». При необходимости его можно изменить снова.`,
         "info"
       );
+      return;
     }
+
+    setStatus(statusElement, "Панель импорта закрыта. При необходимости её можно открыть снова.", "info");
   });
 
   displayColumnSaveButtonElement?.addEventListener("click", async (event) => {
@@ -1174,7 +1177,11 @@ export function initRandomControls() {
       return;
     }
 
-    if (event.target.closest(".select__trigger") || event.target.closest(".select__option")) {
+    if (
+      event.target.closest(".select__trigger") ||
+      event.target.closest(".select__option") ||
+      event.target.closest("button")
+    ) {
       return;
     }
 
