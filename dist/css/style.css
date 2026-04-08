@@ -1268,6 +1268,15 @@ body {
 .results--refreshing .results__list {
   transition: opacity 0.2s ease;
 }
+.results--view-list .results__list {
+  scroll-snap-type: y mandatory;
+  scroll-padding-block: 24rem;
+  overscroll-behavior-y: contain;
+}
+.results--view-list .results__item {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
 .results--view-blocks .results__list {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

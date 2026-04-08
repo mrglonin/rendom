@@ -404,6 +404,19 @@
     }
   }
 
+  &--view-list {
+    .results__list {
+      scroll-snap-type: y mandatory;
+      scroll-padding-block: 24rem;
+      overscroll-behavior-y: contain;
+    }
+
+    .results__item {
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+    }
+  }
+
   &--view-blocks {
     .results__list {
       display: grid;
